@@ -351,6 +351,7 @@ CORPO: [copy completa, com quebras de linha entre as ideias]
 CENA: [A, B, C ou TIPOGRÁFICA]
 RESPIRO: [topo, centro ou base]
 VISUAL: [direção visual específica; siga o prompt do Diretor Artístico]
+DIREÇÃO_JSON: [uma linha de JSON válido; obrigatória quando o CONTRATO TÉCNICO do sistema a pedir]
 ```
 
 - O nome do estado é autoral e nasce do movimento (ex.: DESMASCARAMENTO, PREÇO, VIRADA).

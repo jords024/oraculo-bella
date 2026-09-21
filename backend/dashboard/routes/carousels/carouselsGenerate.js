@@ -683,7 +683,15 @@ Esta memória não é referência de estilo para copiar; é uma lista antirrepet
         const promptValues = await Promise.all(promptIds.map(id => getAgentPromptAsync(id)));
         const editorialPrompts = Object.fromEntries(promptIds.map((id, index) => [id, promptValues[index] || '']));
         const memory = [recentCopyContext, JSON.stringify(recentContentMemory || [])].filter(Boolean).join('\n');
-        const visualDirection = `IDENTIDADE BELLA: ${activeTemplate.name}. ${activeTemplate.direction}\nQuantidade variável: ${numSlides} lâminas. Preserve CTA COMENTE BELLA no encerramento. Aplique o plano de layouts já fornecido pelo sistema, mas varie linguagem-mãe, escala, densidade e presença humana entre conteúdos.\nMEMÓRIA VISUAL E ANTIPADRÕES: ${JSON.stringify(visualReferenceContract)}`;
+        // O gerador de imagem depende do plano de layouts e do DIREÇÃO_JSON de cada lâmina
+        // (build_prompt e a seleção de referências visuais leem visual_plan). Esse contrato
+        // precisa chegar à etapa de escrita mesmo quando o prompt `criador` não é usado.
+        const technicalContract = `CONTRATO TÉCNICO DAS LÂMINAS (o gerador de imagem depende disto; tem prioridade sobre instruções de variar layouts livremente):
+- Use exatamente este plano de layouts para a direção escolhida:
+${layoutPlan}
+- Ordem dos campos em cada lâmina: cabeçalho [SX — ESTADO | layout: LAYOUT], TÍTULO:, CORPO:, CENA:, RESPIRO:, VISUAL:, DIREÇÃO_JSON:.
+- DIREÇÃO_JSON ocupa uma única linha com JSON válido e estas chaves preenchidas de forma específica para aquela lâmina, sem valores genéricos repetidos entre lâminas: {"visual_role":"","subject":"","action":"","environment":"","material_anchor":"","crop_focus":"","mood":"","accent":"","photo_treatment":"","text_density":"","continuity_key":"","unique_detail":"","emotional_intent":"","care_signal":"","sensory_focus":"","light":"","lens":"","composition":"","human_presence":"","authenticity_detail":"","anti_corporate_guard":""}`;
+        const visualDirection = `IDENTIDADE BELLA: ${activeTemplate.name}. ${activeTemplate.direction}\nQuantidade variável: ${numSlides} lâminas. Preserve CTA COMENTE BELLA no encerramento. Aplique o plano de layouts já fornecido pelo sistema, mas varie linguagem-mãe, escala, densidade e presença humana entre conteúdos.\nMEMÓRIA VISUAL E ANTIPADRÕES: ${JSON.stringify(visualReferenceContract)}\n${technicalContract}`;
         const orchestrationArgs = {
           apiKey, model: activeModel, reasoningEffort: activeEffort,
           messages: formattedMessages, totalSlides: numSlides, memory, visualDirection,
