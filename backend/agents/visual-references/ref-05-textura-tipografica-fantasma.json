@@ -1,0 +1,34 @@
+{
+  "ref_id": "ref-05-textura-tipografica-fantasma",
+  "fonte": "Referência enviada pelo usuário (carrossel Nicole Holz, slide de clímax com fundo azul)",
+  "papel_no_carrossel": "clímax / frase de efeito (o ponto mais quotável do carrossel)",
+  "layout_arquetipo": "fundo_solido_com_textura_tipografica_fantasma",
+  "resumo": "Fundo azul sólido onde a própria palavra-chave do slide é repetida em tamanho gigante e baixa opacidade atrás do título real — a textura de fundo é tipográfica, não fotográfica nem de papel.",
+  "fundo": {
+    "tipo": "cor_solida_com_texto_fantasma",
+    "descricao": "Azul saturado cobrindo o quadro inteiro; a palavra 'solidão' repetida em contorno fino e semitransparente cria uma textura de fundo única para este slide."
+  },
+  "textura": "tipográfica (texto repetido como padrão), não têxtil nem fotográfica — mais uma variação de textura entre lâminas do mesmo carrossel.",
+  "tipografia": {
+    "hierarquia": [
+      "título bold branco no topo, direto e curto",
+      "parágrafo de corpo mais leve abaixo",
+      "frase de efeito isolada dentro de um selo/etiqueta recortado (formato de ticket, bordas onduladas), em peso mais forte"
+    ],
+    "principio": "três tratamentos tipográficos distintos na mesma lâmina — a intensidade visual sobe exatamente no ponto de maior peso emocional do texto (a frase dentro do selo), o que alinha forma e conteúdo."
+  },
+  "motivos_decorativos": [
+    "selo/etiqueta com bordas onduladas tipo carimbo (formato diferente do card retangular usado em ref-04 — o carrossel varia a forma do 'container' de texto, não repete sempre o mesmo retângulo)",
+    "flores fotográficas pequenas, apenas no canto inferior direito, como único toque orgânico — não cobrem o quadro"
+  ],
+  "tratamento_de_foto": "quase nulo — só um pequeno recorte fotográfico de apoio no canto, o resto é 100% tipografia/cor.",
+  "paleta": "azul saturado único, sem gradiente, com branco e preto para texto — máxima simplicidade cromática no slide de maior carga emocional.",
+  "papel_no_fluxo": "reservado para o ápice narrativo — a intensidade visual (textura fantasma + selo) é usada com moderação, só aqui, o que a torna memorável em vez de repetitiva.",
+  "por_que_parece_intencional_e_nao_improvisado": "a textura de fundo repete a PALAVRA-CHAVE do próprio slide — é conteúdo virando forma, não um padrão genérico aplicado em qualquer lugar.",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "a palavra repetida no fundo muda a cada carrossel — é sempre a palavra-âncora daquele slide específico, nunca fixa",
+    "o formato do selo pode variar (ticket, etiqueta, carimbo, fita) desde que seja diferente do container usado nos outros slides do mesmo carrossel",
+    "esse tratamento deve ser reservado a no máximo 1 slide por carrossel — se usado em todos, perde o efeito de clímax"
+  ],
+  "nao_copiar_literalmente": "não é para todo carrossel da Bella ganhar um slide azul com texto fantasma — é para reservar UM momento de maior intensidade visual por carrossel, ligado à frase mais forte do roteiro."
+}

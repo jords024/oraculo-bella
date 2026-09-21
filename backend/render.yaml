@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: fonte-oculta-dashboard
+    runtime: node
+    buildCommand: npm install && python3 -m pip install --upgrade pip --quiet && python3 -m pip install --target ./python_packages -r requirements.txt --quiet
+    startCommand: node dashboard/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DASHBOARD_USER
+        sync: false
+      - key: DASHBOARD_PASS
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: META_ACCESS_TOKEN
+        sync: false
+      - key: INSTAGRAM_ACCOUNT_ID
+        sync: false
+      - key: FACEBOOK_PAGE_ID
+        sync: false
+      - key: NOTION_TOKEN
+        sync: false
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APPLICATION_KEY
+        sync: false
+      - key: B2_BUCKET_NAME
+        value: Publicacoes
+      - key: B2_ENDPOINT
+        value: s3.us-east-005.backblazeb2.com
+      - key: ELEVENLABS_API_KEY
+        sync: false
+      - key: FAL_KEY
+        sync: false

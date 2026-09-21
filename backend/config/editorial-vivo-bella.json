@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "workspace": "bella",
+  "principles": {
+    "copy_and_design_are_one": true,
+    "concept_before_subject": true,
+    "human_presence_is_optional": true,
+    "research_is_conditional": true,
+    "fixed_slide_role_for_s3": false,
+    "allowed_slide_counts": [3, 5, 7, 10]
+  },
+  "sequence_rules": {
+    "adjacent_layout_repeat": false,
+    "minimum_distinct_archetypes": 3,
+    "vary_camera_distance": true,
+    "vary_text_density": true,
+    "recurring_symbol_may_evolve": true,
+    "copy_must_open_and_close_specific_loops": true
+  },
+  "anti_patterns": [
+    "mulher genérica como capa automática",
+    "objeto literal promovido a protagonista sem tensão psicológica",
+    "faixa preta ou blur improvisado atrás do texto",
+    "card corporativo isolado sobre fotografia",
+    "cadeira, janela, café ou livro usados como preenchimento",
+    "mesma metáfora, pose, sintaxe ou função narrativa em conteúdos diferentes",
+    "texto gerado dentro da imagem"
+  ],
+  "quality_gates": [
+    "cada imagem torna visível uma ferida ou desejo específico",
+    "cada lâmina muda a percepção e prepara a seguinte",
+    "a capa cria universo e curiosidade antes de explicar",
+    "a sequência alterna impacto, respiro, reconhecimento e transformação",
+    "a tipografia é composta pelo sistema e permanece editável"
+  ]
+}

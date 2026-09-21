@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oraculo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold:     #C9A84C;
+    --gold-dim: rgba(201,168,76,0.12);
+    --bg:       #080808;
+    --text:     #EDE8DF;
+    --text-dim: rgba(237,232,223,0.4);
+    --border:   rgba(201,168,76,0.18);
+    --serif:    'Cormorant Garamond', Georgia, serif;
+    --sans:     'Space Grotesk', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  /* Glow */
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 65%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .card {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 400px;
+    padding: 56px 48px;
+    border: 1px solid var(--border);
+    background: rgba(12,12,12,0.9);
+    text-align: center;
+    animation: fadeUp 0.7s ease-out forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-family: var(--sans);
+    margin-bottom: 20px;
+    opacity: 0.8;
+  }
+
+  .brand {
+    font-family: var(--serif);
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .brand em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .divider {
+    width: 32px; height: 1px;
+    background: var(--gold);
+    opacity: 0.4;
+    margin: 24px auto;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-bottom: 36px;
+    line-height: 1.6;
+  }
+
+  .field {
+    margin-bottom: 16px;
+    text-align: left;
+  }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.7;
+    margin-bottom: 8px;
+  }
+
+  .field input {
+    width: 100%;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 300;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .field input:focus {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .field input::placeholder {
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  /* Hide password bullets style */
+  .field input[type="password"] {
+    letter-spacing: 0.2em;
+  }
+
+  .btn-login {
+    width: 100%;
+    margin-top: 8px;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .btn-login:hover {
+    background: var(--gold);
+    color: #080808;
+  }
+
+  .btn-login:active {
+    transform: scale(0.99);
+  }
+
+  .error-msg {
+    margin-top: 16px;
+    font-size: 12px;
+    color: #DC2626;
+    letter-spacing: 0.05em;
+    display: none;
+  }
+
+  .error-msg.visible { display: block; }
+
+  .footer-note {
+    margin-top: 32px;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 40px 28px; margin: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<div class="card">
+  <div class="eyebrow">Estúdio de Conteúdo</div>
+  <div class="brand">Fonte<br><em>Oculta</em></div>
+  <div class="divider"></div>
+  <p class="subtitle">Acesso restrito ao estúdio.<br>Insira suas credenciais para continuar.</p>
+
+  <form id="loginForm" action="/auth/login" method="POST">
+    <div class="field">
+      <label>Usuário</label>
+      <input type="text" name="username" placeholder="seu usuário" autocomplete="username" required />
+    </div>
+    <div class="field">
+      <label>Senha</label>
+      <div style="position: relative; display: flex; align-items: center;">
+        <input type="password" name="password" id="passwordInput" placeholder="••••••••" autocomplete="current-password" required style="padding-right: 44px; width: 100%;" />
+        <button type="button" id="togglePassword" style="position: absolute; right: 12px; background: none; border: none; color: var(--gold); cursor: pointer; opacity: 0.7; transition: opacity 0.2s; display: flex; align-items: center; justify-content: center; padding: 0; outline: none;" aria-label="Mostrar senha">
+          <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <button type="submit" class="btn-login">Entrar</button>
+  </form>
+
+  <div class="error-msg" id="errorMsg">
+    Credenciais inválidas. Tente novamente.
+  </div>
+
+  <div class="footer-note">Oraculo · Plataforma Interna</div>
+</div>
+
+<script>
+  // Carrega dinamicamente a identidade visual (nome da empresa)
+  fetch('/api/settings/branding')
+    .then(res => res.json())
+    .then(data => {
+      const companyName = (data && (data.companyName || data.logoText)) || "Oraculo";
+      const brandEl = document.querySelector('.brand');
+      if (brandEl) {
+        const words = companyName.trim().split(/\s+/);
+        if (words.length > 1) {
+          const lastWord = words.pop();
+          const firstPart = words.join(' ');
+          brandEl.innerHTML = `${firstPart}<br><em>${lastWord}</em>`;
+        } else {
+          brandEl.innerHTML = `<em>${companyName}</em>`;
+        }
+      }
+    })
+    .catch(err => console.error('Erro ao carregar branding:', err));
+
+  // Handle form submission via AJAX (fetch) to get JWT
+  const loginForm = document.getElementById('loginForm');
+  const errorMsg = document.getElementById('errorMsg');
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.classList.remove('visible');
+
+    const formData = new FormData(loginForm);
+    const data = Object.fromEntries(formData.entries());
+
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({ detail: 'Credenciais inválidas. Tente novamente.' }));
+        errorMsg.textContent = errData.detail || 'Credenciais inválidas. Tente novamente.';
+        errorMsg.classList.add('visible');
+        return;
+      }
+
+      const resJson = await response.json();
+      if (resJson.token) {
+        localStorage.setItem('fo_token', resJson.token);
+        window.location.href = '/';
+      } else {
+        errorMsg.textContent = 'Erro ao obter token de acesso.';
+        errorMsg.classList.add('visible');
+      }
+    } catch (err) {
+      console.error('Erro na requisição de login:', err);
+      errorMsg.textContent = 'Erro ao conectar ao servidor. Tente novamente mais tarde.';
+      errorMsg.classList.add('visible');
+    }
+  });
+
+  // Toggle password visibility
+  const passwordInput = document.getElementById('passwordInput');
+  const togglePassword = document.getElementById('togglePassword');
+  const eyeIcon = document.getElementById('eyeIcon');
+
+  const eyeOpenSvg = `
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+    <circle cx="12" cy="12" r="3"></circle>
+  `;
+
+  const eyeClosedSvg = `
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+    <line x1="1" y1="1" x2="23" y2="23"></line>
+  `;
+
+  togglePassword.addEventListener('click', function () {
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    
+    if (type === 'password') {
+      eyeIcon.innerHTML = eyeOpenSvg;
+      togglePassword.setAttribute('aria-label', 'Mostrar senha');
+    } else {
+      eyeIcon.innerHTML = eyeClosedSvg;
+      togglePassword.setAttribute('aria-label', 'Ocultar senha');
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,422 @@
+/* frontend/src/css/biblioteca/gallery.css — Estilos da Galeria e Grid da Biblioteca */
+
+.biblioteca-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bg-main, #09090b);
+}
+
+.biblioteca-main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Galeria da Esquerda ─────────────────────────────────────────────────── */
+.biblioteca-gallery-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 32px;
+  background: transparent;
+}
+
+.biblioteca-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.biblioteca-title-wrap h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-1, #f4f4f5);
+  margin: 0 0 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.biblioteca-title-wrap p {
+  font-size: 13px;
+  color: var(--text-3, #a1a1aa);
+  margin: 0;
+}
+
+.biblioteca-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.biblioteca-search-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 8px;
+  padding: 8px 14px 8px 34px;
+  color: #fff;
+  font-size: 13px;
+  width: 240px;
+  transition: all 0.2s;
+}
+
+.biblioteca-search-input:focus {
+  outline: none;
+  border-color: var(--gold, #c9a84c);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.biblioteca-select-filter {
+  background: #18181b;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.15));
+  border-radius: 8px;
+  color: var(--text-1, #f4f4f5);
+  padding: 8px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  outline: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.biblioteca-select-filter:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+}
+
+.biblioteca-select-filter:focus {
+  border-color: var(--gold, #c9a84c);
+}
+
+/* ── Grid de Cards de Imagens ────────────────────────────────────────────── */
+.biblioteca-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 18px;
+}
+
+.lib-card {
+  background: #121214;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.lib-card:hover {
+  border-color: rgba(201, 168, 76, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+.lib-card.is-reference {
+  border-color: var(--gold, #c9a84c);
+  box-shadow: 0 0 0 1px var(--gold, #c9a84c), 0 4px 16px rgba(201, 168, 76, 0.2);
+}
+
+.lib-card.is-batch-selected {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444, 0 4px 16px rgba(239, 68, 68, 0.25);
+  background: rgba(239, 68, 68, 0.04);
+}
+
+.lib-card-thumb-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: #09090b;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+.lib-card-thumb {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.lib-card:hover .lib-card-thumb {
+  transform: scale(1.05);
+}
+
+/* Checkbox de Seleção em Lote */
+.lib-batch-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 0;
+}
+
+.lib-batch-checkbox:hover {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.lib-batch-checkbox.active {
+  background: #ef4444;
+  border-color: #ef4444;
+  color: #fff;
+}
+
+/* Botão de Referência IA (Estrela) */
+.lib-reference-btn {
+  position: absolute;
+  top: 10px;
+  left: 40px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+  font-size: 11px;
+  padding: 0;
+}
+
+.lib-reference-btn:hover {
+  border-color: var(--gold, #c9a84c);
+  background: rgba(201, 168, 76, 0.25);
+}
+
+.lib-reference-btn.active {
+  background: var(--gold, #c9a84c);
+  border-color: var(--gold, #c9a84c);
+  box-shadow: 0 0 8px rgba(201, 168, 76, 0.6);
+}
+
+/* Banner de Ações em Lote */
+.biblioteca-batch-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(18, 18, 20, 0.95));
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 10px;
+  padding: 10px 18px;
+  margin-bottom: 18px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.biblioteca-batch-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.biblioteca-batch-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lib-card-action-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  transition: all 0.2s;
+  backdrop-filter: blur(4px);
+}
+
+.lib-card-action-icon:hover {
+  background: rgba(201, 168, 76, 0.3);
+  border-color: var(--gold, #c9a84c);
+  color: var(--gold, #c9a84c);
+}
+
+.lib-card-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #121214;
+}
+
+.lib-card-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lib-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-1, #f4f4f5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.lib-card-badge {
+  font-size: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-3, #a1a1aa);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.lib-card-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.lib-btn-copy-url {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  color: var(--text-2, #d4d4d8);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.lib-btn-copy-url:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.lib-btn-icon-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.lib-btn-icon-danger:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.lib-btn-icon-edit {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  color: var(--text-3, #a1a1aa);
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.lib-btn-icon-edit:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── Paginação ────────────────────────────────────────────────────────── */
+.biblioteca-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 28px;
+  padding: 14px 20px;
+  background: #121214;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  border-radius: 12px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--text-3, #a1a1aa);
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lib-card-date {
+  font-size: 11px;
+  color: var(--text-3, #71717a);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+  margin: 2px 0 4px 0;
+}
+
+.lib-card-date-icon {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* ── Estilo Escuro Global para Selects e Dropdowns ── */
+select, select option {
+  background-color: #18181b !important;
+  color: #f4f4f5 !important;
+}

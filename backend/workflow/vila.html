@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vila Jordânica — Fábrica de Teses</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+:root {
+  --gold:    #c9a84c;
+  --gold2:   #e6c97a;
+  --bg:      #050508;
+  --bg2:     #080810;
+  --bg3:     #0c0c18;
+  --border:  #ffffff0a;
+  --text:    #e8e4d8;
+  --muted:   #ffffff40;
+}
+
+body {
+  background: var(--bg);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 52px 1fr;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: #06060e;
+  border-bottom: 1px solid var(--border);
+  z-index: 100;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.topbar-logo {
+  width: 28px; height: 28px;
+  position: relative;
+}
+.topbar-logo svg { width: 100%; height: 100%; }
+.brand-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(90deg, var(--gold), var(--gold2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.brand-sub {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 1px;
+}
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.status-live {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-live 2s ease-in-out infinite;
+}
+@keyframes pulse-live {
+  0%,100% { opacity:1; transform:scale(1); }
+  50% { opacity:0.5; transform:scale(1.4); }
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.topbar-time {
+  font-size: 10px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+/* ── MAIN LAYOUT ── */
+.main {
+  display: grid;
+  grid-template-columns: 264px 1fr 308px;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── PANELS ── */
+.panel {
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff0a transparent;
+}
+.panel::-webkit-scrollbar { width: 3px; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+.panel::-webkit-scrollbar-thumb { background: #ffffff0a; border-radius: 2px; }
+.panel.no-border { border-right: none; }
+
+/* ── PANEL HEADER ── */
+.p-head {
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+}
+.p-head-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.p-head-title {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+/* ── AGENT GROUP ── */
+.agent-group {
+  padding: 12px 0 0;
+}
+.agent-group-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 18px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.agent-group-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── AGENT CARD (roster) ── */
+.agent-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px 10px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+.agent-card:hover {
+  background: #ffffff04;
+}
+.agent-card.active {
+  background: #ffffff06;
+}
+.agent-card.active .a-indicator {
+  background: var(--a-color);
+  box-shadow: 0 0 8px var(--a-color);
+}
+.agent-card.is-working {
+  border-left-color: var(--a-color);
+  background: #ffffff06;
+}
+.agent-card.is-working .a-indicator {
+  background: var(--a-color);
+  box-shadow: 0 0 10px var(--a-color);
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  0%,100% { transform:scale(1); }
+  50% { transform:scale(1.6); }
+}
+
+.a-portrait {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  overflow: hidden;
+  position: relative;
+}
+.a-portrait svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.a-info {
+  flex: 1;
+  min-width: 0;
+}
+.a-role {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--a-color, var(--muted));
+  opacity: 0.7;
+  margin-bottom: 1px;
+}
+.a-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.a-task {
+  font-size: 9px;
+  color: var(--muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.a-indicator {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #ffffff15;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+/* Reviewer mini cards */
+.reviewers-compact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 8px 14px 8px 18px;
+}
+.reviewer-mini {
+  background: #0a0a14;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  position: relative;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.reviewer-mini:hover { background: #ffffff05; }
+.reviewer-mini.active {
+  border-color: var(--a-color);
+  box-shadow: 0 0 12px var(--a-color, #f59e0b)22;
+}
+.reviewer-mini.active .a-indicator {
+  background: var(--a-color);
+  box-shadow: 0 0 6px var(--a-color);
+  animation: pulse-dot 1.2s infinite;
+}
+.rm-portrait {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+.rm-portrait svg { width:100%; height:100%; }
+.rm-name {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text);
+}
+.rm-role {
+  font-size: 7px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+.rm-indicator {
+  position: absolute;
+  top: 6px; right: 6px;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #ffffff10;
+  transition: all 0.3s;
+}
+
+
+/* ── FÁBRICA CENTER ── */
+.fabrica {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Fábrica header */
+.fabrica-head {
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #0a0a16 0%, var(--bg) 100%);
+  position: relative;
+  overflow: hidden;
+}
+.fabrica-head::before {
+  content: '';
+  position: absolute;
+  top: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 300px; height: 80px;
+  background: radial-gradient(ellipse, #c9a84c08 0%, transparent 70%);
+}
+.fabrica-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #c9a84c0c;
+  border: 1px solid #c9a84c22;
+  color: var(--gold);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+.fabrica-title {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #ffffff 50%, var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.fabrica-subtitle {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+}
+
+/* Active idea bar */
+.active-idea-bar {
+  margin: 0 28px;
+  margin-top: 14px;
+  background: #0c0c1a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.aib-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.aib-info { flex: 1; min-width: 0; }
+.aib-label {
+  font-size: 8px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.aib-title {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.aib-stage {
+  font-size: 9px;
+  color: var(--gold);
+  letter-spacing: 1px;
+  margin-top: 2px;
+  font-weight: 600;
+}
+.aib-praca {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: 1px solid;
+  flex-shrink: 0;
+}
+
+/* Pipeline stages */
+.pipeline-stages {
+  padding: 16px 28px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 8px;
+}
+.stage-node {
+  background: #0c0c1a;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+  position: relative;
+  transition: all 0.4s;
+}
+.stage-node.active {
+  border-color: var(--s-color);
+  box-shadow: 0 0 20px var(--s-color)22, inset 0 0 20px var(--s-color)08;
+}
+.stage-node.done {
+  border-color: #ffffff0a;
+  opacity: 0.6;
+}
+.stage-node.done .stage-check { display: flex; }
+.stage-check {
+  display: none;
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #10b981;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+}
+.stage-num {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.stage-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.stage-agents {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+.stage-agent-pip {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.stage-agent-pip svg { width:100%; height:100%; }
+.stage-progress {
+  margin-top: 8px;
+  height: 2px;
+  background: #ffffff08;
+  border-radius: 1px;
+  overflow: hidden;
+}
+.stage-progress-bar {
+  height: 100%;
+  background: var(--s-color);
+  border-radius: 1px;
+  transition: width 0.3s ease;
+  box-shadow: 0 0 6px var(--s-color);
+}
+.stage-working-text {
+  margin-top: 6px;
+  font-size: 8px;
+  color: var(--s-color);
+  letter-spacing: 0.5px;
+  min-height: 10px;
+}
+
+/* Canvas for connections */
+.pipeline-canvas-wrap {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+#pipe-canvas {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+}
+
+/* Slide output preview */
+.slide-preview-strip {
+  padding: 12px 28px 16px;
+  border-top: 1px solid var(--border);
+}
+.sps-label {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.sps-row {
+  display: flex;
+  gap: 6px;
+}
+.sps-slide {
+  width: 44px;
+  height: 55px;
+  border-radius: 4px;
+  background: #0c0c1a;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: var(--muted);
+  font-weight: 700;
+  transition: all 0.3s;
+  cursor: default;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.sps-slide.done {
+  border-color: #10b98144;
+  background: #051008;
+}
+.sps-slide.done::after {
+  content: '✓';
+  position: absolute;
+  bottom: 3px; right: 4px;
+  font-size: 7px;
+  color: #10b981;
+}
+.sps-slide.active {
+  border-color: var(--gold);
+  box-shadow: 0 0 10px #c9a84c22;
+  animation: slide-pulse 1s ease-in-out infinite;
+}
+@keyframes slide-pulse {
+  0%,100% { border-color: var(--gold); }
+  50% { border-color: var(--gold2); box-shadow: 0 0 16px #c9a84c33; }
+}
+.sps-slide-num {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text);
+}
+.sps-slide-state {
+  font-size: 6px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Nova tese input */
+.nova-tese-section {
+  padding: 14px 28px 0;
+}
+.nova-tese-form {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.nova-tese-input {
+  flex: 1;
+  background: #0c0c1a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: all 0.2s;
+}
+.nova-tese-input::placeholder { color: var(--muted); }
+.nova-tese-input:focus {
+  border-color: #c9a84c44;
+  box-shadow: 0 0 12px #c9a84c0a;
+}
+.nova-tese-btn {
+  background: linear-gradient(135deg, #c9a84c, #a8872a);
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  color: #000;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.nova-tese-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px #c9a84c33;
+}
+
+.praca-picker {
+  display: flex;
+  gap: 4px;
+  padding: 6px 28px 0;
+  flex-wrap: wrap;
+}
+.praca-chip {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  border-radius: 10px;
+  border: 1px solid;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+.praca-chip.selected { opacity: 1; }
+.praca-chip:hover { opacity: 0.8; }
+
+
+/* ── BACKLOG PANEL ── */
+.backlog-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #06060d;
+}
+.backlog-panel .p-head {
+  background: #06060d;
+}
+
+.bl-columns {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 10px 0 24px;
+  gap: 0;
+  scrollbar-width: thin;
+  scrollbar-color: #ffffff0a transparent;
+}
+
+.bl-col {
+  padding: 0 14px 12px;
+}
+.bl-col-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding: 8px 0 6px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: #06060d;
+  z-index: 5;
+}
+.bl-col-name {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bl-col-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+}
+.bl-col-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--muted);
+  background: #ffffff08;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+/* Idea cards in backlog */
+.idea-card {
+  background: #0c0c18;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+.idea-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--i-color, #ffffff20);
+}
+.idea-card:hover {
+  background: #0f0f1e;
+  border-color: #ffffff12;
+  transform: translateX(2px);
+}
+.ic-praca {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--i-color);
+  margin-bottom: 4px;
+}
+.ic-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+  margin-bottom: 6px;
+}
+.ic-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ic-score {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 8px;
+  background: #ffffff08;
+  color: var(--muted);
+}
+.ic-score.pass { background: #10b98118; color: #34d399; }
+.ic-score.rewrite { background: #f59e0b18; color: #fcd34d; }
+.ic-agent {
+  font-size: 8px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ic-agent-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  animation: pulse-dot 1.5s ease-in-out infinite;
+}
+
+/* Add idea mini form */
+.add-idea-btn {
+  width: 100%;
+  padding: 8px 12px;
+  background: #ffffff04;
+  border: 1px dashed #ffffff0a;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 10px;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  margin-top: 2px;
+}
+.add-idea-btn:hover {
+  background: #ffffff08;
+  border-color: #c9a84c22;
+  color: var(--gold);
+}
+
+/* ── SCORE TICKER ── */
+.score-ticker {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0c0c1a;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 20px;
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 1px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.score-ticker.visible { opacity: 1; }
+.ticker-score { font-size: 13px; font-weight: 800; color: var(--text); }
+
+/* ── AGENT TOOLTIP ── */
+.agent-tooltip {
+  position: fixed;
+  z-index: 500;
+  background: #0e0e1c;
+  border: 1px solid #ffffff12;
+  border-radius: 12px;
+  padding: 14px 16px;
+  max-width: 220px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: all 0.2s;
+  box-shadow: 0 16px 40px #00000080;
+}
+.agent-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.at-name { font-size: 13px; font-weight: 800; margin-bottom: 2px; }
+.at-role { font-size: 8px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.at-bio { font-size: 10px; color: #ffffff88; line-height: 1.6; }
+
+/* ── DECORATIVE GEOMETRY ── */
+.geo-bg {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0.03;
+}
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-brand">
+    <div class="topbar-logo">
+      <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="14,2 26,22 2,22" fill="none" stroke="#c9a84c" stroke-width="1.2"/>
+        <circle cx="14" cy="14" r="4" fill="#c9a84c" opacity="0.6"/>
+        <circle cx="14" cy="8" r="1.5" fill="#c9a84c"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">Vila Jordânica</div>
+      <div class="brand-sub">Fábrica de Teses — Fonte Oculta</div>
+    </div>
+  </div>
+  <div class="topbar-status">
+    <div class="status-live"></div>
+    <span id="system-status">Sistema Ativo — 13 Agentes Online</span>
+  </div>
+  <div class="topbar-right">
+    <div class="topbar-time" id="clock">--:--:--</div>
+  </div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main">
+
+  <!-- ══════════════════════════════════════
+       LEFT — VILA DE AGENTES
+  ═══════════════════════════════════════ -->
+  <aside class="panel" id="agents-panel">
+    <div class="p-head">
+      <div class="p-head-label">Equipe</div>
+      <div class="p-head-title">Agentes da Vila</div>
+    </div>
+
+    <!-- ESTRATÉGIA -->
+    <div class="agent-group">
+      <div class="agent-group-label">Estratégia</div>
+
+      <div class="agent-card" style="--a-color:#c9a84c" data-agent="vethar" id="ac-vethar">
+        <div class="a-portrait" id="p-vethar">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0d0b04"/><circle cx="40" cy="40" r="39" fill="none" stroke="#c9a84c" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="44" rx="17" ry="20" fill="#1a1408" stroke="#c9a84c" stroke-width="0.4" opacity="0.4"/><path d="M40 20 L58 54 L22 54 Z" fill="none" stroke="#c9a84c" stroke-width="0.6" opacity="0.25"/><ellipse cx="33" cy="44" rx="3.5" ry="2.2" fill="none" stroke="#c9a84c" stroke-width="0.7"/><circle cx="33" cy="44" r="2" fill="#c9a84c" opacity="0.9"/><circle cx="33.7" cy="43.3" r="0.7" fill="#fff8e0"/><ellipse cx="47" cy="44" rx="3.5" ry="2.2" fill="none" stroke="#c9a84c" stroke-width="0.7"/><circle cx="47" cy="44" r="2" fill="#c9a84c" opacity="0.9"/><circle cx="47.7" cy="43.3" r="0.7" fill="#fff8e0"/><circle cx="40" cy="35" r="2" fill="#c9a84c" opacity="0.6"/><circle cx="40" cy="35" r="0.8" fill="#fff8e0"/><line x1="40" y1="20" x2="40" y2="28" stroke="#c9a84c" stroke-width="0.8" opacity="0.4"/><line x1="36" y1="21" x2="37.5" y2="29" stroke="#c9a84c" stroke-width="0.5" opacity="0.2"/><line x1="44" y1="21" x2="42.5" y2="29" stroke="#c9a84c" stroke-width="0.5" opacity="0.2"/><path d="M36 53 Q40 57 44 53" fill="none" stroke="#c9a84c" stroke-width="0.8" opacity="0.4"/><path d="M36 38 L44 38" stroke="#c9a84c" stroke-width="0.4" opacity="0.2"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Agente Estratégico</div>
+          <div class="a-name">Vethar</div>
+          <div class="a-task" id="task-vethar">Mapeando Partitura Emocional...</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+    </div>
+
+    <!-- COPY & VOZ -->
+    <div class="agent-group">
+      <div class="agent-group-label">Copy & Voz</div>
+
+      <div class="agent-card" style="--a-color:#3b82f6" data-agent="forge" id="ac-forge">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#040810"/><circle cx="40" cy="40" r="39" fill="none" stroke="#3b82f6" stroke-width="1" opacity="0.7"/><rect x="25" y="26" width="30" height="34" rx="5" fill="#080e1a" stroke="#3b82f6" stroke-width="0.5" opacity="0.4"/><ellipse cx="33" cy="43" rx="4" ry="2.5" fill="#3b82f6" opacity="0.85"/><ellipse cx="47" cy="43" rx="4" ry="2.5" fill="#3b82f6" opacity="0.85"/><circle cx="33" cy="43" r="1.2" fill="#bfdbfe"/><circle cx="47" cy="43" r="1.2" fill="#bfdbfe"/><path d="M36 52 L44 52" stroke="#3b82f6" stroke-width="1" opacity="0.4"/><path d="M42 28 L38 37 L41.5 37 L37 46" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.7" stroke-linecap="round" stroke-linejoin="round"/><line x1="26" y1="35" x2="54" y2="35" stroke="#3b82f6" stroke-width="0.4" opacity="0.2"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Agente de Gancho</div>
+          <div class="a-name">Forge</div>
+          <div class="a-task" id="task-forge">Hook Forge · 3 Variações</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#14b8a6" data-agent="cypher" id="ac-cypher">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#040f0e"/><circle cx="40" cy="40" r="39" fill="none" stroke="#14b8a6" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="44" rx="17" ry="20" fill="#061210" stroke="#14b8a6" stroke-width="0.4" opacity="0.4"/><circle cx="33" cy="44" r="2.8" fill="#14b8a6" opacity="0.8"/><circle cx="33.8" cy="43.2" r="1" fill="#99f6e4"/><circle cx="47" cy="44" r="2.8" fill="#14b8a6" opacity="0.8"/><circle cx="47.8" cy="43.2" r="1" fill="#99f6e4"/><path d="M36 52 Q40 56 44 52" fill="none" stroke="#14b8a6" stroke-width="0.9" opacity="0.5"/><path d="M24 22 Q34 16 40 28 Q46 40 60 52" fill="none" stroke="#14b8a6" stroke-width="1.2" opacity="0.4" stroke-linecap="round"/><path d="M40 28 L40 34" stroke="#14b8a6" stroke-width="1" opacity="0.3"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Copywriter</div>
+          <div class="a-name">Cypher</div>
+          <div class="a-task" id="task-cypher">Densidade Vertical · 10 Slides</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#10b981" data-agent="vox" id="ac-vox">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#040e0a"/><circle cx="40" cy="40" r="39" fill="none" stroke="#10b981" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="43" rx="16" ry="19" fill="#061008" stroke="#10b981" stroke-width="0.4" opacity="0.4"/><circle cx="33" cy="41" r="2.8" fill="#10b981" opacity="0.8"/><circle cx="33.8" cy="40.2" r="1" fill="#a7f3d0"/><circle cx="47" cy="41" r="2.8" fill="#10b981" opacity="0.8"/><circle cx="47.8" cy="40.2" r="1" fill="#a7f3d0"/><path d="M34 52 Q40 57 46 52" fill="none" stroke="#10b981" stroke-width="1.2" opacity="0.6"/><path d="M22 40 Q25 35 22 30" fill="none" stroke="#10b981" stroke-width="1" opacity="0.4" stroke-linecap="round"/><path d="M18 42 Q22 35 18 28" fill="none" stroke="#10b981" stroke-width="0.6" opacity="0.25" stroke-linecap="round"/><path d="M58 40 Q55 35 58 30" fill="none" stroke="#10b981" stroke-width="1" opacity="0.4" stroke-linecap="round"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Agente de Voz</div>
+          <div class="a-name">Vox</div>
+          <div class="a-task" id="task-vox">Humanizer · Arestas Intactas</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+    </div>
+
+    <!-- REVISORES -->
+    <div class="agent-group">
+      <div class="agent-group-label">Revisores Autônomos</div>
+      <div class="reviewers-compact">
+
+        <div class="reviewer-mini" style="--a-color:#ef4444" id="ac-kael">
+          <div class="rm-indicator" id="dot-kael"></div>
+          <div class="rm-portrait">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0f0404"/><circle cx="40" cy="40" r="39" fill="none" stroke="#ef4444" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="43" rx="15" ry="18" fill="#140606" stroke="#ef4444" stroke-width="0.4" opacity="0.4"/><ellipse cx="33" cy="41" rx="4" ry="2.2" fill="#ef4444" opacity="0.85"/><ellipse cx="47" cy="41" rx="4" ry="2.2" fill="#ef4444" opacity="0.85"/><path d="M35 51 L45 51" stroke="#ef4444" stroke-width="1.5" opacity="0.4"/><path d="M29 35 Q33 31 37 35" fill="none" stroke="#ef4444" stroke-width="1.2" opacity="0.6"/><path d="M43 35 Q47 31 51 35" fill="none" stroke="#ef4444" stroke-width="1.2" opacity="0.6"/></svg>
+          </div>
+          <div class="rm-name">Kael</div>
+          <div class="rm-role">R1 · Gancho</div>
+        </div>
+
+        <div class="reviewer-mini" style="--a-color:#8b5cf6" id="ac-lyra">
+          <div class="rm-indicator" id="dot-lyra"></div>
+          <div class="rm-portrait">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0a0614"/><circle cx="40" cy="40" r="39" fill="none" stroke="#8b5cf6" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="43" rx="15" ry="18" fill="#0f0820" stroke="#8b5cf6" stroke-width="0.4" opacity="0.4"/><ellipse cx="33" cy="41" rx="3" ry="3.8" fill="#8b5cf6" opacity="0.7"/><ellipse cx="47" cy="41" rx="3" ry="3.8" fill="#8b5cf6" opacity="0.7"/><path d="M35 52 Q40 57 45 52" fill="none" stroke="#8b5cf6" stroke-width="0.9" opacity="0.5"/><path d="M20 40 Q40 15 60 40" fill="none" stroke="#8b5cf6" stroke-width="0.6" opacity="0.3"/></svg>
+          </div>
+          <div class="rm-name">Lyra</div>
+          <div class="rm-role">R2 · Arco</div>
+        </div>
+
+        <div class="reviewer-mini" style="--a-color:#dc2626" id="ac-raven">
+          <div class="rm-indicator" id="dot-raven"></div>
+          <div class="rm-portrait">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0d0304"/><circle cx="40" cy="40" r="39" fill="none" stroke="#dc2626" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="43" rx="15" ry="18" fill="#120404" stroke="#dc2626" stroke-width="0.4" opacity="0.4"/><ellipse cx="33" cy="40" rx="4.5" ry="2" fill="#dc2626" opacity="0.9"/><ellipse cx="47" cy="40" rx="4.5" ry="2" fill="#dc2626" opacity="0.9"/><path d="M36 51 L44 51" stroke="#dc2626" stroke-width="2" opacity="0.4"/><path d="M30 34 L50 34" stroke="#dc2626" stroke-width="1" opacity="0.3"/></svg>
+          </div>
+          <div class="rm-name">Raven</div>
+          <div class="rm-role">R3 · Raiva</div>
+        </div>
+
+        <div class="reviewer-mini" style="--a-color:#06b6d4" id="ac-echo">
+          <div class="rm-indicator" id="dot-echo"></div>
+          <div class="rm-portrait">
+            <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#04100f"/><circle cx="40" cy="40" r="39" fill="none" stroke="#06b6d4" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="43" rx="15" ry="18" fill="#060f0e" stroke="#06b6d4" stroke-width="0.4" opacity="0.4"/><circle cx="33" cy="41" r="3.5" fill="#06b6d4" opacity="0.7"/><circle cx="47" cy="41" r="3.5" fill="#06b6d4" opacity="0.7"/><circle cx="33" cy="41" r="6" fill="none" stroke="#06b6d4" stroke-width="0.5" opacity="0.25"/><circle cx="47" cy="41" r="6" fill="none" stroke="#06b6d4" stroke-width="0.5" opacity="0.25"/><path d="M35 52 Q40 57 45 52" fill="none" stroke="#06b6d4" stroke-width="0.8" opacity="0.5"/></svg>
+          </div>
+          <div class="rm-name">Echo</div>
+          <div class="rm-role">R4 · CTA</div>
+        </div>
+
+        <div class="reviewer-mini" style="--a-color:#94a3b8; grid-column: 1 / -1" id="ac-zen">
+          <div class="rm-indicator" id="dot-zen"></div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <div class="rm-portrait" style="width:22px;height:22px">
+              <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0a0a0c"/><circle cx="40" cy="40" r="39" fill="none" stroke="#94a3b8" stroke-width="1" opacity="0.7"/><polygon points="40,22 52,32 52,50 40,58 28,50 28,32" fill="none" stroke="#94a3b8" stroke-width="0.8" opacity="0.4"/><circle cx="33" cy="40" r="2.8" fill="#94a3b8" opacity="0.7"/><circle cx="47" cy="40" r="2.8" fill="#94a3b8" opacity="0.7"/><path d="M36 50 Q40 54 44 50" fill="none" stroke="#94a3b8" stroke-width="0.8" opacity="0.4"/></svg>
+            </div>
+            <div>
+              <div class="rm-name">Zen</div>
+              <div class="rm-role">R5 · Cristalização</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- DESIGN -->
+    <div class="agent-group" style="padding-bottom:20px">
+      <div class="agent-group-label">Design & Imagem</div>
+
+      <div class="agent-card" style="--a-color:#a855f7" data-agent="nyx" id="ac-nyx">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0a0614"/><circle cx="40" cy="40" r="39" fill="none" stroke="#a855f7" stroke-width="1" opacity="0.7"/><path d="M22 40 Q31 26 40 40 Q49 54 58 40 Q49 26 40 40 Q31 54 22 40Z" fill="none" stroke="#a855f7" stroke-width="0.8" opacity="0.5"/><circle cx="40" cy="40" r="8" fill="#1a0a2e" stroke="#a855f7" stroke-width="0.7" opacity="0.7"/><circle cx="40" cy="40" r="5" fill="#a855f7" opacity="0.75"/><circle cx="40" cy="40" r="2.2" fill="#0a0614"/><circle cx="41.2" cy="38.8" r="0.8" fill="#fff" opacity="0.7"/><ellipse cx="30" cy="56" rx="4.5" ry="1.8" fill="none" stroke="#a855f7" stroke-width="0.5" opacity="0.3"/><ellipse cx="50" cy="56" rx="4.5" ry="1.8" fill="none" stroke="#a855f7" stroke-width="0.5" opacity="0.3"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Design Director</div>
+          <div class="a-name">Nyx</div>
+          <div class="a-task" id="task-nyx">Escolha Estratégica de Preset</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#ec4899" data-agent="vision" id="ac-vision">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0f0410"/><circle cx="40" cy="40" r="39" fill="none" stroke="#ec4899" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="44" rx="16" ry="19" fill="#140618" stroke="#ec4899" stroke-width="0.4" opacity="0.4"/><ellipse cx="33" cy="42" rx="3.5" ry="3" fill="#ec4899" opacity="0.7"/><ellipse cx="47" cy="42" rx="3.5" ry="3" fill="#ec4899" opacity="0.7"/><circle cx="33.8" cy="41.2" r="1" fill="#fbcfe8"/><circle cx="47.8" cy="41.2" r="1" fill="#fbcfe8"/><path d="M35 53 Q40 57 45 53" fill="none" stroke="#ec4899" stroke-width="0.9" opacity="0.5"/><path d="M20 18 Q40 28 60 18" fill="none" stroke="#ec4899" stroke-width="0.6" opacity="0.3" stroke-linecap="round"/><circle cx="40" cy="25" r="3.5" fill="none" stroke="#ec4899" stroke-width="0.8" opacity="0.4"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Prompt Engineer</div>
+          <div class="a-name">Vision</div>
+          <div class="a-task" id="task-vision">Tensão Visual · 7 Camadas</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#f59e0b" data-agent="canal" id="ac-canal">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="40" cy="40" r="40" fill="#0c0800"/>
+            <circle cx="40" cy="40" r="38" fill="none" stroke="#f59e0b" stroke-width="0.7" opacity=".3"/>
+            <ellipse cx="40" cy="36" rx="16" ry="18" fill="#78350f"/>
+            <ellipse cx="40" cy="30" rx="9" ry="10" fill="#fbbf24"/>
+            <line x1="15" y1="52" x2="35" y2="44" stroke="#f59e0b" stroke-width="1.5" opacity=".7"/>
+            <line x1="65" y1="52" x2="45" y2="44" stroke="#f59e0b" stroke-width="1.5" opacity=".7"/>
+            <polygon points="32,58 40,48 48,58" fill="#f59e0b" opacity=".6"/>
+            <polygon points="24,67 40,55 56,67" fill="#f59e0b" opacity=".35"/>
+            <rect x="30" y="44" width="20" height="2.5" rx="1.5" fill="#fde68a" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Canalizador Visual</div>
+          <div class="a-name">Kairo</div>
+          <div class="a-task" id="task-canal">Layout Engine · Copy→Imagem</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#22d3ee" data-agent="nano" id="ac-nano">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#040e10"/><circle cx="40" cy="40" r="39" fill="none" stroke="#22d3ee" stroke-width="1" opacity="0.7"/><rect x="25" y="26" width="30" height="32" rx="6" fill="#060f12" stroke="#22d3ee" stroke-width="0.7" opacity="0.5"/><rect x="32" y="36" width="7" height="5" rx="1.5" fill="#22d3ee" opacity="0.8"/><rect x="41" y="36" width="7" height="5" rx="1.5" fill="#22d3ee" opacity="0.8"/><rect x="34" y="47" width="12" height="2.5" rx="1.5" fill="#22d3ee" opacity="0.35"/><line x1="25" y1="44" x2="18" y2="40" stroke="#22d3ee" stroke-width="1" opacity="0.4"/><line x1="55" y1="44" x2="62" y2="40" stroke="#22d3ee" stroke-width="1" opacity="0.4"/><rect x="35" y="27" width="10" height="4" rx="1" fill="#22d3ee" opacity="0.2"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Geração de Imagem</div>
+          <div class="a-name">Nano</div>
+          <div class="a-task" id="task-nano">Gemini API · 10 Imagens</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+      <div class="agent-card" style="--a-color:#f59e0b" data-agent="silva" id="ac-silva">
+        <div class="a-portrait">
+          <svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="39" fill="#0d0904"/><circle cx="40" cy="40" r="39" fill="none" stroke="#f59e0b" stroke-width="1" opacity="0.7"/><ellipse cx="40" cy="44" rx="16" ry="19" fill="#120c04" stroke="#f59e0b" stroke-width="0.4" opacity="0.4"/><circle cx="33" cy="43" r="3" fill="#f59e0b" opacity="0.8"/><circle cx="33.8" cy="42.2" r="1.1" fill="#fef3c7"/><circle cx="47" cy="43" r="3" fill="#f59e0b" opacity="0.8"/><circle cx="47.8" cy="42.2" r="1.1" fill="#fef3c7"/><path d="M36 53 Q40 57 44 53" fill="none" stroke="#f59e0b" stroke-width="0.9" opacity="0.5"/><rect x="30" y="24" width="20" height="12" rx="2.5" fill="none" stroke="#f59e0b" stroke-width="0.6" opacity="0.3"/><rect x="32" y="26" width="5" height="8" rx="1" fill="#f59e0b" opacity="0.15"/><rect x="38" y="26" width="9" height="4" rx="1" fill="#f59e0b" opacity="0.1"/><rect x="38" y="31" width="6" height="2.5" rx="1" fill="#f59e0b" opacity="0.08"/></svg>
+        </div>
+        <div class="a-info">
+          <div class="a-role">Compositor Final</div>
+          <div class="a-name">Silva</div>
+          <div class="a-task" id="task-silva">Python + Pillow · JPEG 1080p</div>
+        </div>
+        <div class="a-indicator"></div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- ══════════════════════════════════════
+       CENTER — FÁBRICA DE TESES
+  ═══════════════════════════════════════ -->
+  <main class="fabrica panel">
+
+    <!-- Header -->
+    <div class="fabrica-head">
+      <div class="fabrica-badge">⬡ Sede Operacional</div>
+      <div class="fabrica-title">FÁBRICA DE TESES</div>
+      <div class="fabrica-subtitle">Pipeline ativo · Partitura Emocional obrigatória · Score /15 cirúrgico</div>
+    </div>
+
+    <!-- Nova Tese Input -->
+    <div class="nova-tese-section" style="margin-top:14px">
+      <div class="nova-tese-form">
+        <input class="nova-tese-input" id="nova-input" placeholder="Nova tese — ex: O silêncio que antecede a sabotagem..." type="text"/>
+        <button class="nova-tese-btn" onclick="addIdeia()">+ ENVIAR</button>
+      </div>
+    </div>
+
+    <!-- Praça Picker -->
+    <div class="praca-picker" id="praca-picker">
+      <div class="praca-chip selected" style="--c:#ec4899; color:#ec4899; border-color:#ec4899" data-praca="CORPO" onclick="selectPraca(this)">CORPO</div>
+      <div class="praca-chip" style="color:#8b5cf6; border-color:#8b5cf6" data-praca="MENTE" onclick="selectPraca(this)">MENTE</div>
+      <div class="praca-chip" style="color:#3b82f6; border-color:#3b82f6" data-praca="SISTEMA" onclick="selectPraca(this)">SISTEMA</div>
+      <div class="praca-chip" style="color:#a855f7; border-color:#a855f7" data-praca="ESPÍRITO" onclick="selectPraca(this)">ESPÍRITO</div>
+      <div class="praca-chip" style="color:#f59e0b; border-color:#f59e0b" data-praca="ALAVANCA" onclick="selectPraca(this)">ALAVANCA</div>
+    </div>
+
+    <!-- Active Idea -->
+    <div class="active-idea-bar" style="margin-top:12px">
+      <div class="aib-icon">⚙️</div>
+      <div class="aib-info">
+        <div class="aib-label">Em Processamento</div>
+        <div class="aib-title" id="active-title">O Cogumelo e a Consciência Censurada</div>
+        <div class="aib-stage" id="active-stage">Estágio 3 — Design Director</div>
+      </div>
+      <div class="aib-praca" id="active-praca" style="color:#a855f7; border-color:#a855f766">ESPÍRITO</div>
+    </div>
+
+    <!-- Pipeline Stage Nodes -->
+    <div class="pipeline-stages">
+
+      <div class="stage-node done" style="--s-color:#c9a84c" id="sn-1">
+        <div class="stage-check">✓</div>
+        <div class="stage-num">ESTÁGIO 01</div>
+        <div class="stage-name">Estratégia</div>
+        <div class="stage-agents">
+          <div class="stage-agent-pip" title="Vethar"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#c9a84c22"/><circle cx="40" cy="40" r="2" fill="#c9a84c"/></svg></div>
+          <div class="stage-agent-pip" title="Forge"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#3b82f622"/><circle cx="40" cy="40" r="2" fill="#3b82f6"/></svg></div>
+        </div>
+        <div class="stage-progress"><div class="stage-progress-bar" style="width:100%"></div></div>
+        <div class="stage-working-text">✓ Partitura mapeada · Hook selecionado</div>
+      </div>
+
+      <div class="stage-node done" style="--s-color:#14b8a6" id="sn-2">
+        <div class="stage-check">✓</div>
+        <div class="stage-num">ESTÁGIO 02</div>
+        <div class="stage-name">Copy & Voz</div>
+        <div class="stage-agents">
+          <div class="stage-agent-pip"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#14b8a622"/><circle cx="40" cy="40" r="2" fill="#14b8a6"/></svg></div>
+          <div class="stage-agent-pip"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#10b98122"/><circle cx="40" cy="40" r="2" fill="#10b981"/></svg></div>
+        </div>
+        <div class="stage-progress"><div class="stage-progress-bar" style="width:100%"></div></div>
+        <div class="stage-working-text">✓ 10 slides · Score 15/15</div>
+      </div>
+
+      <div class="stage-node active" style="--s-color:#a855f7" id="sn-3">
+        <div class="stage-num">ESTÁGIO 03</div>
+        <div class="stage-name">Design</div>
+        <div class="stage-agents">
+          <div class="stage-agent-pip" title="Nyx"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#a855f722"/><circle cx="40" cy="40" r="2" fill="#a855f7"/></svg></div>
+          <div class="stage-agent-pip" title="Kairo"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#f59e0b22"/><circle cx="40" cy="40" r="2" fill="#f59e0b"/></svg></div>
+          <div class="stage-agent-pip" title="Vision"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#ec489922"/><circle cx="40" cy="40" r="2" fill="#ec4899"/></svg></div>
+          <div class="stage-agent-pip" title="Nano"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#22d3ee22"/><circle cx="40" cy="40" r="2" fill="#22d3ee"/></svg></div>
+        </div>
+        <div class="stage-progress"><div class="stage-progress-bar" id="stage3-bar" style="width:40%"></div></div>
+        <div class="stage-working-text" id="stage3-text">Kairo decidindo layouts · Vision montando prompts...</div>
+      </div>
+
+      <div class="stage-node" style="--s-color:#06b6d4" id="sn-4">
+        <div class="stage-num">ESTÁGIO 04</div>
+        <div class="stage-name">Output</div>
+        <div class="stage-agents">
+          <div class="stage-agent-pip"><svg viewBox="0 0 80 80"><circle cx="40" cy="40" r="40" fill="#f59e0b22"/><circle cx="40" cy="40" r="2" fill="#f59e0b"/></svg></div>
+        </div>
+        <div class="stage-progress"><div class="stage-progress-bar" style="width:0%"></div></div>
+        <div class="stage-working-text" style="color:#ffffff22">Aguardando...</div>
+      </div>
+
+    </div>
+
+    <!-- Slide Preview Strip -->
+    <div class="slide-preview-strip" style="margin-top:14px">
+      <div class="sps-label">Slides em Geração — O Cogumelo e a Consciência Censurada</div>
+      <div class="sps-row" id="slide-strip">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+
+    <!-- Canvas area for particles (fills remaining space) -->
+    <div class="pipeline-canvas-wrap" style="flex:1; min-height: 60px;">
+      <canvas id="pipe-canvas"></canvas>
+    </div>
+
+  </main>
+
+  <!-- ══════════════════════════════════════
+       RIGHT — BACKLOG
+  ═══════════════════════════════════════ -->
+  <aside class="panel backlog-panel no-border">
+    <div class="p-head" style="background:#06060d">
+      <div class="p-head-label">Gestão de Conteúdo</div>
+      <div class="p-head-title">Backlog de Teses</div>
+    </div>
+
+    <div class="bl-columns" id="bl-columns">
+
+      <!-- IDEIA -->
+      <div class="bl-col" id="col-ideia">
+        <div class="bl-col-head">
+          <div class="bl-col-name"><div class="bl-col-dot" style="background:#ffffff30"></div><span style="color:#ffffff50">IDEIA</span></div>
+          <div class="bl-col-count" id="cnt-ideia">3</div>
+        </div>
+        <div class="bl-cards" id="cards-ideia"></div>
+        <button class="add-idea-btn" onclick="focusInput()">+ Nova tese...</button>
+      </div>
+
+      <!-- EM PROCESSO -->
+      <div class="bl-col" id="col-processo">
+        <div class="bl-col-head">
+          <div class="bl-col-name"><div class="bl-col-dot" style="background:#c9a84c"></div><span style="color:#c9a84c">EM PROCESSO</span></div>
+          <div class="bl-col-count" id="cnt-processo">1</div>
+        </div>
+        <div class="bl-cards" id="cards-processo"></div>
+      </div>
+
+      <!-- REVISÃO -->
+      <div class="bl-col" id="col-revisao">
+        <div class="bl-col-head">
+          <div class="bl-col-name"><div class="bl-col-dot" style="background:#f59e0b"></div><span style="color:#f59e0b">REVISÃO</span></div>
+          <div class="bl-col-count" id="cnt-revisao">1</div>
+        </div>
+        <div class="bl-cards" id="cards-revisao"></div>
+      </div>
+
+      <!-- APROVADO -->
+      <div class="bl-col" id="col-aprovado">
+        <div class="bl-col-head">
+          <div class="bl-col-name"><div class="bl-col-dot" style="background:#10b981"></div><span style="color:#10b981">APROVADO</span></div>
+          <div class="bl-col-count" id="cnt-aprovado">1</div>
+        </div>
+        <div class="bl-cards" id="cards-aprovado"></div>
+      </div>
+
+      <!-- PUBLICADO -->
+      <div class="bl-col" id="col-publicado">
+        <div class="bl-col-head">
+          <div class="bl-col-name"><div class="bl-col-dot" style="background:#6366f1"></div><span style="color:#6366f1">PUBLICADO</span></div>
+          <div class="bl-col-count" id="cnt-publicado">1</div>
+        </div>
+        <div class="bl-cards" id="cards-publicado"></div>
+      </div>
+
+    </div>
+  </aside>
+
+</div><!-- /main -->
+
+<!-- TOOLTIP -->
+<div class="agent-tooltip" id="tooltip">
+  <div class="at-name" id="tt-name"></div>
+  <div class="at-role" id="tt-role"></div>
+  <div class="at-bio" id="tt-bio"></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+
+const BACKLOG = {
+  ideia: [
+    { id:'b5', title:'A Armadilha da Disciplina', praca:'MENTE', pracoColor:'#8b5cf6', score:null },
+    { id:'b6', title:'O Sonho Lúcido Como Sistema de Teste', praca:'ESPÍRITO', pracoColor:'#a855f7', score:null },
+    { id:'b7', title:'O Dinheiro que Foi Programado Para Te Rejeitar', praca:'SISTEMA', pracoColor:'#3b82f6', score:null },
+  ],
+  processo: [
+    { id:'b4', title:'Epigenética: O Crime de Herança', praca:'MENTE', pracoColor:'#8b5cf6', score:null, agent:'CYPHER' },
+  ],
+  revisao: [
+    { id:'b3', title:'O Ego Não Protege. O Ego Aprisiona.', praca:'ESPÍRITO', pracoColor:'#a855f7', score:'11/15', rewrite:true },
+  ],
+  aprovado: [
+    { id:'b2', title:'O Cogumelo e a Consciência Censurada', praca:'ESPÍRITO', pracoColor:'#a855f7', score:'15/15' },
+  ],
+  publicado: [
+    { id:'b1', title:'O Perdão que Cura o Corpo', praca:'CORPO', pracoColor:'#ec4899', score:'15/15' },
+  ],
+};
+
+const SLIDE_STATES = [
+  'DISRUPÇÃO','DESCIDA','NOMEAÇÃO','PROFUNDIDADE',
+  'QUEDA FUNDA','ESPELHO','ASCENSÃO','CRISTALIZAÇÃO',
+  'SETUP CTA','CTA FIXO'
+];
+
+const AGENT_BIOS = {
+  vethar:  { name:'Vethar', role:'Agente Estratégico · Oráculo do Conteúdo', bio:'Mapeia a Partitura Emocional antes de qualquer linha ser escrita. 10 estados emocionais, densidade vertical obrigatória. A copy executa a partitura — nunca o contrário.' },
+  forge:   { name:'Forge', role:'Hook Forge · Agente de Gancho', bio:'Gera 3 variações em sequência obrigatória: Confronto Direto → Inversão de Crença → Paradoxo Sagrado. Justifica descarte. Seleciona o que cria maior tensão cognitiva irresolvível.' },
+  cypher:  { name:'Cypher', role:'Copywriter · Densidade Vertical', bio:'Escreve 10 slides onde cada um contém uma frase que o anterior não poderia ter dito. S1-S2: 1-2 frases. S5: a frase mais difícil de escrever e de ler.' },
+  vox:     { name:'Vox', role:'Humanizer · Agente de Voz', bio:'Remove APENAS marcadores sintáticos de IA. Preserva todas as arestas — a intensidade emocional é intocável. A frase que desconforta antes de seduzir é sempre a certa.' },
+  nyx:     { name:'Nyx', role:'Design Director · Identidade Visual', bio:'Escolha estratégica — não estética. O preset amplifica a tensão emocional. Arqueologia → Manuscrito Sagrado. Confronto → Crimson Cinematográfico. Consciência → Esotérico.' },
+  canal:   { name:'Kairo', role:'Canalizador Visual · Layout Engine', bio:'Opera entre a copy e a geração de imagem. Lê a partitura emocional e decide: text_only quando > 6 linhas, dramatico para S1/nomeação, card para âncora científica, fullbleed para emocional. Monta o prompt em 7 camadas com âncora visual, cor de acento e zona de texto. Extraído de análise de 3 carrosséis virais.' },
+  vision:  { name:'Vision', role:'Prompt Engineer · Tensão Visual', bio:'A imagem cria tensão com o texto — não o ilustra. 7 camadas: estado emocional → metáfora → composição → luz única → restrições → acento de cor → densidade.' },
+  nano:    { name:'Nano', role:'Geração de Imagem · Gemini API', bio:'Gera 10 imagens em alta resolução via Gemini API. Prompt de 800-2500 chars por slide. Retry automático com backoff exponencial.' },
+  silva:   { name:'Silva', role:'Compositor Final · Python + Pillow', bio:'Combina imagem + tipografia Franklin Gothic/Inter + gradiente + vignette + film grain → JPEG 1080x1350px. Preset visual aplicado com precisão cirúrgica.' },
+};
+
+// ══════════════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════════════
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('pt-BR', { hour12:false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ══════════════════════════════════════════════
+// BACKLOG RENDER
+// ══════════════════════════════════════════════
+let selectedPraca = 'CORPO';
+
+function selectPraca(el) {
+  document.querySelectorAll('.praca-chip').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPraca = el.dataset.praca;
+}
+
+function focusInput() {
+  document.getElementById('nova-input').focus();
+}
+
+function addIdeia() {
+  const input = document.getElementById('nova-input');
+  const title = input.value.trim();
+  if (!title) return;
+
+  const pracoColors = { CORPO:'#ec4899', MENTE:'#8b5cf6', SISTEMA:'#3b82f6', ESPÍRITO:'#a855f7', ALAVANCA:'#f59e0b' };
+  const newCard = {
+    id: 'b' + Date.now(),
+    title,
+    praca: selectedPraca,
+    pracoColor: pracoColors[selectedPraca] || '#ffffff44',
+    score: null,
+  };
+  BACKLOG.ideia.unshift(newCard);
+  input.value = '';
+  renderBacklog();
+  showTicker(`Nova tese adicionada ao backlog · ${selectedPraca}`);
+}
+
+function makeCard(item, col) {
+  const div = document.createElement('div');
+  div.className = 'idea-card';
+  div.style.setProperty('--i-color', item.pracoColor || '#ffffff20');
+
+  let scorePill = '';
+  if (item.score) {
+    const cls = item.rewrite ? 'rewrite' : 'pass';
+    scorePill = `<div class="ic-score ${cls}">${item.score}</div>`;
+  }
+
+  let agentLine = '';
+  if (item.agent) {
+    const colors = { CYPHER:'#14b8a6', VETHAR:'#c9a84c', FORGE:'#3b82f6', NYX:'#a855f7' };
+    const col = colors[item.agent] || '#ffffff44';
+    agentLine = `<div class="ic-agent"><div class="ic-agent-dot" style="background:${col}"></div>${item.agent}</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="ic-praca">${item.praca}</div>
+    <div class="ic-title">${item.title}</div>
+    <div class="ic-meta">
+      ${scorePill || '<div></div>'}
+      ${agentLine}
+    </div>
+  `;
+
+  div.addEventListener('click', () => {
+    // Move card to next stage
+    const stages = ['ideia','processo','revisao','aprovado','publicado'];
+    const idx = stages.indexOf(col);
+    if (idx < stages.length - 1) {
+      BACKLOG[col] = BACKLOG[col].filter(i => i.id !== item.id);
+      BACKLOG[stages[idx+1]].unshift(item);
+      if (idx === 0) {
+        // Going to processo — activate
+        document.getElementById('active-title').textContent = item.title;
+        document.getElementById('active-praca').textContent = item.praca;
+        document.getElementById('active-praca').style.color = item.pracoColor;
+        document.getElementById('active-praca').style.borderColor = item.pracoColor + '66';
+        activateProcesso();
+      }
+      renderBacklog();
+      showTicker(`"${item.title.substring(0,30)}..." → ${stages[idx+1].toUpperCase()}`);
+    }
+  });
+
+  return div;
+}
+
+function renderBacklog() {
+  const cols = ['ideia','processo','revisao','aprovado','publicado'];
+  cols.forEach(col => {
+    const container = document.getElementById('cards-' + col);
+    const counter = document.getElementById('cnt-' + col);
+    if (!container) return;
+    container.innerHTML = '';
+    (BACKLOG[col] || []).forEach(item => container.appendChild(makeCard(item, col)));
+    if (counter) counter.textContent = (BACKLOG[col] || []).length;
+  });
+}
+
+// ══════════════════════════════════════════════
+// SLIDE STRIP
+// ══════════════════════════════════════════════
+let currentSlide = 4; // slides 1-4 done
+
+function renderSlideStrip() {
+  const strip = document.getElementById('slide-strip');
+  strip.innerHTML = '';
+  for (let i = 1; i <= 10; i++) {
+    const div = document.createElement('div');
+    div.className = 'sps-slide';
+    if (i < currentSlide) div.classList.add('done');
+    if (i === currentSlide) div.classList.add('active');
+    div.innerHTML = `
+      <div>
+        <div class="sps-slide-num">S${String(i).padStart(2,'0')}</div>
+        <div class="sps-slide-state">${SLIDE_STATES[i-1].split(' ')[0]}</div>
+      </div>
+    `;
+    strip.appendChild(div);
+  }
+}
+
+// ══════════════════════════════════════════════
+// PIPELINE ANIMATION
+// ══════════════════════════════════════════════
+const workerAgents = ['ac-vethar','ac-forge','ac-cypher','ac-vox'];
+const reviewerAgents = ['ac-kael','ac-lyra','ac-raven','ac-echo','ac-zen'];
+const designAgents = ['ac-nyx','ac-canal','ac-vision','ac-nano','ac-silva'];
+
+const workMessages = {
+  'ac-vethar': ['Mapeando estados emocionais...','Partitura em construção...','Density check...'],
+  'ac-forge':  ['Gerando variações de gancho...','Confronto Direto → ativo','Paradoxo Sagrado escolhido'],
+  'ac-cypher': ['Slide S01 — DISRUPÇÃO...','Densidade vertical check...','S05 — frase mais funda...'],
+  'ac-vox':    ['Removendo marcadores de IA...','Arestas preservadas...','Tom verificado'],
+  'ac-nyx':    ['Analisando praça...','Preset escolhido...','Paleta confirmada'],
+  'ac-canal':  ['Lendo partitura emocional...','Layout S01 → dramatico','Âncora tipo B selecionada','Motor de decisão ativo...','Prompt 7 camadas montado'],
+  'ac-vision': ['Camada 1: estado emocional...','Camada 4: luz única...','Prompt finalizado'],
+  'ac-nano':   ['Gemini API → gerando...','Retry S04...','Imagem recebida'],
+  'ac-silva':  ['Aplicando gradiente...','Film grain ativo...','JPEG exportado'],
+};
+
+let activeAgentSet = new Set();
+let processoRunning = false;
+
+function setWorking(agentId, working) {
+  const el = document.getElementById(agentId);
+  if (!el) return;
+  if (working) {
+    el.classList.add('is-working');
+    activeAgentSet.add(agentId);
+  } else {
+    el.classList.remove('is-working');
+    activeAgentSet.delete(agentId);
+  }
+}
+
+function activateProcesso() {
+  if (processoRunning) return;
+  processoRunning = true;
+  // Stage 1 already done visually
+}
+
+// Stage 3 animation (design in progress)
+let stage3Progress = 40;
+const stage3Msgs = [
+  'Nyx analisando praça ESPÍRITO...',
+  'Preset esoterico_minimalista selecionado',
+  'Kairo: lendo partitura emocional...',
+  'Kairo: S01 → dramatico | âncora tipo A (ícone sagrado)',
+  'Kairo: S02 → fullbleed | âncora tipo B (figura de costas)',
+  'Kairo: S04 → card | âncora científica detectada',
+  'Kairo: S05 → text_only | copy > 6 linhas',
+  'Kairo: cor de acento S01 → violeta #7c3aed',
+  'Vision construindo prompts 7 camadas...',
+  'Prompt S01 finalizado · 1240 chars',
+  'Prompt S02 finalizado · 980 chars',
+  'Nano conectando à Gemini API...',
+  'Gerando slide S01...',
+  'Slide S01 recebido ✓',
+  'Gerando slide S02...',
+];
+let s3msgIdx = 0;
+
+function tickStage3() {
+  stage3Progress = Math.min(stage3Progress + (Math.random() * 3 + 0.5), 99);
+  const bar = document.getElementById('stage3-bar');
+  const txt = document.getElementById('stage3-text');
+  if (bar) bar.style.width = stage3Progress + '%';
+  if (txt && s3msgIdx < stage3Msgs.length) {
+    if (Math.random() > 0.6) {
+      txt.textContent = stage3Msgs[s3msgIdx++];
+    }
+  }
+
+  // Advance slide
+  if (stage3Progress > 50 + currentSlide * 5 && currentSlide <= 10) {
+    currentSlide = Math.min(currentSlide + 1, 10);
+    renderSlideStrip();
+  }
+}
+setInterval(tickStage3, 1800);
+
+// Rotate working agents
+const agentTaskVariants = {
+  'ac-nyx':   ['Escolhendo preset...','Paleta visual confirmada','Análise de praça concluída'],
+  'ac-canal': ['Decisão de layout...','Âncora visual selecionada','7 camadas montadas'],
+  'ac-vision':['Construindo prompt S' + currentSlide + '...','7 camadas ativas','Tensão visual verificada'],
+  'ac-nano':  ['Gemini API conectada','Gerando imagem...','Processando resposta...'],
+  'ac-silva': ['Aguardando imagens...','Gradiente configurado','Tipografia pronta'],
+};
+
+const activeDesignPhase = ['ac-nyx','ac-canal','ac-vision','ac-nano'];
+activeDesignPhase.forEach(id => setWorking(id, true));
+
+function rotateDesignWorkers() {
+  const msgs = workMessages;
+  ['ac-nyx','ac-canal','ac-vision','ac-nano'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const taskEl = el.querySelector('.a-task');
+    if (!taskEl) return;
+    const variants = msgs[id];
+    if (variants) {
+      taskEl.textContent = variants[Math.floor(Math.random() * variants.length)];
+    }
+  });
+}
+setInterval(rotateDesignWorkers, 2200);
+
+// ══════════════════════════════════════════════
+// CANVAS PARTICLES
+// ══════════════════════════════════════════════
+const canvas = document.getElementById('pipe-canvas');
+const ctx = canvas.getContext('2d');
+let particles = [];
+
+function resizeCanvas() {
+  const wrap = canvas.parentElement;
+  canvas.width = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+}
+
+function spawnParticle(color) {
+  const w = canvas.width;
+  const h = canvas.height;
+  particles.push({
+    x: Math.random() * w,
+    y: h + 5,
+    tx: Math.random() * w,
+    ty: -5,
+    progress: 0,
+    speed: 0.004 + Math.random() * 0.006,
+    color,
+    size: 1.5 + Math.random() * 2,
+    alpha: 1,
+  });
+}
+
+const particleColors = ['#c9a84c','#a855f7','#22d3ee','#ec4899','#10b981'];
+setInterval(() => {
+  if (particles.length < 20) {
+    spawnParticle(particleColors[Math.floor(Math.random() * particleColors.length)]);
+  }
+}, 300);
+
+function drawCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles = particles.filter(p => {
+    p.progress += p.speed;
+    if (p.progress > 1) return false;
+    const x = p.x + (p.tx - p.x) * p.progress;
+    const y = p.y + (p.ty - p.y) * p.progress;
+    const a = p.alpha * Math.sin(p.progress * Math.PI);
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI * 2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = a * 0.7;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 6;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur = 0;
+    return true;
+  });
+  requestAnimationFrame(drawCanvas);
+}
+
+// ══════════════════════════════════════════════
+// TOOLTIP
+// ══════════════════════════════════════════════
+const tooltip = document.getElementById('tooltip');
+
+document.querySelectorAll('[data-agent]').forEach(el => {
+  el.addEventListener('mouseenter', (e) => {
+    const key = el.dataset.agent;
+    const bio = AGENT_BIOS[key];
+    if (!bio) return;
+    document.getElementById('tt-name').textContent = bio.name;
+    document.getElementById('tt-role').textContent = bio.role;
+    document.getElementById('tt-bio').textContent = bio.bio;
+    tooltip.classList.add('show');
+    positionTooltip(e);
+  });
+  el.addEventListener('mousemove', positionTooltip);
+  el.addEventListener('mouseleave', () => tooltip.classList.remove('show'));
+});
+
+function positionTooltip(e) {
+  let x = e.clientX + 16;
+  let y = e.clientY + 8;
+  if (x + 240 > window.innerWidth) x = e.clientX - 256;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+// ══════════════════════════════════════════════
+// TICKER
+// ══════════════════════════════════════════════
+let tickerTimer = null;
+function showTicker(msg) {
+  const el = document.querySelector('.score-ticker') || (() => {
+    const d = document.createElement('div');
+    d.className = 'score-ticker';
+    d.innerHTML = `<span class="ticker-score">↗</span><span id="ticker-msg"></span>`;
+    document.body.appendChild(d);
+    return d;
+  })();
+  el.querySelector('#ticker-msg') && (el.querySelector('#ticker-msg').textContent = msg);
+  el.classList.add('visible');
+  clearTimeout(tickerTimer);
+  tickerTimer = setTimeout(() => el.classList.remove('visible'), 3000);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+window.addEventListener('load', () => {
+  renderBacklog();
+  renderSlideStrip();
+  resizeCanvas();
+  drawCanvas();
+});
+
+window.addEventListener('resize', resizeCanvas);
+
+// Ticker scroll
+const ticker = document.createElement('div');
+ticker.className = 'score-ticker';
+ticker.innerHTML = '<span class="ticker-score">↗</span><span id="ticker-msg"></span>';
+document.body.appendChild(ticker);
+</script>
+</body>
+</html>

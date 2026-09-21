@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oraculo</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Space+Grotesk:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --gold:     #C9A84C;
+    --gold-dim: rgba(201,168,76,0.12);
+    --bg:       #080808;
+    --text:     #EDE8DF;
+    --text-dim: rgba(237,232,223,0.4);
+    --border:   rgba(201,168,76,0.18);
+    --serif:    'Cormorant Garamond', Georgia, serif;
+    --sans:     'Space Grotesk', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.4;
+  }
+
+  .glow {
+    position: fixed;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.04) 0%, transparent 65%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  .card {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 440px;
+    padding: 24px 36px 16px;
+    border: 1px solid var(--border);
+    background: rgba(12,12,12,0.9);
+    text-align: center;
+    animation: fadeUp 0.7s ease-out forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-family: var(--sans);
+    margin-bottom: 8px;
+    opacity: 0.8;
+  }
+
+  .brand {
+    font-family: var(--serif);
+    font-size: 32px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .brand em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .divider {
+    width: 32px; height: 1px;
+    background: var(--gold);
+    opacity: 0.4;
+    margin: 10px auto;
+  }
+
+  .subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+    letter-spacing: 0.05em;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  .field {
+    margin-bottom: 10px;
+    text-align: left;
+  }
+
+  .field label {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 300;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  .field input:focus {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .field input::placeholder {
+    color: var(--text-dim);
+    font-weight: 300;
+  }
+
+  .field input[type="password"] {
+    letter-spacing: 0.2em;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  .btn-submit {
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+
+  .btn-submit:hover:not(:disabled) {
+    background: var(--gold);
+    color: #080808;
+  }
+
+  .btn-submit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .msg {
+    margin-top: 16px;
+    font-size: 13px;
+    letter-spacing: 0.05em;
+    line-height: 1.5;
+  }
+
+  .msg-error { color: #f43f5e; }
+  .msg-success { color: #3acc7a; }
+
+  .loading-container {
+    padding: 40px 0;
+  }
+
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid rgba(201,168,76,0.2);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .hidden { display: none !important; }
+
+  .password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  .password-container input {
+    padding-right: 40px !important;
+  }
+
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: var(--gold);
+    opacity: 0.6;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+    outline: none;
+    z-index: 2;
+  }
+
+  .toggle-password:hover {
+    opacity: 1;
+  }
+
+  .pwd-reqs { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+  .req-tag { font-size: 10px; padding: 2px 6px; border-radius: 3px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); color: var(--text-dim); transition: all 0.2s; }
+  .req-tag.valid { border-color: rgba(58, 204, 122, 0.4); color: #3acc7a; background: rgba(58, 204, 122, 0.08); }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+
+<div class="card">
+  <div class="eyebrow">Criar Nova Conta</div>
+  <div class="brand">Fonte<br><em>Oculta</em></div>
+  <div class="divider"></div>
+
+  <!-- Estado: Carregando -->
+  <div id="loadingState" class="loading-container">
+    <div class="spinner"></div>
+    <p style="font-size: 12px; color: var(--text-dim);">Validando código de convite...</p>
+  </div>
+
+  <!-- Estado: Erro -->
+  <div id="errorState" class="hidden">
+    <p class="msg msg-error" id="errorText">Código de convite expirado ou inválido.</p>
+    <a href="/login.html" class="btn-submit" style="display: block; text-decoration: none; margin-top: 24px; line-height: 1.8;">Ir para o Login</a>
+  </div>
+
+  <!-- Estado: Sucesso -->
+  <div id="successState" class="hidden">
+    <p class="msg msg-success">Conta criada com sucesso!<br>Você já pode acessar o estúdio com suas novas credenciais.</p>
+    <a href="/login.html" class="btn-submit" style="display: block; text-decoration: none; margin-top: 24px; line-height: 1.8;">Ir para o Login</a>
+  </div>
+
+  <!-- Estado: Formulário de Registro -->
+  <form id="registerForm" class="hidden">
+    <div style="margin-bottom: 10px;">
+      <span style="font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 4px;">Seu cargo no estúdio será:</span>
+      <div id="roleLabel" class="role-badge">USUÁRIO</div>
+    </div>
+
+    <div class="field">
+      <label>Nome Completo</label>
+      <input type="text" id="nameInput" placeholder="Ex: Julia Nogueira" required />
+    </div>
+
+    <div class="field">
+      <label>E-mail (Login)</label>
+      <input type="email" id="emailInput" placeholder="seuemail@exemplo.com" required autocomplete="username" />
+    </div>
+
+    <div class="field">
+      <label>Senha</label>
+      <div class="password-container">
+        <input type="password" id="passwordInput" placeholder="••••••••" required autocomplete="new-password" />
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('passwordInput', this)">
+          <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+        </button>
+      </div>
+      <div class="pwd-reqs">
+        <span class="req-tag" id="reqLen">10+ caracteres</span>
+        <span class="req-tag" id="reqLetter">1 letra</span>
+        <span class="req-tag" id="reqNum">1 número</span>
+        <span class="req-tag" id="reqSpecial">1 especial (@#$%)</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Confirmar Senha</label>
+      <div class="password-container">
+        <input type="password" id="confirmPasswordInput" placeholder="••••••••" required autocomplete="new-password" />
+        <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPasswordInput', this)">
+          <svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="formError" class="msg msg-error hidden" style="font-size: 12px; margin-bottom: 14px;"></div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">Concluir Registro</button>
+  </form>
+
+  <div id="footerText" style="margin-top: 16px; font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; opacity: 0.5;">
+    @afonteoculta · Cadastro de Estúdio
+  </div>
+</div>
+
+<script>
+  let inviteId = '';
+
+  // 1. Carrega dinamicamente a identidade visual (nome da empresa)
+  fetch('/api/settings/branding')
+    .then(res => res.json())
+    .then(data => {
+      document.title = "Oraculo";
+      
+      const brandEl = document.querySelector('.brand');
+      if (brandEl) {
+        const words = companyName.trim().split(/\s+/);
+        if (words.length > 1) {
+          const lastWord = words.pop();
+          const firstPart = words.join(' ');
+          brandEl.innerHTML = `${firstPart}<br><em>${lastWord}</em>`;
+        } else {
+          brandEl.innerHTML = `<em>${companyName}</em>`;
+        }
+      }
+      
+      const footerEl = document.getElementById('footerText');
+      if (footerEl) {
+        const handle = companyName.toLowerCase().replace(/\s+/g, '');
+        footerEl.textContent = `@${handle} · Cadastro de Estúdio`;
+      }
+    })
+    .catch(err => console.error('Erro ao carregar branding:', err));
+
+  // 2. Extrai e valida o convite
+  const urlParams = new URLSearchParams(window.location.search);
+  inviteId = urlParams.get('invite');
+
+  if (!inviteId) {
+    showError('Código de convite ausente na URL.');
+  } else {
+    fetch(`/api/users/invitations/${inviteId}/verify`)
+      .then(async res => {
+        const data = await res.json();
+        if (res.ok && data.valid) {
+          showForm(data.role);
+        } else {
+          showError(data.error || 'Código de convite inválido ou expirado.');
+        }
+      })
+      .catch(err => {
+        showError('Erro de conexão ao validar o convite.');
+      });
+  }
+
+  function showError(msg) {
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('errorState').classList.remove('hidden');
+    document.getElementById('errorText').textContent = msg;
+  }
+
+  function showForm(role) {
+    document.getElementById('loadingState').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+    
+    const roleBadge = document.getElementById('roleLabel');
+    roleBadge.textContent = role === 'admin' ? 'Administrador (Admin)' : 'Colaborador (Usuário)';
+    if (role === 'admin') {
+      roleBadge.style.borderColor = 'var(--gold)';
+    } else {
+      roleBadge.style.borderColor = 'rgba(237, 232, 223, 0.3)';
+      roleBadge.style.color = 'var(--text)';
+      roleBadge.style.background = 'rgba(255,255,255,0.02)';
+    }
+  }
+
+  // Validação em tempo real dos requisitos de senha
+  const passwordInputEl = document.getElementById('passwordInput');
+  passwordInputEl.addEventListener('input', function () {
+    const v = passwordInputEl.value;
+    document.getElementById('reqLen').classList.toggle('valid', v.length >= 10);
+    document.getElementById('reqLetter').classList.toggle('valid', /[a-zA-Z]/.test(v));
+    document.getElementById('reqNum').classList.toggle('valid', /[0-9]/.test(v));
+    document.getElementById('reqSpecial').classList.toggle('valid', /[^a-zA-Z0-9]/.test(v));
+  });
+
+  // 3. Submissão do formulário
+  const form = document.getElementById('registerForm');
+  const formError = document.getElementById('formError');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    formError.classList.add('hidden');
+
+    const name = document.getElementById('nameInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value;
+    const confirmPassword = document.getElementById('confirmPasswordInput').value;
+
+    if (password.length < 10) {
+      showFormError('A senha deve conter no mínimo 10 caracteres.');
+      return;
+    }
+
+    if (!/[a-zA-Z]/.test(password)) {
+      showFormError('A senha deve conter pelo menos uma letra.');
+      return;
+    }
+
+    if (!/[0-9]/.test(password)) {
+      showFormError('A senha deve conter pelo menos um número.');
+      return;
+    }
+
+    if (!/[^a-zA-Z0-9]/.test(password)) {
+      showFormError('A senha deve conter pelo menos um caractere especial (ex: !@#$%&*).');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showFormError('As senhas não coincidem.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Registrando...';
+
+    fetch('/api/users/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ inviteId, name, email, password })
+    })
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        document.getElementById('registerForm').classList.add('hidden');
+        document.getElementById('successState').classList.remove('hidden');
+      } else {
+        showFormError(data.error || 'Erro ao registrar conta.');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Concluir Registro';
+      }
+    })
+    .catch(err => {
+      showFormError('Erro de rede ao processar o registro.');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Concluir Registro';
+    });
+  });
+
+  function showFormError(msg) {
+    formError.textContent = msg;
+    formError.classList.remove('hidden');
+  }
+
+  function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+      </svg>`;
+    } else {
+      input.type = 'password';
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 18px; height: 18px;">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+      </svg>`;
+    }
+  }
+</script>
+</body>
+</html>

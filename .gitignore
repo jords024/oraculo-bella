@@ -1,0 +1,39 @@
+# Somente backend/ e frontend/ entram no repositório
+/*
+!/.gitignore
+!/backend/
+!/frontend/
+
+# Segredos e configuração local
+.env
+.env.*
+!.env.example
+.mcp.json
+*.pem
+*.key
+
+# Dados locais e de execução (banco, imagens geradas, filas, logs)
+storage/
+logs/
+*.log
+**/dashboard/data/*
+!**/dashboard/data/branding.json
+**/temp/
+
+# Script avulso com chave de API escrita no código (revogar a chave)
+backend/generate-slides.mjs
+*.part
+*.sqlite
+*.db
+
+# Contratos e documentos de clientes
+*.docx
+
+# Dependências e artefatos de build de Python/Node
+node_modules/
+python_packages/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/

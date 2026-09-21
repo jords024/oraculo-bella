@@ -1,0 +1,1406 @@
+<script>
+let allCarousels = [];
+let currentFilter = 'all';
+let lightboxSlides = [];
+let lightboxIdx = 0;
+let lightboxCarouselId = '';
+
+// ── Main Tab Switch ────────────────────────────────────────────────────────
+function switchMainTab(tab, el) {
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.main-view').forEach(v => v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-' + tab).classList.add('active');
+  if (tab === 'oraculo') loadOraculoData();
+}
+
+// ── Oráculo ────────────────────────────────────────────────────────────────
+let oraculoData = null;
+let oraculoSortCol = 'engagement';
+let oraculoSortDir = -1; // -1 = desc
+
+async function loadOraculoData() {
+  try {
+    const res = await fetch('/api/oraculo/completo');
+    const data = await res.json();
+    if (data.posts && data.posts.length > 0) {
+      oraculoData = data;
+      renderOraculo();
+    }
+  } catch(e) { /* silencioso se ainda não sincronizou */ }
+}
+
+async function syncOraculo() {
+  const btn = document.getElementById('btn-sync');
+  btn.disabled = true;
+  btn.textContent = '⟳ Sincronizando...';
+  document.getElementById('oraculo-sync-label').textContent = 'Buscando posts e métricas do Instagram... pode levar 1-2 min';
+
+  try {
+    const res = await fetch('/api/oraculo/sync', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      oraculoData = data;
+      renderOraculo();
+      showToast('Oráculo sincronizado!');
+    } else {
+      showToast('Erro: ' + (data.error || 'Falha na sincronização'));
+    }
+  } catch(e) {
+    showToast('Erro ao sincronizar: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⟳ Sincronizar';
+}
+
+function renderOraculo() {
+  if (!oraculoData) return;
+
+  const t = oraculoData.totals || {};
+  const fmt = n => (n || 0).toLocaleString('pt-BR');
+
+  document.getElementById('ot-posts').textContent    = fmt(oraculoData.total_posts);
+  document.getElementById('ot-likes').textContent    = fmt(t.likes);
+  document.getElementById('ot-comments').textContent = fmt(t.comments);
+  document.getElementById('ot-saved').textContent    = fmt(t.saved);
+  document.getElementById('ot-shares').textContent   = fmt(t.shares);
+  document.getElementById('ot-reach').textContent    = fmt(t.reach);
+  document.getElementById('ot-follows').textContent  = fmt(t.follows);
+
+  if (oraculoData.last_sync) {
+    document.getElementById('oraculo-last-sync').textContent = 'Última sync: ' + oraculoData.last_sync;
+    document.getElementById('oraculo-sync-label').textContent =
+      oraculoData.total_posts + ' posts carregados — ordenados por engajamento';
+  }
+
+  renderOraculoTable(oraculoData.posts);
+}
+
+function renderOraculoTable(posts) {
+  if (!posts || posts.length === 0) return;
+
+  // Ordena
+  const sorted = [...posts].sort((a, b) => {
+    const va = a[oraculoSortCol] || 0;
+    const vb = b[oraculoSortCol] || 0;
+    if (typeof va === 'string') return oraculoSortDir * va.localeCompare(vb);
+    return oraculoSortDir * (vb - va);
+  });
+
+  // Máximo de engagement para barra visual
+  const maxEng = Math.max(...sorted.map(p => p.engagement || 0)) || 1;
+
+  const cols = [
+    { key:'published_at',        label:'Data' },
+    { key:'caption',             label:'Post (caption)' },
+    { key:'likes',               label:'❤️ Likes' },
+    { key:'comments',            label:'💬 Coment.' },
+    { key:'saved',               label:'🔖 Salv.' },
+    { key:'shares',              label:'↗ Shares' },
+    { key:'reach',               label:'👁 Alcance' },
+    { key:'follows',             label:'➕ Seguidores' },
+    { key:'total_interactions',  label:'🔥 Interações' },
+    { key:'engagement',          label:'⚡ Eng.' },
+    { key:'permalink',           label:'Link' },
+  ];
+
+  const fmt = n => (n || 0).toLocaleString('pt-BR');
+
+  const headerHtml = cols.map(c => {
+    const sorted = c.key === oraculoSortCol ? ' sorted' : '';
+    const arrow = c.key === oraculoSortCol ? (oraculoSortDir === -1 ? ' ↓' : ' ↑') : '';
+    return `<th class="${sorted}" onclick="sortOraculo('${c.key}')">${c.label}${arrow}</th>`;
+  }).join('');
+
+  const rowsHtml = sorted.map((p, i) => {
+    const date = p.published_at ? p.published_at.substring(0,10) : '';
+    const barW = Math.round((p.engagement / maxEng) * 60);
+    const caption = (p.caption || '').substring(0, 80);
+    const isTop3 = i < 3;
+
+    return `<tr>
+      <td class="oraculo-date">${date}</td>
+      <td>
+        <div class="oraculo-caption" title="${(p.caption_full||'').replace(/"/g,'&quot;')}">
+          ${isTop3 ? '<strong style="color:var(--gold)">🏆 </strong>' : ''}${caption}
+        </div>
+      </td>
+      <td class="oraculo-num">${fmt(p.likes)}</td>
+      <td class="oraculo-num">${fmt(p.comments)}</td>
+      <td class="oraculo-num">${fmt(p.saved)}</td>
+      <td class="oraculo-num">${fmt(p.shares)}</td>
+      <td class="oraculo-num">${fmt(p.reach)}</td>
+      <td class="oraculo-num">${fmt(p.follows)}</td>
+      <td class="oraculo-num">${fmt(p.total_interactions)}</td>
+      <td class="oraculo-num oraculo-highlight">
+        <span class="oraculo-bar" style="width:${barW}px"></span>${fmt(p.engagement)}
+      </td>
+      <td><a class="oraculo-link" href="${p.permalink}" target="_blank">↗ Ver</a></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('oraculo-table-container').innerHTML = `
+    <table class="oraculo-table">
+      <thead><tr>${headerHtml}</tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>`;
+}
+
+function sortOraculo(col) {
+  if (oraculoSortCol === col) {
+    oraculoSortDir *= -1;
+  } else {
+    oraculoSortCol = col;
+    oraculoSortDir = -1;
+  }
+  if (oraculoData) renderOraculoTable(oraculoData.posts);
+}
+
+// ── Load data ──────────────────────────────────────────────────────────────
+async function loadStats() {
+  const res = await fetch('/api/stats');
+  const s = await res.json();
+  document.getElementById('stat-total').textContent = s.totalCarousels;
+  document.getElementById('stat-slides').textContent = s.totalSlides;
+  const ap = (s.byStatus?.aprovado || 0) + (s.byStatus?.pronto || 0);
+  document.getElementById('stat-aprovados').textContent = ap;
+  document.getElementById('stat-publicados').textContent = s.byStatus?.publicado || 0;
+}
+
+async function loadCarousels() {
+  const res = await fetch('/api/carousels');
+  allCarousels = await res.json();
+  renderGrid(allCarousels);
+}
+
+function renderGrid(carousels) {
+  const grid = document.getElementById('carousel-grid');
+  let filtered = carousels;
+  
+  if (currentFilter === 'agendado') {
+    filtered = carousels.filter(c => c.scheduledDate && c.status !== 'publicado');
+  } else if (currentFilter !== 'all') {
+    filtered = carousels.filter(c => c.status === currentFilter);
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="empty" style="grid-column:1/-1">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">Nenhum carrossel encontrado</div>
+      <div class="empty-sub">Clique em "+ Novo Carrossel" para começar</div>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(c => carouselCard(c)).join('');
+}
+
+function carouselCard(c) {
+  const thumb = c.slides && c.slides.length > 0
+    ? `<img class="card-thumb" src="/api/carousels/${c.id}/image/${c.slides[0]}" alt="thumb" />`
+    : `<div class="card-thumb-placeholder">🎠</div>`;
+
+  const statusClass = `badge-${c.status}`;
+  const statusLabel = {
+    rascunho: 'Rascunho', aprovacao: 'Em Aprovação',
+    pronto: 'Pronto', aprovado: 'Aprovado', publicado: 'Publicado',
+    gerando: 'Gerando ⚙️'
+  }[c.status] || c.status;
+
+  const slideStrip = c.slides && c.slides.length > 0
+    ? c.slides.map((f, i) => `
+        <div class="slide-thumb-wrap">
+          <img class="slide-thumb" src="/api/carousels/${c.id}/image/${f}" alt="slide ${i+1}" loading="lazy"
+               onclick="openLightbox('${c.id}', ${i})" />
+          <div class="slide-thumb-num">${i+1}</div>
+          <div class="slide-actions-overlay" onclick="event.stopPropagation()">
+            <button class="slide-icon-btn slide-icon-btn-dl" title="Baixar slide"
+                    onclick="downloadSlide('${c.id}','${f}')">↓</button>
+            <button class="slide-icon-btn slide-icon-btn-edit" title="Editar slide"
+                    onclick="openEditModal('${c.id}','${f}')">✎</button>
+            <button class="slide-icon-btn slide-icon-btn-del" title="Excluir slide"
+                    onclick="deleteSlide('${c.id}','${f}')">✕</button>
+          </div>
+        </div>`).join('')
+    : '<div style="color:var(--gray);font-size:12px;padding:8px 0">Nenhuma imagem encontrada na pasta</div>';
+
+  return `
+  <div class="carousel-card" id="card-${c.id}">
+    <div class="card-header" onclick="toggleCard('${c.id}')">
+      ${thumb}
+      <div class="card-meta">
+        <div class="card-title">${c.title}</div>
+        <div class="card-badges">
+          <span class="badge badge-format">Formato ${c.format}</span>
+          <span class="badge ${statusClass}">${statusLabel}</span>
+        </div>
+        <div class="card-date">📅 ${c.createdAt} · ${c.slidesFound || 0} slides</div>
+      </div>
+    </div>
+    <div class="caption-box" id="caption-${c.id}">${c.caption || 'Sem caption ainda.'}</div>
+    <div class="slide-strip" id="strip-${c.id}">${slideStrip}</div>
+    <div class="card-footer">
+      <select class="status-select" onchange="updateStatus('${c.id}', this.value)" onclick="event.stopPropagation()">
+        <option value="rascunho" ${c.status==='rascunho'?'selected':''}>Rascunho</option>
+        <option value="aprovacao" ${c.status==='aprovacao'?'selected':''}>Em Aprovação</option>
+        <option value="pronto" ${c.status==='pronto'?'selected':''}>Pronto</option>
+        <option value="aprovado" ${c.status==='aprovado'?'selected':''}>Aprovado</option>
+        <option value="publicado" ${c.status==='publicado'?'selected':''}>Publicado</option>
+      </select>
+      <div class="card-actions">
+        <button class="btn btn-outline btn-sm" onclick="openScheduleModal('${c.id}');event.stopPropagation()" title="Agendar Publicação">📅 Agendar</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleCaption('${c.id}');event.stopPropagation()">Caption</button>
+        <button class="btn btn-outline btn-sm" onclick="downloadCarouselZip('${c.id}');event.stopPropagation()" title="Baixar todos os slides em ZIP">↓ ZIP</button>
+        <button class="btn btn-instagram btn-sm" onclick="publishToInstagram('${c.id}');event.stopPropagation()" title="Publicar no Instagram" ${c.status==='publicado'?'disabled':''}>
+          ${c.status==='publicado'?'✅ Publicado':'📱 Instagram'}
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="deleteCarousel('${c.id}');event.stopPropagation()">✕</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Interactions ───────────────────────────────────────────────────────────
+function toggleCard(id) {
+  const strip = document.getElementById(`strip-${id}`);
+  const card  = document.getElementById(`card-${id}`);
+  strip.classList.toggle('open');
+  card.classList.toggle('expanded');
+}
+
+function toggleCaption(id) {
+  document.getElementById(`caption-${id}`).classList.toggle('open');
+}
+
+async function updateStatus(id, status) {
+  await fetch(`/api/carousels/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status })
+  });
+  showToast('Status atualizado!');
+  loadStats();
+}
+
+async function deleteCarousel(id) {
+  if (!confirm('Remover este carrossel INTEIRO do dashboard? (A pasta de imagens também será excluída)')) return;
+  await fetch(`/api/carousels/${id}`, { method: 'DELETE' });
+  showToast('Carrossel removido');
+  loadCarousels();
+  loadStats();
+}
+
+async function deleteSlide(carouselId, filename) {
+  if (!confirm(`Tem certeza que deseja apagar o slide permanentemente? (${filename})`)) return;
+  try {
+    const res = await fetch(`/api/carousels/${carouselId}/slide/${filename}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Slide apagado com sucesso!');
+      loadCarousels();
+    } else {
+      showToast('Erro: ' + data.error);
+    }
+  } catch (e) {
+    showToast('Erro de rede: ' + e.message);
+  }
+}
+
+function filter(status, btn) {
+  currentFilter = status;
+  document.querySelectorAll('.filter-row .btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid(allCarousels);
+}
+
+// ── Lightbox com seleção de elemento ──────────────────────────────────────
+let lbEditMode   = false;
+let lbActiveZone = null;
+let lbActiveField = '';
+let lbSlideMeta  = {};
+
+function openLightbox(carouselId, idx) {
+  const c = allCarousels.find(x => x.id === carouselId);
+  if (!c) return;
+  lightboxSlides = c.slides;
+  lightboxIdx = idx;
+  lightboxCarouselId = carouselId;
+  // Reset edit mode ao trocar slide
+  setEditMode(false);
+  showLightboxSlide();
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function showLightboxSlide() {
+  const file = lightboxSlides[lightboxIdx];
+  const img  = document.getElementById('lightbox-img');
+  img.src = `/api/carousels/${lightboxCarouselId}/image/${file}?t=${Date.now()}`;
+  document.getElementById('lightbox-caption').textContent =
+    `Slide ${lightboxIdx + 1} / ${lightboxSlides.length} · ${file}`;
+  deselectZone();
+  lbSlideMeta = {};
+}
+
+function lightboxNext() {
+  lightboxIdx = (lightboxIdx + 1) % lightboxSlides.length;
+  showLightboxSlide();
+}
+function lightboxPrev() {
+  lightboxIdx = (lightboxIdx - 1 + lightboxSlides.length) % lightboxSlides.length;
+  showLightboxSlide();
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  setEditMode(false);
+}
+
+function closeLightboxOutside(e) {
+  // Fecha só se clicar no fundo (não nas zonas ou editor)
+  if (e.target === document.getElementById('lightbox')) closeLightbox();
+}
+
+// ── Toggle modo edição ─────────────────────────────────────────────────────
+function toggleEditMode() {
+  setEditMode(!lbEditMode);
+}
+
+function setEditMode(on) {
+  lbEditMode = on;
+  const lb     = document.getElementById('lightbox');
+  const toggle = document.getElementById('lb-edit-toggle');
+  const wrap   = document.getElementById('lb-slide-wrap');
+
+  if (on) {
+    lb.classList.remove('lb-editor-hidden');
+    lb.classList.add('lb-editing');
+    toggle.classList.add('active');
+    toggle.textContent = '✎ Editando';
+  } else {
+    lb.classList.add('lb-editor-hidden');
+    lb.classList.remove('lb-editing');
+    toggle.classList.remove('active');
+    toggle.textContent = '✎ Editar';
+    deselectZone();
+  }
+}
+
+// ── Selecionar zona na imagem ──────────────────────────────────────────────
+async function selectZone(field, el) {
+  document.querySelectorAll('.lb-zone').forEach(z => z.classList.remove('selected'));
+  el.classList.add('selected');
+  lbActiveZone  = el;
+  lbActiveField = field;
+
+  const fieldLabel   = field === 'title' ? 'TÍTULO' : 'CORPO';
+  const otherField   = field === 'title' ? 'body'   : 'title';
+  const otherLabel   = field === 'title' ? 'CORPO'  : 'TÍTULO';
+  document.getElementById('lb-editor-fieldname').textContent = fieldLabel;
+
+  // Mostra loading
+  document.getElementById('lb-editor-prompt').style.display    = 'none';
+  document.getElementById('lb-editor-text').style.display      = 'block';
+  document.getElementById('lb-editor-hint').style.display      = 'block';
+  document.getElementById('lb-editor-actions').style.display   = 'flex';
+  const ta  = document.getElementById('lb-editor-text');
+  const sec = document.getElementById('lb-editor-secondary');
+  ta.value    = '⏳ Carregando...';
+  ta.disabled = true;
+  sec.style.display = 'none';
+
+  // Busca meta para pré-preencher
+  const file = lightboxSlides[lightboxIdx];
+  if (!lbSlideMeta[file]) {
+    try {
+      const res = await fetch(`/api/carousels/${lightboxCarouselId}/slide/${file}/meta`);
+      lbSlideMeta[file] = await res.json();
+    } catch { lbSlideMeta[file] = {}; }
+  }
+
+  const meta = lbSlideMeta[file] || {};
+  ta.value    = (meta[field] || '').replace(/\\n/g, '\n');
+  ta.disabled = false;
+  ta.focus();
+
+  // Se o outro campo não tem meta, mostra campo secundário para o usuário preencher
+  const otherVal = (meta[otherField] || '').trim();
+  if (!otherVal) {
+    document.getElementById('lb-editor-secondary-label').textContent = `${otherLabel} (necessário para recompor)`;
+    document.getElementById('lb-editor-text2').value = '';
+    sec.style.display = 'block';
+  } else {
+    // Outro campo preenchido via meta — não precisa aparecer
+    sec.style.display = 'none';
+    document.getElementById('lb-editor-text2').value = otherVal;
+  }
+}
+
+function deselectZone() {
+  document.querySelectorAll('.lb-zone').forEach(z => z.classList.remove('selected'));
+  lbActiveZone  = null;
+  lbActiveField = '';
+  document.getElementById('lb-editor-fieldname').textContent     = '—';
+  document.getElementById('lb-editor-prompt').style.display      = 'block';
+  document.getElementById('lb-editor-text').style.display        = 'none';
+  document.getElementById('lb-editor-hint').style.display        = 'none';
+  document.getElementById('lb-editor-actions').style.display     = 'none';
+  document.getElementById('lb-editor-secondary').style.display   = 'none';
+  document.getElementById('lb-editor-text').value  = '';
+  document.getElementById('lb-editor-text2').value = '';
+}
+
+// ── Salvar elemento editado ────────────────────────────────────────────────
+async function saveElement() {
+  const file    = lightboxSlides[lightboxIdx];
+  const meta    = lbSlideMeta[file] || {};
+  const newText = document.getElementById('lb-editor-text').value.trim();
+  const text2   = document.getElementById('lb-editor-text2').value.trim();
+
+  // Campo principal (editado) + campo secundário (meta salvo ou digitado pelo usuário)
+  const title  = lbActiveField === 'title' ? newText : (meta.title || text2);
+  const body   = lbActiveField === 'body'  ? newText : (meta.body  || text2);
+  const layout = meta.layout || 'fullbleed';
+
+  if (!newText) {
+    showToast('O campo está vazio — escreva o novo texto');
+    document.getElementById('lb-editor-text').focus();
+    return;
+  }
+  if (!title || !body) {
+    const label = lbActiveField === 'title' ? 'CORPO' : 'TÍTULO';
+    showToast(`Preencha também o campo ${label} acima`);
+    document.getElementById('lb-editor-text2').focus();
+    return;
+  }
+
+  const btn = document.getElementById('lb-save-btn');
+  btn.textContent = '⏳ Recompondo...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/carousels/${lightboxCarouselId}/slide/${file}/recompose`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, layout })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Atualiza cache local
+      lbSlideMeta[file] = { title, body, layout };
+      // Força reload da imagem
+      const img = document.getElementById('lightbox-img');
+      img.src = `/api/carousels/${lightboxCarouselId}/image/${file}?t=${Date.now()}`;
+      // Atualiza thumb na grade
+      document.querySelectorAll(`img[src*="${file}"]`).forEach(i => {
+        if (i !== img) i.src = i.src.split('?')[0] + '?t=' + Date.now();
+      });
+      showToast(`✓ ${lbActiveField === 'title' ? 'Título' : 'Corpo'} atualizado!`);
+      deselectZone();
+    } else {
+      showToast('Erro: ' + (data.error || 'desconhecido'));
+    }
+  } catch (e) {
+    showToast('Erro de rede: ' + e.message);
+  } finally {
+    btn.textContent = 'Salvar ↺';
+    btn.disabled = false;
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'Escape') {
+    if (lbActiveField) { deselectZone(); return; }
+    if (lbEditMode)    { setEditMode(false); return; }
+    closeLightbox();
+  }
+  // Navegação apenas se não há textarea focada
+  if (document.activeElement?.id === 'lb-editor-text') return;
+  if (e.key === 'ArrowRight') lightboxNext();
+  if (e.key === 'ArrowLeft')  lightboxPrev();
+});
+
+// ── New carousel form ──────────────────────────────────────────────────────
+function openNewModal()  { document.getElementById('new-modal').classList.add('open'); }
+function closeNewModal() { document.getElementById('new-modal').classList.remove('open'); }
+
+async function createCarousel() {
+  const title   = document.getElementById('f-title').value.trim();
+  const theme   = document.getElementById('f-theme').value.trim();
+  const format  = document.getElementById('f-format').value;
+  const dir     = document.getElementById('f-dir').value.trim();
+  const caption = document.getElementById('f-caption').value.trim();
+  const notes   = document.getElementById('f-notes').value.trim();
+
+  if (!title) { alert('Informe o título do carrossel'); return; }
+
+  await fetch('/api/carousels', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, theme, format, slidesDir: dir, caption, notes, createFolder: !!dir })
+  });
+
+  closeNewModal();
+  showToast('Carrossel criado!');
+  loadCarousels();
+  loadStats();
+}
+
+// ── Download ────────────────────────────────────────────────────────────────
+function downloadSlide(carouselId, filename) {
+  const a = document.createElement('a');
+  a.href = `/api/carousels/${carouselId}/download/${filename}`;
+  a.download = filename;
+  a.click();
+}
+
+// Baixar um carrossel como ZIP
+function downloadCarouselZip(carouselId) {
+  const c = allCarousels.find(x => x.id === carouselId);
+  if (!c || !c.slides || c.slides.length === 0) { showToast('Nenhum slide para baixar'); return; }
+  showToast(`Preparando ZIP — ${c.slides.length} slides...`);
+  const a = document.createElement('a');
+  a.href = `/api/carousels/${carouselId}/download-zip`;
+  a.download = `${carouselId}.zip`;
+  a.click();
+}
+
+// ── Publicar no Instagram ────────────────────────────────────────────────────
+function publishToInstagram(carouselId) {
+  const c = allCarousels.find(x => x.id === carouselId);
+  if (!c) return;
+  if (c.status === 'publicado') { showToast('Já publicado no Instagram'); return; }
+
+  // Cria modal de confirmacao
+  const overlay = document.createElement('div');
+  overlay.className = 'ig-modal-overlay';
+  overlay.innerHTML = `
+    <div class="ig-modal">
+      <h3>📱 Publicar no Instagram</h3>
+      <p>${c.title.substring(0,70)}... · ${c.slides?.length || 0} slides · @afonteoculta</p>
+      <textarea id="ig-caption-input" placeholder="Caption do post (deixe vazio para usar a caption salva)...">${c.caption || ''}</textarea>
+      <div class="ig-progress" id="ig-progress">Iniciando publicação...</div>
+      <div class="ig-modal-actions">
+        <button class="btn btn-outline btn-sm" onclick="this.closest('.ig-modal-overlay').remove()">Cancelar</button>
+        <button class="btn btn-instagram" id="ig-publish-btn" onclick="confirmPublish('${carouselId}', this)">
+          🚀 Publicar agora
+        </button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function confirmPublish(carouselId, btn) {
+  const caption  = document.getElementById('ig-caption-input').value;
+  const progress = document.getElementById('ig-progress');
+  btn.disabled   = true;
+  btn.textContent = '⏳ Publicando...';
+  progress.classList.add('show');
+  progress.textContent = '📤 Hospedando imagens no servidor...\n⏳ Isso pode levar 1-3 minutos, aguarde...';
+
+  try {
+    const res = await fetch(`/api/carousels/${carouselId}/publish-instagram`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ caption }),
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      progress.innerHTML = data.log.replace(/\n/g,'<br>');
+      showToast('✅ Publicado no Instagram com sucesso!');
+      setTimeout(() => {
+        document.querySelector('.ig-modal-overlay')?.remove();
+        loadCarousels();
+      }, 2500);
+    } else {
+      progress.innerHTML = `<span style="color:#CC4455">❌ Erro: ${data.error}</span><br>${(data.log||'').replace(/\n/g,'<br>')}`;
+      btn.disabled = false;
+      btn.textContent = '🔁 Tentar novamente';
+    }
+  } catch (e) {
+    progress.innerHTML = `<span style="color:#CC4455">❌ Erro de conexão: ${e.message}</span>`;
+    btn.disabled = false;
+    btn.textContent = '🔁 Tentar novamente';
+  }
+}
+
+// Baixar TODOS os carrosséis em um único ZIP
+async function downloadAllCarousels() {
+  const btn = document.getElementById('btn-dl-all');
+  if (!allCarousels || allCarousels.length === 0) { showToast('Nenhum carrossel carregado'); return; }
+
+  const totalSlides = allCarousels.reduce((acc, c) => acc + (c.slides?.length || 0), 0);
+  if (totalSlides === 0) { showToast('Nenhum slide encontrado'); return; }
+
+  btn.textContent = '⏳ Gerando ZIP...';
+  btn.classList.add('loading');
+
+  try {
+    const res = await fetch('/api/download-all');
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || res.statusText);
+    }
+    // Faz o download via blob para evitar nova aba
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const date = new Date().toISOString().split('T')[0];
+    a.href     = url;
+    a.download = `afonteoculta-carrosseis-${date}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`✓ ZIP baixado — ${allCarousels.length} carrosséis · ${totalSlides} slides`);
+  } catch (e) {
+    showToast('Erro ao gerar ZIP: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '↓ Baixar Tudo';
+    btn.classList.remove('loading');
+  }
+}
+
+// ── Edit slide modal ─────────────────────────────────────────────────────────
+let editCarouselId = '';
+let editFilename   = '';
+
+function openEditModal(carouselId, filename) {
+  editCarouselId = carouselId;
+  editFilename   = filename;
+  document.getElementById('edit-filename').textContent = filename;
+  // Reset fields
+  document.getElementById('edit-title').value  = '';
+  document.getElementById('edit-body').value   = '';
+  document.getElementById('regen-title').value = '';
+  document.getElementById('regen-body').value  = '';
+  document.getElementById('regen-prompt').value = '';
+  // Show text tab by default
+  switchEditTab('text', document.querySelector('.edit-tab'));
+  document.getElementById('edit-modal').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('open');
+}
+
+function switchEditTab(tab, el) {
+  document.querySelectorAll('.edit-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.edit-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(`edit-panel-${tab}`).classList.add('active');
+}
+
+async function doRecompose() {
+  const title  = document.getElementById('edit-title').value.trim();
+  const body   = document.getElementById('edit-body').value.trim();
+  const layout = document.getElementById('edit-layout').value;
+  if (!title || !body) { alert('Preencha o título e o corpo'); return; }
+
+  const btn = document.getElementById('btn-recompose');
+  btn.innerHTML = '<span class="spinner"></span> Recompondo...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/carousels/${editCarouselId}/slide/${editFilename}/recompose`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, body, layout })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Slide recomposto com sucesso!');
+      closeEditModal();
+      // Bust image cache
+      document.querySelectorAll(`img[src*="${editFilename}"]`).forEach(img => {
+        img.src = img.src.split('?')[0] + '?t=' + Date.now();
+      });
+    } else {
+      alert('Erro: ' + (data.error || 'desconhecido'));
+    }
+  } catch (e) {
+    alert('Erro de rede: ' + e.message);
+  } finally {
+    btn.innerHTML = 'Recompor Slide';
+    btn.disabled = false;
+  }
+}
+
+async function doRegen() {
+  const prompt = document.getElementById('regen-prompt').value.trim();
+  const title  = document.getElementById('regen-title').value.trim();
+  const body   = document.getElementById('regen-body').value.trim();
+  const layout = document.getElementById('regen-layout').value;
+  if (!prompt || !title || !body) { alert('Preencha o prompt, o título e o corpo'); return; }
+
+  const btn = document.getElementById('btn-regen');
+  btn.innerHTML = '<span class="spinner"></span> Gerando imagem... (pode levar 1-2 min)';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`/api/carousels/${editCarouselId}/slide/${editFilename}/regen`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, title, body, layout })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Imagem gerada e slide recomposto!');
+      closeEditModal();
+      document.querySelectorAll(`img[src*="${editFilename}"]`).forEach(img => {
+        img.src = img.src.split('?')[0] + '?t=' + Date.now();
+      });
+    } else {
+      alert('Erro: ' + (data.error || 'desconhecido'));
+    }
+  } catch (e) {
+    alert('Erro de rede: ' + e.message);
+  } finally {
+    btn.innerHTML = 'Gerar Nova Imagem';
+    btn.disabled = false;
+  }
+}
+
+// ── Radar de Descobertas ──────────────────────────────────────────────────────
+async function loadRadar() {
+  const grid = document.getElementById('radar-grid');
+  grid.innerHTML = '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Buscando inteligência...</div></div>';
+  try {
+    const res = await fetch('/api/radar');
+    const data = await res.json();
+    renderRadar(data);
+  } catch (e) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">❌</div><div class="empty-text">Erro ao carregar o Radar</div></div>';
+  }
+}
+
+function renderRadar(data) {
+  const grid = document.getElementById('radar-grid');
+  if (!data || data.length === 0) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">📡</div><div class="empty-text">Nenhuma descoberta recente.</div></div>';
+    return;
+  }
+  
+  document.getElementById('radar-sync-info').textContent = 'Última busca: ' + new Date().toLocaleString('pt-BR');
+
+  let html = '';
+  data.forEach(item => {
+    html += `
+      <div class="carousel-card" style="display:flex; flex-direction:column; padding: 20px;">
+        <div style="font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+          ${item.query}
+        </div>
+        <div class="card-title" style="font-size: 16px; margin-bottom: 12px; line-height: 1.4;">
+          ${item.title}
+        </div>
+        <div style="font-size: 13px; color: var(--gray); margin-bottom: 20px; line-height: 1.5; flex: 1;">
+          ${item.snippet}
+        </div>
+        <div style="display:flex; gap: 8px; margin-top: auto;">
+          <a href="${item.link}" target="_blank" class="btn btn-outline" style="text-decoration:none; text-align:center; flex:1;">Ler Original</a>
+          <button class="btn btn-gold" style="flex:1;" onclick="alert('Funcionalidade Roteiro do Oráculo em construção!')">🪄 Gerar Roteiro</button>
+        </div>
+      </div>
+    `;
+  });
+  grid.innerHTML = html;
+}
+
+async function syncRadar() {
+  const btn = document.getElementById('btn-sync-radar');
+  btn.innerHTML = '<span class="spinner"></span> Sincronizando...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('/api/radar/sync', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Radar atualizado com sucesso!');
+      renderRadar(data.data);
+    } else {
+      alert('Erro: ' + data.error);
+    }
+  } catch (e) {
+    alert('Erro de rede: ' + e.message);
+  } finally {
+    btn.innerHTML = '↻ Sincronizar Radar';
+    btn.disabled = false;
+  }
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Calendário de Agendamento ──────────────────────────────────────────────
+let currentCalDate = new Date();
+
+function renderCalendar() {
+  const container = document.getElementById('calendar-grid-view');
+  if (!container) return;
+  
+  const year = currentCalDate.getFullYear();
+  const month = currentCalDate.getMonth();
+  
+  const firstDay = new Date(year, month, 1);
+  const lastDay = new Date(year, month + 1, 0);
+  
+  const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+  document.getElementById('calendar-month-title').textContent = `${monthNames[month]} ${year}`;
+  
+  let html = '';
+  // Espaços vazios no início
+  for (let i = 0; i < firstDay.getDay(); i++) {
+    html += `<div style="background:var(--bg); border:1px solid var(--gray-dim); border-radius:6px; opacity:0.5;"></div>`;
+  }
+  
+  // Dias do mês
+  for (let i = 1; i <= lastDay.getDate(); i++) {
+    const dayStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+    const scheduled = allCarousels.filter(c => c.scheduledDate === dayStr);
+    
+    let scheduledHtml = '';
+    scheduled.forEach(c => {
+      scheduledHtml += `
+        <div style="background:var(--card2); border:1px solid var(--gold); border-radius:4px; padding:4px; margin-top:4px; font-size:10px; color:var(--white); cursor:pointer;" onclick="openScheduleModal('${c.id}')">
+          <strong style="color:var(--gold);">${c.scheduledTime || '00h00'}</strong><br/>
+          <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block;" title="${c.title}">${c.title}</span>
+        </div>
+      `;
+    });
+    
+    const isToday = new Date().toISOString().split('T')[0] === dayStr;
+    const todayStyle = isToday ? 'border-color:var(--gold); background:rgba(201,168,76,0.1);' : '';
+    
+    html += `
+      <div style="background:var(--card); border:1px solid var(--gray-dim); border-radius:6px; padding:8px; display:flex; flex-direction:column; ${todayStyle}">
+        <div style="text-align:right; font-weight:bold; color:var(--gray); font-size:14px; margin-bottom:4px;">${i}</div>
+        <div style="flex:1; overflow-y:auto;">
+          ${scheduledHtml}
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-top:auto; padding:2px; font-size:10px; border:none;" onclick="openScheduleModal(null, '${dayStr}')">+ Agendar</button>
+      </div>
+    `;
+  }
+  
+  container.innerHTML = html;
+}
+
+function changeMonth(dir) {
+  currentCalDate.setMonth(currentCalDate.getMonth() + dir);
+  renderCalendar();
+}
+
+let editingScheduleId = null;
+
+function openScheduleModal(carouselId = null, dateStr = null) {
+  editingScheduleId = carouselId;
+  const listContainer = document.getElementById('sch-carousel-list');
+  document.getElementById('sch-carousel-id').value = carouselId || '';
+  
+  // Preencher lista visual apenas com rascunhos, prontos ou aprovados
+  const pendings = allCarousels.filter(c => c.status !== 'publicado');
+  if (pendings.length === 0) {
+    showToast('Nenhum carrossel pendente para agendar!');
+    return;
+  }
+  
+  listContainer.innerHTML = pendings.map(c => {
+    const thumb = c.slides && c.slides.length > 0 
+      ? `/api/carousels/${c.id}/image/${c.slides[0]}` 
+      : '';
+    const imgHtml = thumb ? `<img src="${thumb}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : `<div style="width:40px;height:40px;background:var(--gray-dim);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;">Sem Img</div>`;
+    
+    const isSelected = (c.id === carouselId);
+    const border = isSelected ? 'var(--gold)' : 'var(--gray-dim)';
+    const bg = isSelected ? 'rgba(201,168,76,0.1)' : 'var(--card)';
+    
+    return `<div onclick="selectCarouselForSchedule('${c.id}')" id="sch-item-${c.id}" class="sch-item" style="display:flex; gap:10px; padding:8px; border:1px solid ${border}; background:${bg}; border-radius:6px; cursor:pointer; align-items:center;">
+      ${imgHtml}
+      <div style="flex:1; overflow:hidden;">
+        <div style="font-size:13px; font-weight:bold; color:var(--white); line-height:1.2; margin-bottom:4px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${c.title}</div>
+        <div style="font-size:11px; color:var(--gray);">${c.status.toUpperCase()}</div>
+      </div>
+    </div>`;
+  }).join('');
+  
+  if (carouselId) {
+    const c = allCarousels.find(x => x.id === carouselId);
+    if (c) {
+      document.getElementById('sch-date').value = c.scheduledDate || new Date().toISOString().split('T')[0];
+      let t = c.scheduledTime || '09h00';
+      document.getElementById('sch-time').value = t.replace('h', ':');
+    }
+  } else {
+    document.getElementById('sch-date').value = dateStr || new Date().toISOString().split('T')[0];
+    document.getElementById('sch-time').value = '09:00';
+  }
+  
+  document.getElementById('schedule-modal').classList.add('open');
+}
+
+function selectCarouselForSchedule(id) {
+  document.getElementById('sch-carousel-id').value = id;
+  document.querySelectorAll('.sch-item').forEach(el => {
+    el.style.borderColor = 'var(--gray-dim)';
+    el.style.background = 'var(--card)';
+  });
+  const sel = document.getElementById('sch-item-' + id);
+  if(sel) {
+    sel.style.borderColor = 'var(--gold)';
+    sel.style.background = 'rgba(201,168,76,0.1)';
+  }
+}
+
+function closeScheduleModal() {
+  document.getElementById('schedule-modal').classList.remove('open');
+  editingScheduleId = null;
+}
+
+async function saveSchedule() {
+  const carouselId = document.getElementById('sch-carousel-id').value;
+  const date = document.getElementById('sch-date').value;
+  const timeRaw = document.getElementById('sch-time').value; // HH:MM
+  const time = timeRaw.replace(':', 'h');
+  
+  if (!carouselId || !date || !time) {
+    alert("Preencha todos os campos!");
+    return;
+  }
+  
+  const btn = document.querySelector('#schedule-modal .btn-gold');
+  btn.textContent = 'Agendando...';
+  
+  try {
+    await fetch(`/api/carousels/${carouselId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scheduledDate: date, scheduledTime: time, status: 'aprovado' })
+    });
+    showToast('Carrossel agendado com sucesso!');
+    closeScheduleModal();
+    await loadCarousels(); // Recarrega os dados e renderiza tudo
+    renderCalendar(); // Atualiza o calendário também
+  } catch (e) {
+    alert('Erro ao agendar: ' + e.message);
+  } finally {
+    btn.textContent = 'Agendar';
+  }
+}
+
+// ── Clonador de Reels (SSE e Engenharia Reversa) ──────────────────────────
+function logTerminal(msg, isError = false) {
+  const term = document.getElementById('reels-terminal');
+  const d = document.createElement('div');
+  d.textContent = `> ${msg}`;
+  if (isError) d.style.color = '#f55';
+  term.appendChild(d);
+  term.scrollTop = term.scrollHeight;
+}
+
+function runReelsEngineer() {
+  const url = document.getElementById('reels-url').value.trim();
+  if (!url) return alert('Insira uma URL!');
+
+  const btn = document.getElementById('btn-reels-run');
+  btn.disabled = true;
+  btn.textContent = 'Processando...';
+
+  // Limpar tela
+  const term = document.getElementById('reels-terminal');
+  term.innerHTML = '';
+  document.getElementById('reels-result-box').style.display = 'none';
+  document.getElementById('reels-result-placeholder').style.display = 'flex';
+  
+  logTerminal(`Iniciando engenharia reversa para: ${url}`);
+  
+  const eventSource = new EventSource(`/api/reels/analyze?url=${encodeURIComponent(url)}`);
+
+  eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    
+    if (data.type === 'log') {
+      logTerminal(data.message);
+    } 
+    else if (data.type === 'error') {
+      logTerminal(data.message, true);
+    } 
+    else if (data.type === 'done') {
+      logTerminal('Processo concluído.', false);
+      eventSource.close();
+      btn.disabled = false;
+      btn.textContent = '🔄 Iniciar';
+      
+      const result = data.result;
+      if (result && !result.error) {
+        document.getElementById('reels-result-placeholder').style.display = 'none';
+        document.getElementById('reels-result-box').style.display = 'flex';
+        
+        document.getElementById('reels-hook').textContent = result.gancho_original || '';
+        document.getElementById('reels-pattern').textContent = result.padrao_psicologico || '';
+        document.getElementById('reels-transcription').textContent = result.transcricao_original || '';
+        document.getElementById('reels-script').value = result.roteiro_fonte_oculta || '';
+        document.getElementById('btn-reels-dl').style.display = 'inline-block';
+        loadReelsHistory();
+      } else if (result && result.error) {
+        logTerminal(`ERRO FATAL: ${result.error}`, true);
+      }
+    }
+  };
+
+  eventSource.onerror = function() {
+    logTerminal('Erro na conexão com o servidor.', true);
+    eventSource.close();
+    btn.disabled = false;
+    btn.textContent = '🔄 Iniciar';
+  };
+}
+
+function createCarouselFromReels() {
+  const roteiro = document.getElementById('reels-script').value;
+  if (!roteiro) return;
+  
+  openNewModal();
+  document.getElementById('f-title').value = "Reel Adaptado";
+  document.getElementById('f-theme').value = "engenharia-reversa";
+  document.getElementById('f-notes').value = "ROTEIRO GERADO PELO CLONADOR:\n\n" + roteiro;
+}
+
+async function downloadReelVideo() {
+  const url = document.getElementById('reels-url').value.trim();
+  if (!url) { alert('Cole a URL do Reel primeiro.'); return; }
+
+  const btn = document.getElementById('btn-reels-download');
+  btn.textContent = '⏳ Baixando...';
+  btn.classList.add('loading');
+
+  try {
+    const res = await fetch(`/api/reels/download?url=${encodeURIComponent(url)}`);
+    if (!res.ok) {
+      const err = await res.json();
+      alert('Erro ao baixar: ' + (err.error || res.statusText));
+      return;
+    }
+    const disposition = res.headers.get('Content-Disposition') || '';
+    const match = disposition.match(/filename="?([^"]+)"?/);
+    const filename = match ? match[1] : 'reel.mp4';
+    const blob = await res.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  } catch(e) {
+    alert('Falha no download: ' + e.message);
+  } finally {
+    btn.textContent = '⬇ Baixar';
+    btn.classList.remove('loading');
+  }
+}
+
+function downloadTranscription() {
+  const text = document.getElementById('reels-transcription').textContent;
+  if (!text) return;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `transcricao-${new Date().getTime()}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+}
+
+async function loadReelsHistory() {
+  const res = await fetch('/api/reels/history');
+  const history = await res.json();
+  const grid = document.getElementById('reels-history-grid');
+  
+  if (history.length === 0) {
+    grid.innerHTML = '<div style="color:var(--gray); font-size:13px;">Nenhuma análise no histórico.</div>';
+    return;
+  }
+
+  grid.innerHTML = history.map((h, idx) => `
+    <div class="carousel-card" style="padding:15px; cursor:default;">
+      <div style="font-size:11px; color:var(--gold); margin-bottom:5px;">📅 ${new Date(h.timestamp).toLocaleString()}</div>
+      <div style="font-size:12px; font-weight:bold; color:var(--white); margin-bottom:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${h.url}</div>
+      <div style="font-size:13px; color:var(--gray); margin-bottom:15px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">
+        <strong>Hook:</strong> ${h.gancho_original}
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline btn-sm" style="flex:1" onclick="restoreReelsAnalysis(${idx})">👁 Ver</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteReelsHistory(${idx})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function restoreReelsAnalysis(idx) {
+  fetch('/api/reels/history').then(res => res.json()).then(history => {
+    const h = history[idx];
+    if (!h) return;
+    
+    document.getElementById('reels-result-placeholder').style.display = 'none';
+    document.getElementById('reels-result-box').style.display = 'flex';
+    document.getElementById('reels-hook').textContent = h.gancho_original;
+    document.getElementById('reels-pattern').textContent = h.padrao_psicologico;
+    document.getElementById('reels-transcription').textContent = h.transcricao_original;
+    document.getElementById('reels-script').value = h.roteiro_fonte_oculta;
+    document.getElementById('btn-reels-dl').style.display = 'inline-block';
+    
+    // Switch scroll back to top of result box
+    document.getElementById('reels-result-box').scrollTop = 0;
+    showToast('Análise restaurada do histórico');
+  });
+}
+
+async function deleteReelsHistory(idx) {
+  if(!confirm('Apagar esta análise do histórico?')) return;
+  await fetch(`/api/reels/history/${idx}`, { method: 'DELETE' });
+  loadReelsHistory();
+}
+
+// Intercepta a mudança de abas para renderizar o calendário ou histórico quando aberto
+const oldSwitch = switchMainTab;
+switchMainTab = function(tab, el) {
+  oldSwitch(tab, el);
+  if (tab === 'calendario') renderCalendar();
+  if (tab === 'reels') loadReelsHistory();
+};
+
+// ── Init ───────────────────────────────────────────────────────────────────
+loadStats();
+loadCarousels();
+loadRadar();
+
+function logTerminal(msg, isError = false) {
+  const logs = document.getElementById('terminal-logs');
+  const item = document.createElement('div');
+  item.className = 'terminal-log-item' + (isError ? ' terminal-log-error' : '');
+  item.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  logs.appendChild(item);
+  logs.scrollTop = logs.scrollHeight;
+}
+
+
+function runVideoFactory() {
+  const tema = document.getElementById('video-tema').value.trim();
+  if (!tema) return alert('Insira um tema!');
+  const btn = document.getElementById('btn-video-run');
+  btn.disabled = true;
+  btn.textContent = 'Processando...';
+  const term = document.getElementById('video-terminal');
+  term.innerHTML = '';
+  const d = document.createElement('div');
+  d.textContent = `> Iniciando fábrica para: ${tema}`;
+  term.appendChild(d);
+  const eventSource = new EventSource(`/api/video/generate?tema=${encodeURIComponent(tema)}`);
+  eventSource.onmessage = function(event) {
+    const data = JSON.parse(event.data);
+    if (data.type === 'log' || data.type === 'error') {
+      const line = document.createElement('div');
+      line.textContent = `> ${data.message}`;
+      if(data.type === 'error') line.style.color = '#CC4455';
+      term.appendChild(line);
+      term.scrollTop = term.scrollHeight;
+    } else if (data.type === 'done') {
+      eventSource.close();
+      btn.disabled = false;
+      btn.textContent = '🚀 Produzir Vídeo';
+      const line = document.createElement('div');
+      line.textContent = '> -----------------------------------------------------';
+      line.style.color = 'var(--gold)';
+      const line2 = document.createElement('div');
+      line2.textContent = '> PROCESSO CONCLUÍDO COM SUCESSO!';
+      line2.style.color = 'var(--gold)';
+      line2.style.fontWeight = 'bold';
+      term.appendChild(line);
+      term.appendChild(line2);
+      term.scrollTop = term.scrollHeight;
+    }
+  };
+  eventSource.onerror = function() {
+    eventSource.close();
+    btn.disabled = false;
+    btn.textContent = '🚀 Produzir Vídeo';
+  };
+}
+
+// ── Live Generation Panel ────────────────────────────────────────────────────
+let liveSession = null; // { carouselId, total, slides: [] }
+let liveLbIndex  = 0;   // índice atual no lightbox
+
+function openLivePanel(carouselId, total) {
+  liveSession = { carouselId, total, slides: [], done: false };
+  const panel = document.getElementById('live-gen-panel');
+  const grid  = document.getElementById('live-gen-grid');
+  const title = document.getElementById('live-gen-title');
+  const bar   = document.getElementById('live-gen-bar');
+  const pct   = document.getElementById('live-gen-pct');
+
+  title.textContent = 'Gerando carrossel...';
+  bar.style.width   = '0%';
+  pct.textContent   = '0%';
+  grid.innerHTML    = '';
+  panel.classList.remove('expanded');
+  document.getElementById('live-gen-expand-btn').textContent = '⤢';
+
+  for (let i = 1; i <= total; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'live-slot pending';
+    slot.id        = `live-slot-${i}`;
+    slot.innerHTML = `<div class="live-slot-num">${String(i).padStart(2,'0')}</div><div class="live-slot-pulse"></div>`;
+    grid.appendChild(slot);
+  }
+
+  panel.classList.add('visible');
+}
+
+function updateLiveSlide(carouselId, slideNum, total, filename, title_text, percent) {
+  const slot = document.getElementById(`live-slot-${slideNum}`);
+  if (slot) {
+    slot.className = 'live-slot loading';
+    const img = document.createElement('img');
+    const ts  = Date.now();
+    img.src   = `/api/carousels/${carouselId}/image/${filename}?t=${ts}`;
+    img.alt   = title_text;
+    img.dataset.slideNum = slideNum;
+    img.dataset.src      = img.src;
+    img.onload = () => {
+      slot.className = 'live-slot done';
+      slot.innerHTML = '';
+      slot.appendChild(img);
+      const cap = document.createElement('div');
+      cap.className   = 'live-slot-cap';
+      cap.textContent = title_text;
+      slot.appendChild(cap);
+      // Clique no slot abre lightbox
+      slot.onclick = () => openLiveLightbox(slideNum - 1);
+      // Guarda info no liveSession
+      if (liveSession) {
+        liveSession.slides[slideNum - 1] = { src: img.src, title: title_text, num: slideNum };
+      }
+    };
+    img.onerror = () => {
+      slot.className = 'live-slot error';
+      slot.innerHTML = `<div class="live-slot-num">${String(slideNum).padStart(2,'0')}</div><div style="font-size:9px;color:#CC4455;margin-top:4px;">erro</div>`;
+    };
+  }
+  const bar = document.getElementById('live-gen-bar');
+  const pct = document.getElementById('live-gen-pct');
+  if (bar) bar.style.width = percent + '%';
+  if (pct) pct.textContent = percent + '%';
+}
+
+function closeLivePanel() {
+  document.getElementById('live-gen-panel').classList.remove('visible', 'expanded');
+  liveSession = null;
+}
+
+function finishLivePanel() {
+  const title = document.getElementById('live-gen-title');
+  const bar   = document.getElementById('live-gen-bar');
+  const pct   = document.getElementById('live-gen-pct');
+  if (title) title.textContent = '✅ Carrossel gerado!';
+  if (bar)   bar.style.width = '100%';
+  if (pct)   pct.textContent = '100%';
+  if (liveSession) liveSession.done = true;
+}
+
+function toggleLivePanelExpand() {
+  const panel = document.getElementById('live-gen-panel');
+  const btn   = document.getElementById('live-gen-expand-btn');
+  const expanded = panel.classList.toggle('expanded');
+  btn.textContent = expanded ? '⤡' : '⤢';
+  btn.title = expanded ? 'Minimizar' : 'Expandir prévia';
+}
+
+function openLiveLightbox(index) {
+  if (!liveSession) return;
+  const slides = liveSession.slides.filter(Boolean);
+  if (!slides.length) return;
+  liveLbIndex = Math.max(0, Math.min(index, slides.length - 1));
+  renderLiveLightbox(slides);
+  document.getElementById('live-lightbox').classList.add('open');
+}
+
+function renderLiveLightbox(slides) {
+  const s     = slides[liveLbIndex];
+  if (!s) return;
+  const img   = document.getElementById('live-lb-img');
+  const cap   = document.getElementById('live-lb-caption');
+  const ctr   = document.getElementById('live-lb-counter');
+  const prev  = document.getElementById('live-lb-prev');
+  const next  = document.getElementById('live-lb-next');
+  // Animate swap
+  img.style.opacity = '0';
+  img.style.transform = 'scale(0.96)';
+  setTimeout(() => {
+    img.src = s.src;
+    img.style.transition = 'opacity 0.2s, transform 0.2s';
+    img.style.opacity = '1';
+    img.style.transform = 'scale(1)';
+  }, 80);
+  cap.textContent  = s.title || `Slide ${s.num}`;
+  ctr.textContent  = `${liveLbIndex + 1} / ${slides.length}`;
+  prev.disabled    = liveLbIndex === 0;
+  next.disabled    = liveLbIndex === slides.length - 1;
+}
+
+function liveLightboxNav(dir) {
+  if (!liveSession) return;
+  const slides = liveSession.slides.filter(Boolean);
+  liveLbIndex  = Math.max(0, Math.min(liveLbIndex + dir, slides.length - 1));
+  renderLiveLightbox(slides);
+}
+
+function closeLiveLightbox() {
+  document.getElementById('live-lightbox').classList.remove('open');
+}
+
+// Navegação por teclado no lightbox
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('live-lightbox');
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'Escape')      closeLiveLightbox();
+  if (e.key === 'ArrowRight')  liveLightboxNav(1);
+  if (e.key === 'ArrowLeft')   liveLightboxNav(-1);
+});
+
+// ── Global SSE Events (Progress) ──
+const globalSSE = new EventSource('/api/events');
+globalSSE.onmessage = (e) => {
+  try {
+    const msg = JSON.parse(e.data);
+
+    if (msg.type === 'terminal_log') {
+      logTerminal(msg.data.message);
+
+    } else if (msg.type === 'generation_started') {
+      const { carousel_id } = msg.data;
+      openLivePanel(carousel_id, 10);
+      showToast('🎬 Geração iniciada...', 3000);
+      loadCarousels();
+
+    } else if (msg.type === 'slide_generated') {
+      const { carousel_id, slide_num, total_slides, filename, title: t, percent } = msg.data;
+      updateLiveSlide(carousel_id, slide_num, total_slides, filename, t || `S${slide_num}`, percent || Math.round(slide_num/total_slides*100));
+      loadCarousels();
+
+    } else if (msg.type === 'generation_done') {
+      finishLivePanel();
+      showToast('✅ Carrossel finalizado!', 5000);
+      loadCarousels();
+      loadStats();
+    }
+  } catch(err) { console.error('SSE Error:', err); }
+};
+</script>

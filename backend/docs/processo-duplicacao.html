@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Processo de Duplicação — Oráculo de Conteúdo</title>
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --surface: #13131e;
+      --border: #1e1e32;
+      --accent: #c9a84c;
+      --accent2: #7c3aed;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --teal: #0d9488;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 260px; height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      padding: 24px 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo h2 {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .sidebar-logo p {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .nav-section {
+      padding: 8px 20px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      font-size: 13px;
+      color: var(--muted);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .nav-link:hover, .nav-link.active {
+      color: var(--text);
+      background: rgba(201,168,76,0.06);
+      border-left-color: var(--accent);
+    }
+    .nav-link .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--muted);
+      flex-shrink: 0;
+    }
+    .nav-link.active .dot { background: var(--accent); }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 260px;
+      min-height: 100vh;
+    }
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 28px 48px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+    .header h1 span { color: var(--accent); }
+    .header p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .content { padding: 40px 48px; max-width: 900px; }
+
+    /* ── SECTION ── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── COMPONENTS ── */
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--accent);
+      margin: 40px 0 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    h2:first-child { margin-top: 0; }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 24px 0 10px;
+    }
+    p { color: #b0b0c8; margin-bottom: 12px; }
+    strong { color: var(--text); }
+
+    .callout {
+      background: rgba(201,168,76,0.08);
+      border: 1px solid rgba(201,168,76,0.2);
+      border-left: 3px solid var(--accent);
+      border-radius: 6px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+      color: #d4c68a;
+    }
+    .callout.purple {
+      background: rgba(124,58,237,0.08);
+      border-color: rgba(124,58,237,0.3);
+      border-left-color: var(--accent2);
+      color: #b8a0f0;
+    }
+    .callout.teal {
+      background: rgba(13,148,136,0.08);
+      border-color: rgba(13,148,136,0.3);
+      border-left-color: var(--teal);
+      color: #7dd3cc;
+    }
+
+    .phase-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin: 16px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .phase-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 3px; height: 100%;
+      background: var(--accent);
+    }
+    .phase-card.purple::before { background: var(--accent2); }
+    .phase-card.teal::before { background: var(--teal); }
+    .phase-card.green::before { background: var(--green); }
+    .phase-card.blue::before { background: var(--blue); }
+
+    .phase-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .phase-badge {
+      background: rgba(201,168,76,0.15);
+      color: var(--accent);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .phase-badge.purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .phase-badge.teal { background: rgba(13,148,136,0.15); color: #5eead4; }
+    .phase-badge.green { background: rgba(34,197,94,0.15); color: #86efac; }
+    .phase-badge.blue { background: rgba(59,130,246,0.15); color: #93c5fd; }
+
+    .phase-title { font-size: 16px; font-weight: 700; }
+    .phase-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+    th {
+      background: rgba(255,255,255,0.04);
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      color: #b0b0c8;
+      vertical-align: top;
+    }
+    td strong { color: var(--text); }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .checklist {
+      list-style: none;
+      margin: 12px 0;
+    }
+    .checklist li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 6px 0;
+      font-size: 13px;
+      color: #b0b0c8;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li::before {
+      content: '○';
+      color: var(--muted);
+      flex-shrink: 0;
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .form-field {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 10px 0;
+    }
+    .form-field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+    .form-field p {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 8px;
+    }
+    .form-field .how {
+      font-size: 11px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 4px;
+      padding: 8px 12px;
+      color: var(--muted);
+      border-left: 2px solid var(--accent2);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.3px;
+    }
+    .tag.gold { background: rgba(201,168,76,0.15); color: var(--accent); }
+    .tag.purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .tag.green { background: rgba(34,197,94,0.15); color: #86efac; }
+    .tag.red { background: rgba(239,68,68,0.15); color: #fca5a5; }
+
+    .map-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 12px 0;
+    }
+    .map-cell {
+      background: var(--surface);
+      padding: 12px 14px;
+      font-size: 12px;
+    }
+    .map-cell .label { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .map-cell .value { color: var(--text); font-size: 13px; }
+
+    code {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Consolas', monospace;
+      font-size: 12px;
+      color: #7dd3cc;
+    }
+    pre {
+      background: #0d0d1a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      font-size: 12px;
+      color: #a0c4c0;
+      line-height: 1.8;
+    }
+
+    .timeline {
+      position: relative;
+      padding-left: 28px;
+      margin: 16px 0;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 8px; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--border);
+    }
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: -24px;
+      top: 6px;
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: 2px solid var(--bg);
+    }
+    .timeline-item h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .timeline-item p {
+      font-size: 12px;
+      color: var(--muted);
+      margin: 4px 0 0;
+    }
+
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .cost-row:last-child { border-bottom: none; }
+    .cost-row .service { color: var(--text); }
+    .cost-row .detail { color: var(--muted); font-size: 11px; }
+    .cost-row .price { color: var(--accent); font-weight: 700; font-family: monospace; }
+    .cost-total {
+      background: rgba(201,168,76,0.1);
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 100%; height: auto; position: relative; }
+      .main { margin-left: 0; }
+      .content { padding: 24px 20px; }
+      .header { padding: 20px 24px; }
+      .map-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <h2>Oráculo</h2>
+    <p>Sistema de Duplicação White-Label</p>
+  </div>
+
+  <div class="nav-section">Visão Geral</div>
+  <a class="nav-link active" onclick="show('overview')"><span class="dot"></span>O que é o sistema</a>
+  <a class="nav-link" onclick="show('arquitetura')"><span class="dot"></span>Arquitetura técnica</a>
+  <a class="nav-link" onclick="show('custos')"><span class="dot"></span>Custos por cliente</a>
+
+  <div class="nav-section">Processo</div>
+  <a class="nav-link" onclick="show('fase0')"><span class="dot"></span>Fase 0 — Pré-venda</a>
+  <a class="nav-link" onclick="show('fase1')"><span class="dot"></span>Fase 1 — Onboarding</a>
+  <a class="nav-link" onclick="show('fase2')"><span class="dot"></span>Fase 2 — Transplante</a>
+  <a class="nav-link" onclick="show('fase3')"><span class="dot"></span>Fase 3 — Calibração</a>
+  <a class="nav-link" onclick="show('fase4')"><span class="dot"></span>Fase 4 — Infra Técnica</a>
+  <a class="nav-link" onclick="show('fase5')"><span class="dot"></span>Fase 5 — Volume Inicial</a>
+  <a class="nav-link" onclick="show('fase6')"><span class="dot"></span>Fase 6 — Entrega</a>
+
+  <div class="nav-section">Referência</div>
+  <a class="nav-link" onclick="show('onboarding')"><span class="dot"></span>Formulário de Onboarding</a>
+  <a class="nav-link" onclick="show('mapa')"><span class="dot"></span>Mapa Onboarding → Código</a>
+  <a class="nav-link" onclick="show('bloqueadores')"><span class="dot"></span>Bloqueadores comuns</a>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="header">
+    <h1>Oráculo de Conteúdo — <span>Playbook de Duplicação</span></h1>
+    <p>White-label · Onboarding → Entrega em 5–7 dias úteis · Versão 1.0</p>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════════════════ OVERVIEW -->
+    <div id="overview" class="section active">
+      <h2>🧠 O que é o Sistema Oráculo</h2>
+
+      <div class="callout">
+        O Oráculo é uma <strong>fábrica autônoma de conteúdo para Instagram</strong>, movida por IA, que transforma um tema em um carrossel completo de 10 slides ou em um Reel de vídeo — com copy viral, imagens cinematográficas, narração, trilha e publicação automática.
+      </div>
+
+      <h3>O que ele produz</h3>
+      <table>
+        <thead><tr><th>Formato</th><th>Composição</th><th>Publicação</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Carrossel</strong></td><td>10 slides (1080×1350px), copy Método Jordânico, imagens IA por slide</td><td>Automática via Meta API</td></tr>
+          <tr><td><strong>Reel de Vídeo</strong></td><td>7 cenas × (voz + efeito sonoro + vídeo IA + trilha de fundo)</td><td>Manual (montagem final)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>A cadeia de agentes de IA</h3>
+      <pre><code>TEMA (qualquer assunto relevante ao nicho)
+    ↓
+[Copywriter IA]       → escreve a narrativa com arco emocional (GPT-4o)
+    ↓
+[Humanizer]           → transforma copy genérica em voz da marca
+    ↓
+[Revisor/Oráculo]     → pontua e aprova pelo critério viral (5 critérios)
+    ↓
+[Canalizador Visual]  → decide layout e âncora visual por slide
+    ↓
+[Diretor Artístico]   → gera imagem por slide via OpenAI gpt-image-2
+    ↓
+[Compositor]          → monta slide final com texto + imagem
+    ↓
+[Publisher]           → sobe para ImgBB e publica no Instagram via Meta API</code></pre>
+
+      <h3>O que diferencia cada instalação</h3>
+      <div class="callout purple">
+        <strong>O motor (código) é idêntico para todos os clientes.</strong><br>
+        O que muda é a alma — arquivos de identidade reescritos para cada nicho, voz e produto.
+      </div>
+
+      <table>
+        <thead><tr><th>Componente</th><th>@afonteoculta</th><th>Ex: Saúde Funcional</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Nicho</strong></td><td>Espiritualidade, epigenética</td><td>Medicina integrativa</td></tr>
+          <tr><td><strong>Praças</strong></td><td>MENTE / CORPO / SISTEMA / ESPÍRITO / ALAVANCA</td><td>INTESTINO / HORMÔNIOS / ESTRESSE / SONO / ENERGIA</td></tr>
+          <tr><td><strong>Produto CTA</strong></td><td>Tecnologia Sonora / Desbloqueio Neural</td><td>Protocolo de Detox / Consulta</td></tr>
+          <tr><td><strong>Palavra CTA</strong></td><td>COMENTE FONTE</td><td>COMENTE SAÚDE</td></tr>
+          <tr><td><strong>Paleta</strong></td><td>Violeta, dourado, teal</td><td>Verde, âmbar, branco</td></tr>
+          <tr><td><strong>Humanizer</strong></td><td>Voz iniciática, densa</td><td>Voz clínica-empática</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ ARQUITETURA -->
+    <div id="arquitetura" class="section">
+      <h2>⚙️ Arquitetura Técnica</h2>
+
+      <h3>Estrutura de pastas</h3>
+      <pre><code>oraculo-[cliente]/
+├── core/
+│   ├── agentes/                  ← Agentes de IA (copywriter, voz, imagem…)
+│   └── util/                     ← Motor visual (compose_util_v3.py)
+├── infra/
+│   ├── uploaders/                ← ImgBB, B2, Catbox
+│   ├── social/                   ← Instagram publisher + Notion
+│   └── video/                    ← Kling, Seedance (vídeo IA)
+├── processos/                    ← Pipelines orquestrados
+├── agents/                       ← Identidade em Markdown (ALMA DO SISTEMA)
+│   ├── humanizer.md
+│   ├── oraculo-revisor.md
+│   ├── canalizador-visual.md
+│   └── visual-dna.md
+├── campanhas/reels/[nome]/       ← Assets por cena
+├── dashboard/                    ← Interface web (Node.js + HTML)
+└── .env                          ← Todas as credenciais</code></pre>
+
+      <h3>As três camadas de configuração</h3>
+      <table>
+        <thead><tr><th>Camada</th><th>O que é</th><th>Onde fica</th><th>Dificuldade</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Credenciais</strong></td><td>Chaves de API, tokens</td><td><code>.env</code></td><td><span class="tag green">Baixa</span></td></tr>
+          <tr><td><strong>Identidade</strong></td><td>Voz, visual DNA, nicho</td><td><code>agents/*.md</code></td><td><span class="tag gold">Média</span></td></tr>
+          <tr><td><strong>Método Editorial</strong></td><td>Arco narrativo, presets</td><td><code>diretor_artistico.py</code></td><td><span class="tag red">Alta</span></td></tr>
+        </tbody>
+      </table>
+
+      <h3>O que é configurável (trocar e pronto)</h3>
+      <ul class="checklist">
+        <li>Todas as chaves de API no <code>.env</code></li>
+        <li>ID da conta do Instagram e da Página do Facebook</li>
+        <li>ID da voz no ElevenLabs</li>
+        <li>Watermark <code>@nomedaconta</code> no compose_util</li>
+        <li>Palavra do CTA (ex: "COMENTE FONTE" → "COMENTE CURA")</li>
+      </ul>
+
+      <h3>O que precisa ser REESCRITO para cada cliente</h3>
+      <ul class="checklist">
+        <li><code>agents/humanizer.md</code> → voz da marca</li>
+        <li><code>agents/oraculo-revisor.md</code> → critérios alinhados ao nicho</li>
+        <li><code>agents/canalizador-visual.md</code> → paleta, presets, referências</li>
+        <li><code>agents/visual-dna.md</code> → identidade visual</li>
+        <li><code>core/agentes/diretor_artistico.py</code> → PRESET_ATMOSPHERE, SLIDE_ENERGY</li>
+        <li><code>core/agentes/copywriter_reels.py</code> → SYSTEM_PROMPT (nicho + regras)</li>
+        <li><code>CLAUDE.md</code> → instruções operacionais do projeto</li>
+      </ul>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ CUSTOS -->
+    <div id="custos" class="section">
+      <h2>💰 Custos Mensais por Cliente</h2>
+
+      <div class="callout teal">
+        Estes são custos de API — não incluem a mensalidade do sistema contratada com você.
+      </div>
+
+      <h3>Plano Carrosséis (3 posts/semana)</h3>
+      <div class="phase-card">
+        <div class="cost-row"><span class="service">OpenAI gpt-image-2</span><span class="detail">~90 imagens/mês</span><span class="price">$6–8</span></div>
+        <div class="cost-row"><span class="service">OpenAI GPT-4o (copy)</span><span class="detail">~90 roteiros/mês</span><span class="price">$2–4</span></div>
+        <div class="cost-row"><span class="service">ImgBB (hosting)</span><span class="detail">Gratuito</span><span class="price">$0</span></div>
+        <div class="cost-row"><span class="service">Meta API</span><span class="detail">Gratuito</span><span class="price">$0</span></div>
+        <div class="cost-row cost-total"><span class="service"><strong>TOTAL</strong></span><span class="detail">Só carrosséis</span><span class="price">~$8–12/mês</span></div>
+      </div>
+
+      <h3>Plano Carrosséis + Reels</h3>
+      <div class="phase-card">
+        <div class="cost-row"><span class="service">OpenAI (imagens + copy)</span><span class="detail">Como acima</span><span class="price">$8–12</span></div>
+        <div class="cost-row"><span class="service">ElevenLabs Creator</span><span class="detail">Voz + SFX (~200 cenas)</span><span class="price">$22</span></div>
+        <div class="cost-row"><span class="service">fal.ai Kling Pro</span><span class="detail">~30 vídeos de 5s</span><span class="price">$60–90</span></div>
+        <div class="cost-row cost-total"><span class="service"><strong>TOTAL</strong></span><span class="detail">Carrosséis + Reels</span><span class="price">~$90–124/mês</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 0 -->
+    <div id="fase0" class="section">
+      <h2>🔍 Fase 0 — Pré-Venda</h2>
+      <div class="callout">
+        Antes de fechar, verificar se o cliente tem a <strong>estrutura mínima</strong> para o sistema funcionar. Vender sem isso cria bloqueadores na fase 4.
+      </div>
+
+      <h3>Perguntas de qualificação</h3>
+      <ul class="checklist">
+        <li>Você tem uma conta do Instagram <strong>profissional</strong> ativa (mín. 90 dias)?</li>
+        <li>Você tem uma <strong>Página do Facebook</strong> vinculada ao Instagram?</li>
+        <li>Você já tem acesso ao <strong>Meta Business Suite</strong>?</li>
+        <li>Você tem um <strong>produto ou serviço</strong> claro que o conteúdo vai promover?</li>
+        <li>Você tem um <strong>nicho específico</strong> definido?</li>
+      </ul>
+
+      <div class="callout purple">
+        Se o cliente não tiver a estrutura Meta configurada: incluir no escopo como serviço adicional ou sinalizar como bloqueador antes de fechar.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 1 -->
+    <div id="fase1" class="section">
+      <h2>📋 Fase 1 — Onboarding</h2>
+      <div class="callout">
+        Enviar formulário Notion ao cliente. Prazo: 48h para devolver preenchido. Se não preencher corretamente, agendar call de 1h para preencher junto.
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-header">
+          <span class="phase-badge">Módulo A</span>
+          <div>
+            <div class="phase-title">Credenciais Técnicas</div>
+            <div class="phase-meta">Sem isso o sistema literalmente não roda</div>
+          </div>
+        </div>
+        <ul class="checklist">
+          <li>OpenAI API Key (sk-proj-...)</li>
+          <li>Meta System User Token (não expira — via Meta Business Suite)</li>
+          <li>Instagram Account ID (numérico)</li>
+          <li>Facebook Page ID (numérico)</li>
+          <li>ImgBB API Key (gratuito)</li>
+          <li>ElevenLabs API Key + Voice ID <span class="tag gold">se Reels</span></li>
+          <li>fal.ai API Key <span class="tag gold">se Reels com vídeo IA</span></li>
+          <li>Notion Token + Database ID <span class="tag purple">se grade editorial</span></li>
+        </ul>
+      </div>
+
+      <div class="phase-card purple">
+        <div class="phase-header">
+          <span class="phase-badge purple">Módulo B</span>
+          <div>
+            <div class="phase-title">Alma da Marca</div>
+            <div class="phase-meta">O mais importante — define tudo que o sistema vai gerar</div>
+          </div>
+        </div>
+        <ul class="checklist">
+          <li>Nome da marca, handle do Instagram, nicho específico</li>
+          <li>Produto/serviço + como é entregue + palavra do CTA</li>
+          <li>Público: maior dor, maior desejo, o que já tentou, linguagem real</li>
+          <li>O Inimigo: qual sistema falhou + evidência verificável</li>
+          <li>As 5 Praças de Conteúdo (eixos temáticos)</li>
+          <li>Voz da marca: 3 adjetivos + exemplos reais de texto</li>
+        </ul>
+      </div>
+
+      <div class="phase-card teal">
+        <div class="phase-header">
+          <span class="phase-badge teal">Módulo C</span>
+          <div>
+            <div class="phase-title">DNA Visual</div>
+            <div class="phase-meta">Define a estética das imagens geradas</div>
+          </div>
+        </div>
+        <ul class="checklist">
+          <li>3 contas Instagram com visual admirado</li>
+          <li>Paleta de cores (hex ou descrição)</li>
+          <li>Estilo visual: Gravura / Pintura / Fotorrealista / Cinematográfico</li>
+          <li>Paleta emocional: Violeta / Dourado / Teal / Crimson / Índigo</li>
+          <li>Logotipo/watermark para os slides (arquivo)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 2 -->
+    <div id="fase2" class="section">
+      <h2>🧬 Fase 2 — Transplante de Identidade</h2>
+      <div class="callout purple">
+        Esta é a fase mais crítica. Não é troca de variáveis — é reescrita guiada pelas respostas do onboarding. Aqui é onde a alma do cliente entra no sistema.
+      </div>
+
+      <h3>Checklist de transplante</h3>
+
+      <div class="phase-card">
+        <div class="phase-header"><span class="phase-badge">1º</span><div class="phase-title">Credenciais</div></div>
+        <ul class="checklist">
+          <li>Preencher <code>.env</code> com todas as credenciais do Módulo A</li>
+          <li>Testar OpenAI: <code>python -c "from openai import OpenAI; print('OK')"</code></li>
+          <li>Testar Meta API: confirmar resposta 200 com o token</li>
+        </ul>
+      </div>
+
+      <div class="phase-card purple">
+        <div class="phase-header"><span class="phase-badge purple">2º</span><div class="phase-title">agents/humanizer.md</div></div>
+        <ul class="checklist">
+          <li>Reescrever "O que a voz É" com os 3 adjetivos do cliente (B6)</li>
+          <li>Reescrever "O que NÃO é" com anti-padrões do nicho específico</li>
+          <li>Criar 2 exemplos de before/after com linguagem REAL do público (B3)</li>
+          <li>Confirmar com cliente: "isso soa como você fala?"</li>
+        </ul>
+      </div>
+
+      <div class="phase-card purple">
+        <div class="phase-header"><span class="phase-badge purple">3º</span><div class="phase-title">agents/oraculo-revisor.md</div></div>
+        <ul class="checklist">
+          <li>Critério 3: reescrever inimigo com dados do cliente (B4)</li>
+          <li>Critério 4: reescrever "Comente [PALAVRA] se..." com dor específica</li>
+          <li>Substituir exemplos de espiritualidade por exemplos do nicho</li>
+        </ul>
+      </div>
+
+      <div class="phase-card teal">
+        <div class="phase-header"><span class="phase-badge teal">4º</span><div class="phase-title">agents/visual-dna.md + canalizador-visual.md</div></div>
+        <ul class="checklist">
+          <li>Paleta: substituir violeta/teal/ouro pelas cores do cliente (C2)</li>
+          <li>Referências artísticas: ajustar para o estilo do cliente (C1)</li>
+          <li>Tabela cor × estado emocional: reconstruir com paleta do cliente</li>
+        </ul>
+      </div>
+
+      <div class="phase-card teal">
+        <div class="phase-header"><span class="phase-badge teal">5º</span><div class="phase-title">core/agentes/diretor_artistico.py</div></div>
+        <ul class="checklist">
+          <li>PRESET_ATMOSPHERE: reescrever para o estilo visual do cliente</li>
+          <li>SLIDE_ENERGY: recalibrar energia por estado emocional no nicho</li>
+          <li>Watermark: mudar para <code>@conta_do_cliente</code></li>
+        </ul>
+      </div>
+
+      <div class="phase-card">
+        <div class="phase-header"><span class="phase-badge">6º</span><div class="phase-title">CLAUDE.md + planner.py</div></div>
+        <ul class="checklist">
+          <li>CLAUDE.md: atualizar nicho, produto, CTA, praças, handle</li>
+          <li>planner.py: substituir PRACAS pelos 5 pilares do cliente (B5)</li>
+          <li>copywriter/diretor de cena: reescrever SYSTEM_PROMPT com nicho + tom</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 3 -->
+    <div id="fase3" class="section">
+      <h2>🎯 Fase 3 — Calibração</h2>
+      <div class="callout">
+        Gerar o <strong>primeiro carrossel real</strong> e validar com o cliente antes de escalar. Nunca pular esta etapa.
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-item">
+          <h4>Escolher tema de calibração</h4>
+          <p>Relacionado à Praça mais forte · Conectado à dor principal · Sem polêmica · Fácil de avaliar</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Gerar carrossel completo</h4>
+          <p>10 slides · Revisar copy e imagens antes de enviar</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Enviar para aprovação com roteiro de feedback</h4>
+          <p>"O texto soa como você?" · "A imagem combina?" · "O CTA te faria comentar?"</p>
+        </div>
+        <div class="timeline-item">
+          <h4>Ajustar com base no feedback</h4>
+          <p>Máximo 2 rodadas. Se precisar de 3, agendar call de 30min.</p>
+        </div>
+      </div>
+
+      <h3>Mapa de feedback → ajuste</h3>
+      <table>
+        <thead><tr><th>Feedback do cliente</th><th>Onde ajustar</th></tr></thead>
+        <tbody>
+          <tr><td>"Texto não soa como eu"</td><td><code>agents/humanizer.md</code></td></tr>
+          <tr><td>"Imagem muito genérica"</td><td><code>agents/visual-dna.md</code> + <code>diretor_artistico.py</code></td></tr>
+          <tr><td>"Paleta não combina"</td><td><code>agents/canalizador-visual.md</code> + preset</td></tr>
+          <tr><td>"CTA fraco"</td><td><code>agents/oraculo-revisor.md</code> Critério 4</td></tr>
+          <tr><td>"Arco não convenceu"</td><td><code>agents/oraculo-revisor.md</code> Critério 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 4 -->
+    <div id="fase4" class="section">
+      <h2>🔧 Fase 4 — Infraestrutura Técnica</h2>
+
+      <h3>Setup do ambiente</h3>
+      <ul class="checklist">
+        <li>Python 3.10+ instalado</li>
+        <li>Node.js 18+ instalado</li>
+        <li><code>pip install -r requirements.txt</code></li>
+        <li><code>npm install</code> (na pasta dashboard/)</li>
+        <li><code>.env</code> preenchido e testado</li>
+      </ul>
+
+      <h3>Teste de APIs</h3>
+      <ul class="checklist">
+        <li>OpenAI: <code>python scripts/test_openai.py</code></li>
+        <li>Meta: <code>python scripts/test_meta.py</code></li>
+        <li>ImgBB: <code>python scripts/test_imgbb.py</code></li>
+        <li>ElevenLabs (se Reels): <code>python scripts/test_elevenlabs.py</code></li>
+        <li>fal.ai (se Reels): <code>python scripts/test_falai.py</code></li>
+      </ul>
+
+      <h3>Teste de publicação completo</h3>
+      <ul class="checklist">
+        <li>Gerar 1 carrossel completo (10 slides)</li>
+        <li>Confirmar slides salvos em Desktop/carrossel-[slug]/</li>
+        <li>Abrir dashboard → carrossel aparece na lista</li>
+        <li>Clicar "INSTAGRAM" → publicação inicia sem erro</li>
+        <li>ImgBB recebeu as imagens (verificar painel ImgBB)</li>
+        <li>Meta API criou os containers (sem erro 400)</li>
+        <li>Post visível no perfil do Instagram</li>
+      </ul>
+
+      <h3>Erros comuns na publicação</h3>
+      <table>
+        <thead><tr><th>Erro</th><th>Causa</th><th>Solução</th></tr></thead>
+        <tbody>
+          <tr><td>Meta API 400</td><td>Token sem permissões</td><td>Regenerar System User Token com permissões corretas</td></tr>
+          <tr><td>Erro ImgBB</td><td>Chave errada ou imagem > 32MB</td><td>Verificar chave; reduzir qualidade para 85</td></tr>
+          <tr><td>FINISHED not reached</td><td>Meta API demorou</td><td>Aumentar timeout de polling para 10min</td></tr>
+          <tr><td>Post não aparece</td><td>Conta pessoal</td><td>Converter para conta profissional no Instagram</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 5 -->
+    <div id="fase5" class="section">
+      <h2>📦 Fase 5 — Volume Inicial</h2>
+      <div class="callout">
+        Entregar o cliente pronto para operar <strong>na primeira semana</strong> sem precisar gerar do zero.
+      </div>
+
+      <h3>O que precisa estar pronto na entrega</h3>
+      <ul class="checklist">
+        <li>5 carrosséis prontos — 1 por Praça (temas definidos com o cliente)</li>
+        <li>Grade editorial da semana 1 no Notion (se incluso)</li>
+        <li>1 Reel completo (7 cenas) se escopo incluir Reels</li>
+        <li>Arquivos organizados em <code>campanhas/reels/[nome]/cena_XX/</code></li>
+      </ul>
+
+      <h3>Rodando o planejador editorial</h3>
+      <pre><code># Ver grade sem criar no Notion
+python core/agentes/planner.py --dry-run
+
+# Criar no Notion
+python core/agentes/planner.py --dias 30</code></pre>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ FASE 6 -->
+    <div id="fase6" class="section">
+      <h2>🎓 Fase 6 — Entrega</h2>
+
+      <h3>Pacote de entrega</h3>
+      <ul class="checklist">
+        <li>README-[CLIENTE].md com instruções operacionais simples</li>
+        <li>Documento das Praças + 25 temas (5 por Praça) para os próximos meses</li>
+        <li>Vídeo 1: "Como gerar um carrossel do zero"</li>
+        <li>Vídeo 2: "Como usar o dashboard e publicar"</li>
+        <li>Vídeo 3: "Como calibrar a qualidade do conteúdo"</li>
+        <li>Vídeo 4: "Como gerar um Reel" (se no escopo)</li>
+        <li>GitHub privado criado para o cliente</li>
+        <li>Canal de suporte WhatsApp ou Slack</li>
+      </ul>
+
+      <h3>Roteiro da sessão de handover (1h ao vivo)</h3>
+      <div class="phase-card green">
+        <ul class="checklist">
+          <li><strong>0:00–0:05</strong> — Apresentar o que foi construído</li>
+          <li><strong>0:05–0:10</strong> — Mostrar o dashboard ao vivo</li>
+          <li><strong>0:10–0:25</strong> — Gerar 1 carrossel ao vivo na frente do cliente</li>
+          <li><strong>0:25–0:35</strong> — Publicar 1 carrossel ao vivo</li>
+          <li><strong>0:35–0:45</strong> — Mostrar os vídeos de documentação</li>
+          <li><strong>0:45–1:00</strong> — Perguntas abertas + próximos passos</li>
+        </ul>
+      </div>
+
+      <h3>Resumo de tempo por fase</h3>
+      <table>
+        <thead><tr><th>Fase</th><th>Engenheiro</th><th>Cliente</th><th>Bloqueia</th></tr></thead>
+        <tbody>
+          <tr><td>Pré-venda</td><td>1h</td><td>30min</td><td>Cliente</td></tr>
+          <tr><td>Onboarding</td><td>2h</td><td>3–4h</td><td>Cliente</td></tr>
+          <tr><td>Transplante</td><td>4–6h</td><td>—</td><td>Engenheiro</td></tr>
+          <tr><td>Calibração</td><td>2h</td><td>1h</td><td>Cliente</td></tr>
+          <tr><td>Infraestrutura</td><td>2h</td><td>—</td><td>Engenheiro</td></tr>
+          <tr><td>Volume inicial</td><td>3h</td><td>1h</td><td>Compartilhado</td></tr>
+          <tr><td>Entrega</td><td>2h</td><td>1h</td><td>Engenheiro</td></tr>
+          <tr><td><strong>TOTAL</strong></td><td><strong>16–18h</strong></td><td><strong>6–7h</strong></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ ONBOARDING FORM -->
+    <div id="onboarding" class="section">
+      <h2>📝 Formulário Completo de Onboarding</h2>
+      <div class="callout">
+        Este é o template completo para criar no Typeform / Notion Form / Google Forms. Cada campo tem instrução embutida para o cliente não precisar perguntar como preencher.
+      </div>
+
+      <h3>Módulo A — Credenciais</h3>
+
+      <div class="form-field">
+        <label>A1 — OpenAI API Key</label>
+        <p>Sua chave começa com "sk-proj-..."</p>
+        <div class="how">
+          1. Acesse: platform.openai.com/api-keys<br>
+          2. Clique em "Create new secret key" → Nome: "oraculo-[seu-nome]"<br>
+          3. Copie — ela só aparece uma vez<br>
+          4. Configure um limite em platform.openai.com/settings/billing (recomendo $30/mês)
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>A2 — Meta System User Token</label>
+        <p>Este token nunca expira. NÃO é o token do Graph API Explorer.</p>
+        <div class="how">
+          1. business.facebook.com → Configurações → Usuários do Sistema<br>
+          2. Crie um "Usuário do sistema administrador"<br>
+          3. Gere token com permissões: instagram_content_publish, instagram_manage_insights, pages_read_engagement
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>A3 — Instagram Account ID (numérico)</label>
+        <p>Não é o @usuario — é um número de 17 dígitos.</p>
+        <div class="how">
+          1. developers.facebook.com/tools/explorer<br>
+          2. Digite: me/accounts → Submit<br>
+          3. Encontre sua conta Instagram → copie o "id"
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label>A4 — ImgBB API Key</label>
+        <p>Serviço gratuito para hospedar imagens.</p>
+        <div class="how">imgbb.com → crie conta → api.imgbb.com → copie a chave</div>
+      </div>
+
+      <div class="form-field">
+        <label>A5 — ElevenLabs API Key + Voice ID <span class="tag gold">Se Reels</span></label>
+        <div class="how">elevenlabs.io → avatar → Profile → API Key · Voice ID: Voice Library → clique na voz → ID na URL</div>
+      </div>
+
+      <div class="form-field">
+        <label>A6 — fal.ai API Key <span class="tag gold">Se Reels com vídeo IA</span></label>
+        <div class="how">fal.ai/dashboard/keys → crie chave · Adicione créditos antes: fal.ai/dashboard/billing (recomendo $20)</div>
+      </div>
+
+      <h3>Módulo B — Alma da Marca</h3>
+
+      <div class="form-field">
+        <label>B1 — Identidade Básica</label>
+        <p>Nome da marca · Handle (@) · Nicho específico · Sub-nicho · Seguidores atuais · Taxa de engajamento</p>
+      </div>
+
+      <div class="form-field">
+        <label>B2 — O Produto</label>
+        <p>Nome · O que faz (explicar como para um amigo) · Formato de entrega · Preço aproximado · Como o seguidor acessa · Palavra do CTA</p>
+      </div>
+
+      <div class="form-field">
+        <label>B3 — O Público</label>
+        <p>Maior dor em 1 frase · Maior desejo específico · O que já tentou e falhou · Linguagem REAL do público (como ele descreveria o problema para um amigo — palavras reais)</p>
+        <div class="how">⚠️ Este campo é o mais importante. Se o cliente preencher de forma vaga, agendar call para aprofundar.</div>
+      </div>
+
+      <div class="form-field">
+        <label>B4 — O Inimigo</label>
+        <p>Qual sistema falhou com seu público? · Evidência verificável (fato, ano, dado) · Como você chama esse antagonista no seu conteúdo</p>
+      </div>
+
+      <div class="form-field">
+        <label>B5 — As 5 Praças de Conteúdo</label>
+        <p>Os 5 pilares temáticos que o sistema vai rotacionar. Podem usar os padrões (MENTE/CORPO/SISTEMA/ESPÍRITO/ALAVANCA) ou renomear para o nicho.</p>
+      </div>
+
+      <div class="form-field">
+        <label>B6 — Voz da Marca</label>
+        <p>3 adjetivos do tom · Texto que você escreveu e amou · Referência de outro criador · O que você NUNCA diria · Estilo: Técnico / Espiritual / Misto / Narrativo</p>
+      </div>
+
+      <h3>Módulo C — DNA Visual</h3>
+
+      <div class="form-field">
+        <label>C1 — Referências Visuais</label>
+        <p>3 contas Instagram com visual admirado · O que especificamente você admira nelas</p>
+      </div>
+
+      <div class="form-field">
+        <label>C2 — Paleta e Estilo</label>
+        <p>Cores (hex ou descrição) · Logotipo/watermark (arquivo) · Estilo: Gravura / Pintura / Fotorrealista / Cinematográfico · Paleta emocional: Violeta / Dourado / Teal / Crimson / Índigo</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ MAPA -->
+    <div id="mapa" class="section">
+      <h2>🗺️ Mapa Onboarding → Código</h2>
+      <div class="callout teal">
+        Cada resposta do formulário tem um <strong>destino direto</strong> em um arquivo do sistema. Não existe campo sem uso.
+      </div>
+
+      <table>
+        <thead><tr><th>Resposta do Onboarding</th><th>Arquivo</th><th>O que muda</th></tr></thead>
+        <tbody>
+          <tr><td>B6 — Voz + adjetivos</td><td><code>agents/humanizer.md</code></td><td>Identidade completa do Humanizer</td></tr>
+          <tr><td>B3 — Linguagem real do público</td><td><code>agents/humanizer.md</code></td><td>Exemplos de before/after</td></tr>
+          <tr><td>B4 — O Inimigo + evidência</td><td><code>agents/oraculo-revisor.md</code></td><td>Critério 3 (Raiva Coletiva)</td></tr>
+          <tr><td>B2 — Produto + CTA</td><td><code>agents/oraculo-revisor.md</code></td><td>Critério 4 (Comente X se…)</td></tr>
+          <tr><td>C1 + C2 — Visual + paleta</td><td><code>agents/visual-dna.md</code></td><td>DNA visual completo</td></tr>
+          <tr><td>C2 — Paleta emocional</td><td><code>agents/canalizador-visual.md</code></td><td>Tabela cor × estado emocional</td></tr>
+          <tr><td>B5 — Praças</td><td><code>core/agentes/planner.py</code></td><td>PRACAS + rotação editorial</td></tr>
+          <tr><td>B3 — Tom + público</td><td><code>core/agentes/copywriter_reels.py</code></td><td>SYSTEM_PROMPT completo</td></tr>
+          <tr><td>C2 — Atmosfera visual</td><td><code>core/agentes/diretor_artistico.py</code></td><td>PRESET_ATMOSPHERE + SLIDE_ENERGY</td></tr>
+          <tr><td>A — Todos os tokens</td><td><code>.env</code></td><td>Todas as credenciais</td></tr>
+          <tr><td>Tudo</td><td><code>CLAUDE.md</code></td><td>Contexto operacional do projeto</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ BLOQUEADORES -->
+    <div id="bloqueadores" class="section">
+      <h2>🚨 Bloqueadores Comuns e Soluções</h2>
+
+      <table>
+        <thead><tr><th>Bloqueador</th><th>Causa provável</th><th>Solução</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>Token Meta inválido ou expira</strong></td>
+            <td>Gerou token de usuário comum (expira em 60 dias) em vez de System User Token</td>
+            <td>Guiar via call de 30min no Meta Business Suite — criar Usuário do Sistema</td>
+          </tr>
+          <tr>
+            <td><strong>Conta Instagram não é profissional</strong></td>
+            <td>Conta pessoal sem API de conteúdo habilitada</td>
+            <td>Settings → Account → Switch to Professional Account</td>
+          </tr>
+          <tr>
+            <td><strong>ImgBB retorna erro</strong></td>
+            <td>Imagens muito grandes (&gt;32MB) ou chave errada</td>
+            <td>Reduzir quality=85 no compose_util · Verificar chave</td>
+          </tr>
+          <tr>
+            <td><strong>fal.ai sem créditos no meio do pipeline</strong></td>
+            <td>Saldo zerou durante geração de Reel</td>
+            <td>Verificar saldo antes de iniciar · Cada vídeo 5s ≈ $0.28–0.35</td>
+          </tr>
+          <tr>
+            <td><strong>Conteúdo gerado é genérico</strong></td>
+            <td>Onboarding preenchido de forma superficial</td>
+            <td>Revisitar B3 (público) e B6 (voz) — o problema quase sempre está na dor mal identificada</td>
+          </tr>
+          <tr>
+            <td><strong>Cliente aprova mas o conteúdo não engaja</strong></td>
+            <td>Identidade mal transplantada ou Praças erradas</td>
+            <td>Analisar 3 posts mais virais do cliente e recalibrar humanizer + revisor</td>
+          </tr>
+          <tr>
+            <td><strong>Dashboard não abre</strong></td>
+            <td>Caminho relativo errado no server.js</td>
+            <td>Verificar working directory ao iniciar · Usar caminho absoluto no runtimeArgs</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout purple" style="margin-top: 32px;">
+        <strong>Regra de ouro:</strong> 80% dos problemas pós-entrega têm origem no Módulo B do onboarding — especialmente B3 (público) e B4 (inimigo). Se o cliente preencheu de forma genérica, o sistema vai gerar conteúdo genérico. A solução não é técnica — é aprofundar o onboarding.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function show(id) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    event.currentTarget.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+</script>
+</body>
+</html>

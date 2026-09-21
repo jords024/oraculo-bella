@@ -1,0 +1,6 @@
+/* frontend/src/css/biblioteca.css — Ponto de Entrada Modular de Estilos da Biblioteca */
+
+@import './biblioteca/gallery.css';
+@import './biblioteca/generated_gallery.css';
+@import './biblioteca/assistant_drawer.css';
+@import './biblioteca/assistant_chat.css';

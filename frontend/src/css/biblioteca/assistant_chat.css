@@ -1,0 +1,302 @@
+/* frontend/src/css/biblioteca/assistant_chat.css — Estilos de Mensagens, Chips e Onboarding do Assistente IA */
+
+/* ── Seção Imagens de Entrada ────────────────────────────────────────────── */
+.assistant-references-box {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08));
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.assistant-references-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--gold, #c9a84c);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.assistant-references-subtitle {
+  font-size: 11px;
+  color: var(--text-3, #a1a1aa);
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
+.assistant-chips-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.assistant-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(201, 168, 76, 0.12);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  padding: 3px 8px 3px 4px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.assistant-chip-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+}
+
+.assistant-chip-remove {
+  background: transparent;
+  border: none;
+  color: var(--gold, #c9a84c);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+}
+
+.assistant-chip-remove:hover {
+  color: #ef4444;
+}
+
+/* ── Mensagens do Chat ──────────────────────────────────────────────────── */
+.assistant-chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-bubble-user {
+  align-self: flex-end;
+  background: #c9a84c;
+  color: #09090b;
+  padding: 12px 16px;
+  border-radius: 16px 16px 4px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  max-width: 88%;
+  word-break: break-word;
+  box-shadow: 0 4px 12px rgba(201, 168, 76, 0.2);
+}
+
+.chat-bubble-ai-card {
+  align-self: flex-start;
+  background: #141416;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 12px;
+  padding: 12px;
+  max-width: 95%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.chat-ai-img-wrap {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #09090b;
+  aspect-ratio: 1 / 1;
+  cursor: pointer;
+}
+
+.chat-ai-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.chat-ai-prompt-box {
+  font-size: 11.5px;
+  color: #a1a1aa;
+  font-style: italic;
+  line-height: 1.45;
+  padding: 4px 2px;
+}
+
+.chat-ai-prompt-box strong {
+  color: var(--text-2, #d4d4d8);
+  font-style: normal;
+}
+
+.chat-ai-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.chat-ai-action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  color: var(--text-2, #d4d4d8);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s;
+}
+
+.chat-ai-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chat-ai-action-btn.btn-save-lib {
+  background: rgba(201, 168, 76, 0.15);
+  border-color: rgba(201, 168, 76, 0.35);
+  color: var(--gold, #c9a84c);
+  font-weight: 600;
+}
+
+.chat-ai-action-btn.btn-save-lib:hover {
+  background: var(--gold, #c9a84c);
+  color: #09090b;
+}
+
+/* ── Welcome Guide & Onboarding no Chat ────────────────────────────────── */
+.chat-welcome-guide {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: fadeIn 0.3s ease;
+}
+
+.welcome-guide-header {
+  text-align: center;
+}
+
+.welcome-guide-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  filter: drop-shadow(0 2px 8px rgba(201, 168, 76, 0.4));
+}
+
+.welcome-guide-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.2px;
+}
+
+.welcome-guide-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3, #a1a1aa);
+  margin: 0;
+}
+
+.welcome-guide-features {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px 14px;
+}
+
+.welcome-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.welcome-feature-item strong {
+  display: block;
+  color: #f4f4f5;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.welcome-feature-item p {
+  color: var(--text-3, #a1a1aa);
+  margin: 0;
+}
+
+.feature-item-bullet {
+  font-size: 16px;
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
+.highlight-tag {
+  color: var(--gold, #c9a84c);
+  background: rgba(201, 168, 76, 0.12);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.welcome-guide-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.suggestions-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--gold, #c9a84c);
+}
+
+.suggestions-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestion-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(201, 168, 76, 0.2);
+  color: #e4e4e7;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestion-btn:hover {
+  background: rgba(201, 168, 76, 0.1);
+  border-color: rgba(201, 168, 76, 0.5);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+.suggestion-btn-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.suggestion-btn-text {
+  font-weight: 500;
+}

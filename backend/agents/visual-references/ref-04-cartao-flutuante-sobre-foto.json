@@ -1,0 +1,32 @@
+{
+  "ref_id": "ref-04-cartao-flutuante-sobre-foto",
+  "fonte": "Referência enviada pelo usuário (carrossel Nicole Holz, slide de lista com card azul)",
+  "papel_no_carrossel": "estrutura / lista (quando o conteúdo é enumerável)",
+  "layout_arquetipo": "cartao_flutuante_sobre_foto_desfocada",
+  "resumo": "Mesma estrutura-base da capa atual da Bella que o usuário rejeitou (card sólido sobre foto borrada) — mas executada de um jeito que funciona. As diferenças são o que importa aqui.",
+  "fundo": {
+    "tipo": "foto_desfocada_com_card_solido_por_cima",
+    "descricao": "Foto de ambiente (cortina, cadeira, luz quente) ainda legível e suave ao fundo; card azul sólido centralizado por cima, com sombra suave e padding generoso."
+  },
+  "textura": "o card tem sombra projetada suave (profundidade real), não é um retângulo 'colado' sem contexto de luz.",
+  "tipografia": {
+    "hierarquia": [
+      "título serifado branco com trecho em itálico dentro do card",
+      "lista com marcadores coloridos (bullets), não travessões",
+      "parágrafo de fechamento menor",
+      "assinatura/nome no rodapé do card"
+    ],
+    "principio": "o card se comporta como um objeto de anotação completo (título + lista + fechamento + assinatura), não como uma legenda genérica colada em cima de qualquer foto."
+  },
+  "motivos_decorativos": ["sombra suave sob o card", "bullets coloridos como único acento decorativo"],
+  "tratamento_de_foto": "a foto de fundo permanece visível e quente, nunca escurecida a ponto de virar apenas 'preto com blur' — ela ainda participa da composição.",
+  "paleta": "o azul do card É a cor de destaque recorrente em todo o carrossel (aparece também nos títulos de outros slides) — não é uma cor inventada só para este slide.",
+  "papel_no_fluxo": "reservado especificamente para conteúdo em lista/estrutura — o formato de card só aparece quando o conteúdo pede contenção, não em todo slide.",
+  "por_que_parece_intencional_e_nao_improvisado": "três fatores fazem esse card funcionar, e a ausência deles é exatamente o problema do card atual da Bella (ver ref-00-anti-padrao): (1) a cor do card já existe em outros pontos do carrossel, (2) a foto de fundo continua legível e com temperatura de luz quente, não apagada em preto, (3) o card carrega uma estrutura de conteúdo (lista) que justifica ser 'emoldurado' — não é usado como solução padrão para todo tipo de slide.",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "a cor do card deve sempre vir da paleta já usada em outro lugar do carrossel daquele tema, nunca uma cor nova isolada",
+    "usar o card flutuante só quando o conteúdo for lista, citação ou CTA — nunca como padrão automático de capa/gancho",
+    "a foto de fundo precisa manter luz/tom perceptível; se precisar escurecer para leitura, usar gradiente parcial, não um bloco opaco cobrindo tudo"
+  ],
+  "nao_copiar_literalmente": "não é para copiar 'card azul retangular' como novo padrão fixo — é para copiar a lógica: cor recorrente + foto ainda viva por trás + conteúdo que justifica o card."
+}

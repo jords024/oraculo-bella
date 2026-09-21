@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oraculo</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold:       #C9A84C;
+    --gold-light: #E8CC7A;
+    --gold-dim:   rgba(201,168,76,0.15);
+    --bg:         #080808;
+    --bg-card:    #0F0F0F;
+    --bg-mid:     #131313;
+    --text:       #EDE8DF;
+    --text-dim:   rgba(237,232,223,0.45);
+    --text-mid:   rgba(237,232,223,0.7);
+    --crimson:    #9B1C1C;
+    --serif:      'Cormorant Garamond', Georgia, serif;
+    --sans:       'Space Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    overflow: hidden;
+    width: 100vw; height: 100vh;
+  }
+
+  /* Noise grain */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; opacity: 0.35;
+  }
+
+  /* ── Deck ─────────────────────────────────── */
+  .deck {
+    position: relative;
+    width: 100vw; height: 100vh;
+  }
+
+  @media (min-width: 769px) {
+    .deck {
+      max-width: calc(100vh * 16 / 9);
+      max-height: calc(100vw * 9 / 16);
+      position: absolute; inset: 0; margin: auto;
+    }
+  }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    justify-content: center; align-items: center;
+    padding: 56px 72px;
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+  }
+  .slide.active { opacity: 1; visibility: visible; }
+
+  /* ── Progress ─────────────────────────────── */
+  .progress {
+    position: fixed; top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width 0.4s ease;
+    z-index: 1000;
+  }
+
+  /* ── Nav ──────────────────────────────────── */
+  .nav {
+    position: fixed; bottom: 32px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; align-items: center; gap: 24px;
+    z-index: 1000;
+  }
+  .nav-btn {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid rgba(201,168,76,0.2);
+    color: var(--gold);
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    cursor: pointer; font-size: 16px;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-btn:hover {
+    background: rgba(201,168,76,0.18);
+    border-color: var(--gold);
+  }
+  .nav-counter {
+    font-size: 12px; letter-spacing: 0.15em;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    text-transform: uppercase;
+  }
+
+  /* Slide number badge */
+  .slide-badge {
+    position: fixed; top: 28px; right: 40px;
+    font-size: 11px; letter-spacing: 0.2em;
+    color: var(--text-dim); z-index: 1000;
+    font-family: var(--sans); text-transform: uppercase;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 1 — CAPA
+  ══════════════════════════════════════════ */
+  .s-capa {
+    background: var(--bg);
+    text-align: center;
+  }
+  .s-capa .eyebrow {
+    font-size: 11px; letter-spacing: 0.4em;
+    color: var(--gold); text-transform: uppercase;
+    margin-bottom: 28px; font-family: var(--sans);
+  }
+  .s-capa h1 {
+    font-family: var(--serif);
+    font-size: clamp(42px, 6vw, 82px);
+    font-weight: 300;
+    line-height: 1.05;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+  .s-capa h1 em {
+    font-style: italic;
+    color: var(--gold);
+  }
+  .s-capa .sub {
+    font-size: 14px; letter-spacing: 0.08em;
+    color: var(--text-dim); font-weight: 300;
+    line-height: 1.7;
+  }
+  .capa-line {
+    width: 48px; height: 1px;
+    background: var(--gold); opacity: 0.5;
+    margin: 32px auto;
+  }
+  .capa-stats {
+    display: flex; gap: 48px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .capa-stat { text-align: center; }
+  .capa-stat .val {
+    font-family: var(--serif);
+    font-size: 28px; font-weight: 300;
+    color: var(--gold);
+  }
+  .capa-stat .lbl {
+    font-size: 10px; letter-spacing: 0.2em;
+    color: var(--text-dim); text-transform: uppercase;
+    margin-top: 4px;
+  }
+  .capa-glow {
+    position: absolute;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(201,168,76,0.05) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE 2 — CURVA DRAMÁTICA
+  ══════════════════════════════════════════ */
+  .s-curva { background: var(--bg); }
+  .s-curva .title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 300;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .s-curva .subtitle {
+    font-size: 13px; color: var(--text-dim);
+    text-align: center; letter-spacing: 0.05em;
+    margin-bottom: 32px;
+  }
+  .chart-wrap {
+    width: min(90%, 860px);
+    height: clamp(200px, 38vh, 320px);
+    position: relative;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDES S1–S10 — ANATOMIA INDIVIDUAL
+  ══════════════════════════════════════════ */
+  .s-estado {
+    text-align: left;
+    align-items: flex-start;
+  }
+
+  .estado-header {
+    display: flex; align-items: flex-start;
+    gap: 32px; width: 100%;
+    margin-bottom: 36px;
+  }
+  .estado-num {
+    font-family: var(--serif);
+    font-size: clamp(80px, 12vw, 140px);
+    font-weight: 300;
+    line-height: 0.85;
+    color: var(--gold);
+    opacity: 0.18;
+    min-width: 120px;
+    user-select: none;
+  }
+  .estado-info { flex: 1; }
+  .estado-tag {
+    font-size: 10px; letter-spacing: 0.35em;
+    text-transform: uppercase; color: var(--gold);
+    font-family: var(--sans); font-weight: 500;
+    margin-bottom: 8px;
+  }
+  .estado-nome {
+    font-family: var(--serif);
+    font-size: clamp(32px, 5vw, 64px);
+    font-weight: 300;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+  .estado-tensao {
+    display: inline-flex; align-items: center;
+    gap: 8px;
+    font-size: 11px; letter-spacing: 0.2em;
+    color: var(--text-dim); text-transform: uppercase;
+  }
+  .tensao-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .estado-body {
+    width: 100%;
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+  .estado-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 2px;
+    padding: 20px 22px;
+  }
+  .estado-card .card-label {
+    font-size: 9px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+    opacity: 0.7; margin-bottom: 10px;
+    font-family: var(--sans);
+  }
+  .estado-card .card-val {
+    font-size: 14px; line-height: 1.55;
+    color: var(--text-mid); font-weight: 300;
+  }
+  .estado-card.card-full {
+    grid-column: 1 / -1;
+  }
+  .estado-card .card-frase {
+    font-family: var(--serif);
+    font-size: clamp(16px, 2.2vw, 22px);
+    font-style: italic;
+    color: var(--text);
+    line-height: 1.4;
+  }
+
+  .estado-virometer {
+    width: 100%; margin-top: 6px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .virometer-bar {
+    flex: 1; height: 3px;
+    background: rgba(201,168,76,0.1);
+    border-radius: 2px; overflow: hidden;
+  }
+  .virometer-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+  .virometer-label {
+    font-size: 10px; color: var(--text-dim);
+    letter-spacing: 0.1em; min-width: 28px;
+    text-align: right;
+  }
+
+  /* Accent line left border */
+  .s-estado .accent-bar {
+    position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  /* ══════════════════════════════════════════
+     SLIDE FINAL — O LOOP VIRAL
+  ══════════════════════════════════════════ */
+  .s-loop { background: var(--bg); }
+  .s-loop .title {
+    font-family: var(--serif);
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 300; text-align: center;
+    margin-bottom: 8px;
+  }
+  .s-loop .sub {
+    font-size: 13px; color: var(--text-dim);
+    text-align: center; margin-bottom: 36px;
+  }
+  .loop-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    width: min(90%, 900px);
+  }
+  .loop-card {
+    background: var(--bg-card);
+    border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 2px; padding: 28px 24px;
+    text-align: center;
+  }
+  .loop-icon {
+    font-size: 32px; margin-bottom: 14px;
+    display: block;
+  }
+  .loop-metric {
+    font-family: var(--serif);
+    font-size: 36px; font-weight: 300;
+    color: var(--gold); margin-bottom: 6px;
+  }
+  .loop-label {
+    font-size: 10px; letter-spacing: 0.25em;
+    text-transform: uppercase; color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+  .loop-desc {
+    font-size: 13px; line-height: 1.6;
+    color: var(--text-mid); font-weight: 300;
+  }
+  .loop-trigger {
+    margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid rgba(201,168,76,0.1);
+    font-size: 11px; color: var(--gold);
+    letter-spacing: 0.05em;
+  }
+
+  /* animations */
+  .slide.active .animate-up {
+    animation: fadeUp 0.55s ease-out forwards;
+    opacity: 0;
+  }
+  .slide.active .animate-up:nth-child(1) { animation-delay: 0.05s; }
+  .slide.active .animate-up:nth-child(2) { animation-delay: 0.15s; }
+  .slide.active .animate-up:nth-child(3) { animation-delay: 0.25s; }
+  .slide.active .animate-up:nth-child(4) { animation-delay: 0.35s; }
+  .slide.active .animate-up:nth-child(5) { animation-delay: 0.45s; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .slide { padding: 32px 28px; }
+    .estado-body { grid-template-columns: 1fr 1fr; }
+    .loop-grid { grid-template-columns: 1fr; }
+    .capa-stats { gap: 24px; }
+    .estado-num { font-size: 70px; min-width: 80px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+<div class="slide-badge" id="badge">01 / 13</div>
+
+<div class="deck">
+
+<!-- ══ SLIDE 1 — CAPA ══════════════════════════════════════════════ -->
+<div class="slide s-capa active">
+  <div class="capa-glow"></div>
+  <div class="eyebrow animate-up">Fonte Oculta · Método Jordânico</div>
+  <h1 class="animate-up">A Anatomia do<br><em>Carrossel Viral</em></h1>
+  <div class="capa-line animate-up"></div>
+  <p class="sub animate-up">
+    10 slides. Uma curva dramática precisa.<br>
+    O sistema que transforma tema em identidade — e identidade em seguidor.
+  </p>
+  <div class="capa-stats animate-up">
+    <div class="capa-stat">
+      <div class="val">1.66M</div>
+      <div class="lbl">Compartilhamentos</div>
+    </div>
+    <div class="capa-stat">
+      <div class="val">849K</div>
+      <div class="lbl">Salvamentos</div>
+    </div>
+    <div class="capa-stat">
+      <div class="val">298K</div>
+      <div class="lbl">Comentários</div>
+    </div>
+    <div class="capa-stat">
+      <div class="val">38.6M</div>
+      <div class="lbl">Alcance orgânico</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 — A CURVA ══════════════════════════════════════════ -->
+<div class="slide s-curva">
+  <div class="title animate-up">A Curva Dramática</div>
+  <p class="subtitle animate-up">Tensão emocional ao longo dos 10 slides — nunca linear, sempre oscilante</p>
+  <div class="chart-wrap animate-up">
+    <canvas id="curvaChart"></canvas>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — S1 DISRUPÇÃO ══════════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 60%, #150505);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">01</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 1</div>
+      <div class="estado-nome">DISRUPÇÃO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#DC2626"></div>
+        Tensão Máxima · Gancho Paradoxal
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Para o scroll em 0,5s criando tensão cognitiva irresolvível. Nada é resolvido aqui — só aberto.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">
+        Dois grupos opostos param ao mesmo tempo:<br>
+        quem concorda <em>e</em> quem discorda.
+      </div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:95%"></div></div>
+        <div class="virometer-label">95%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Estrutura</div>
+      <div class="card-val">Afirmação — não pergunta. Paradoxo — não promessa. Número ou nome real.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Você sabe exatamente o que precisa fazer. E não consegue fazer."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4 — S2 DESCIDA ══════════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 70%, #0a0e14);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">02</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 2</div>
+      <div class="estado-nome">DESCIDA</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#4B5563"></div>
+        Tensão Baixa · Validação
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Valida o seguidor. "Você não estava errado em sentir isso." Libera a tensão do S1 para criar espaço.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Gera pertencimento. Quem se sentiu visto salva o carrossel.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:28%"></div></div>
+        <div class="virometer-label">28%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Formato</div>
+      <div class="card-val">1–2 frases. Espaço é tensão. Sem dado, sem explicação — só reconhecimento.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Você tentou. Mais de uma vez. O problema não foi sua falta de esforço."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5 — S3 NOMEAÇÃO ══════════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 60%, #120a03);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">03</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 3</div>
+      <div class="estado-nome">NOMEAÇÃO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#D97706"></div>
+        Tensão Média-Alta · Raiva Coletiva
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Nomeia o responsável externo com evidência verificável. Data, nome, instituição, número.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Raiva coletiva direcionada. Comentários de "eu sabia!", shares para confrontar outros.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:72%"></div></div>
+        <div class="virometer-label">72%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra obrigatória</div>
+      <div class="card-val">Nunca "o sistema". Sempre: "O Banco Central dos EUA em agosto de 1971" — específico e falsificável.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Em 1993, pesquisadores da Universidade de Minneapolis descobriram que padrões financeiros são transmitidos epigeneticamente — antes de qualquer escolha consciente."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6 — S4 PROFUNDIDADE ══════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 60%, #080d18);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">04</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 4 · Sempre TEXT</div>
+      <div class="estado-nome">PROFUNDIDADE</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#3B82F6"></div>
+        Tensão Intelectual · Mecanismo Real
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Nomeia o mecanismo externo com ciência verificável. Desce um nível além da superfície.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Entendimento que abre. Seguidor sente que finalmente tem o "porquê real".</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:54%"></div></div>
+        <div class="virometer-label">54%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra de densidade</div>
+      <div class="card-val">S4 nomeia o sistema externo. S5 nomeia a cumplicidade interna. São níveis diferentes — nunca o mesmo.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"O campo eletromagnético do coração opera a 5.000x a intensidade do cérebro — e chega antes de qualquer ação consciente."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 7 — S5 QUEDA FUNDA ══════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 50%, #0c0814);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">05</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 5 · Sempre TEXT · O piso do arco</div>
+      <div class="estado-nome">QUEDA FUNDA</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#7C3AED"></div>
+        Tensão Emocional Funda · Cumplicidade Interna
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Nomeia o que o seguidor faz para <em>manter</em> o padrão ativo. Não o sistema — ele mesmo.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">"Merda. É verdade." — a sensação mais forte do carrossel. Saves silenciosos. Inicia debates internos.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:18%"></div></div>
+        <div class="virometer-label">18%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra obrigatória</div>
+      <div class="card-val">A frase mais difícil de escrever e de ler. Se não desconforta antes de seduzir — está suavizada demais.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Você foi calibrado para o fracasso antes de aprender a falar. E ainda defende o sistema que fez isso."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 8 — S6 ESPELHO ══════════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 65%, #0f0f0f);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">06</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 6 · Sempre TEXT</div>
+      <div class="estado-nome">ESPELHO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#6B7280"></div>
+        Tensão Reconhecimento · Identificação Direta
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">O seguidor se vê. Reconhecimento doloroso. Segunda pessoa. Sem saída ainda.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Impossível desviar. "Isso sou eu." Salva para revisitar. Marca o momento da virada.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:44%"></div></div>
+        <div class="virometer-label">44%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Formato</div>
+      <div class="card-val">Começa com "Você já..." ou "Existe uma parte de você que..." — nunca generalizado.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Você já se pegou sabotando uma oportunidade sem entender por quê — como se uma parte de você não acreditasse que merecia."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 9 — S7 ASCENSÃO ══════════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 60%, #04120a);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">07</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 7</div>
+      <div class="estado-nome">ASCENSÃO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#059669"></div>
+        Tensão Esperança · Saída Concreta
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Aponta uma saída real e acessível. Não genérica — tem nome, tem mecanismo, existe um caminho.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Esperança específica. "Isso é para mim." Alivia S5 e S6 sem apagar o peso.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:66%"></div></div>
+        <div class="virometer-label">66%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra obrigatória</div>
+      <div class="card-val">Não é "você pode mudar". É "existe um protocolo específico que acessa exatamente esse padrão."</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Existe uma frequência sonora que acessa o sistema nervoso autônomo antes do pensamento — e começa a desfazer o que foi instalado."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — S8 CRISTALIZAÇÃO ══════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 55%, #120e02);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">08</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 8 · Síntese Pura · Sem CTA aqui</div>
+      <div class="estado-nome">CRISTALIZAÇÃO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#C9A84C"></div>
+        Tensão Resolução · Peso com Paz
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Síntese de toda a jornada em 1–2 frases. O que o corpo, campo ou sistema aprendeu. Sem apelo, sem venda.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Reconhecimento que transforma. Não é alívio — é peso que valeu. O CTA tribal vive aqui.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:78%"></div></div>
+        <div class="virometer-label">78%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra obrigatória</div>
+      <div class="card-val">Sem CTA de produto. Sem "comente FONTE" aqui. Apenas síntese + CTA tribal de identidade.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de CTA tribal</div>
+      <div class="card-frase">"Comente FONTE se existe uma voz dentro de você que diz que não é para você — e você nunca conseguiu descobrir de onde ela veio."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — S9 SETUP CTA ══════════════════════════════════ -->
+<div class="slide s-estado" style="background: linear-gradient(135deg, #080808 55%, #0e0818);">
+  <div class="estado-header">
+    <div class="estado-num animate-up">09</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 9 · Urgência sem revelar produto</div>
+      <div class="estado-nome">SETUP CTA</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot" style="background:#8B5CF6"></div>
+        Tensão Possibilidade · Existe Algo
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card">
+      <div class="card-label">O que faz</div>
+      <div class="card-val">Cria a tensão de que existe um próximo passo — sem nomear o produto. A garganta fica com vontade de perguntar.</div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Urgência de possibilidade. "E eu quero isso." O produto aparece no S10 — aqui só a tensão.</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:84%"></div></div>
+        <div class="virometer-label">84%</div>
+      </div>
+    </div>
+    <div class="estado-card">
+      <div class="card-label">Regra obrigatória</div>
+      <div class="card-val">Nunca nomeia o produto. Usa linguagem de resultado, protocolo, frequência — sem o nome do que será entregue.</div>
+    </div>
+    <div class="estado-card card-full">
+      <div class="card-label">Exemplo de frase modelo</div>
+      <div class="card-frase">"Existe um protocolo que acessa exatamente esse padrão — antes do pensamento, antes da sabotagem. Eu preparei algo para quem chegou até aqui."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 — S10 CTA FIXO ══════════════════════════════════ -->
+<div class="slide s-estado" style="background: radial-gradient(ellipse at center, #1a1200 0%, #080808 65%);">
+  <div class="estado-header">
+    <div class="estado-num animate-up" style="opacity:0.35; color: var(--gold);">10</div>
+    <div class="estado-info animate-up">
+      <div class="estado-tag">Slide 10 · INTOCÁVEL · Sempre IMAGE · Portal dourado</div>
+      <div class="estado-nome" style="color:var(--gold)">CTA FIXO</div>
+      <div class="estado-tensao">
+        <div class="tensao-dot"></div>
+        Abertura · Senha Tribal · Portal
+      </div>
+    </div>
+  </div>
+  <div class="estado-body animate-up">
+    <div class="estado-card" style="border-color: rgba(201,168,76,0.3);">
+      <div class="card-label">Título — SEMPRE</div>
+      <div class="card-val" style="font-family: var(--serif); font-size: 20px; color: var(--gold); letter-spacing: 0.1em;">COMENTE<br>FONTE</div>
+    </div>
+    <div class="estado-card" style="border-color: rgba(201,168,76,0.3);">
+      <div class="card-label">Gatilho viral</div>
+      <div class="card-val">Declaração de identidade pública. Quem comenta diz à própria rede: "eu pertenço a isso."</div>
+      <div class="estado-virometer">
+        <div class="virometer-bar"><div class="virometer-fill" style="width:92%"></div></div>
+        <div class="virometer-label">92%</div>
+      </div>
+    </div>
+    <div class="estado-card" style="border-color: rgba(201,168,76,0.3);">
+      <div class="card-label">Imagem</div>
+      <div class="card-val">Portal dourado puro. Layout: fullbleed. Nunca alterar o layout deste slide.</div>
+    </div>
+    <div class="estado-card card-full" style="border-color: rgba(201,168,76,0.25); background: rgba(201,168,76,0.04);">
+      <div class="card-label">Corpo — Template fixo por pilar</div>
+      <div class="card-frase" style="color: var(--gold-light);">
+        "E eu te envio a Tecnologia Sonora capaz de [resultado do pilar] usando o Desbloqueio Neural."
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 13 — O LOOP VIRAL ══════════════════════════════════ -->
+<div class="slide s-loop">
+  <div class="title animate-up">O <em style="font-style:italic; color:var(--gold)">Loop</em> Viral</div>
+  <p class="sub animate-up">Como cada tipo de engajamento é gerado por slides diferentes</p>
+  <div class="loop-grid animate-up">
+    <div class="loop-card">
+      <span class="loop-icon">🔁</span>
+      <div class="loop-metric">1.66M</div>
+      <div class="loop-label">Compartilhamentos</div>
+      <div class="loop-desc">Gerados pelo S3. Raiva coletiva com inimigo nomeado. O seguidor usa o conteúdo como argumento com outra pessoa.</div>
+      <div class="loop-trigger">S3 NOMEAÇÃO → "isso explica você"</div>
+    </div>
+    <div class="loop-card">
+      <span class="loop-icon">🔖</span>
+      <div class="loop-metric">849K</div>
+      <div class="loop-label">Salvamentos</div>
+      <div class="loop-desc">Gerados pelo S5 e S6. Reconhecimento visceral. O seguidor guarda para revisitar quando a dor voltar.</div>
+      <div class="loop-trigger">S5 + S6 → "sou eu, guardar"</div>
+    </div>
+    <div class="loop-card">
+      <span class="loop-icon">💬</span>
+      <div class="loop-metric">298K</div>
+      <div class="loop-label">Comentários</div>
+      <div class="loop-desc">Gerados pelo S1 e S10. O paradoxo do S1 ativa duas bolhas opostas. O CTA do S10 gera a resposta "FONTE".</div>
+      <div class="loop-trigger">S1 DISRUPÇÃO + S10 CTA → briga de bolha</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.deck -->
+
+<!-- Nav -->
+<div class="nav">
+  <button class="nav-btn" onclick="prev()">←</button>
+  <span class="nav-counter" id="counter">01 / 13</span>
+  <button class="nav-btn" onclick="next()">→</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+const total  = slides.length;
+let cur = 0;
+let chartBuilt = false;
+
+function show(n) {
+  if (n < 0) n = 0;
+  if (n >= total) n = total - 1;
+  slides[cur].classList.remove('active');
+  cur = n;
+  slides[cur].classList.add('active');
+
+  const pct = ((cur + 1) / total * 100).toFixed(1);
+  document.getElementById('progress').style.width = pct + '%';
+  const num = String(cur + 1).padStart(2, '0');
+  const tot = String(total).padStart(2, '0');
+  document.getElementById('counter').textContent = `${num} / ${tot}`;
+  document.getElementById('badge').textContent    = `${num} / ${tot}`;
+
+  if (cur === 1 && !chartBuilt) buildChart();
+}
+
+function next() { show(cur + 1); }
+function prev() { show(cur - 1); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+  if (e.key === 'ArrowLeft')  { e.preventDefault(); prev(); }
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.nav')) next();
+});
+
+// Touch swipe
+let tx = 0;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend',   e => {
+  const dx = tx - e.changedTouches[0].clientX;
+  if (Math.abs(dx) > 40) dx > 0 ? next() : prev();
+});
+
+// Chart.js — Dramatic Curve
+function buildChart() {
+  chartBuilt = true;
+  const labels = ['S1\nDISRUPÇÃO','S2\nDESCIDA','S3\nNOMEAÇÃO','S4\nPROFUNDIDADE',
+                  'S5\nQUEDA','S6\nESPELHO','S7\nASCENSÃO','S8\nCRISTALIZAÇÃO',
+                  'S9\nSETUP','S10\nCTA'];
+  const data   = [95, 25, 72, 52, 15, 42, 66, 78, 85, 92];
+  const colors = ['#DC2626','#4B5563','#D97706','#3B82F6','#7C3AED',
+                  '#6B7280','#059669','#C9A84C','#8B5CF6','#C9A84C'];
+
+  new Chart(document.getElementById('curvaChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        borderColor: '#C9A84C',
+        backgroundColor: 'rgba(201,168,76,0.06)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.42,
+        pointBackgroundColor: colors,
+        pointBorderColor: '#080808',
+        pointBorderWidth: 2,
+        pointRadius: 7,
+        pointHoverRadius: 9,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 900, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `Tensão: ${ctx.raw}%`
+          },
+          backgroundColor: 'rgba(8,8,8,0.92)',
+          borderColor: 'rgba(201,168,76,0.3)',
+          borderWidth: 1,
+          titleColor: '#C9A84C',
+          bodyColor: '#EDE8DF',
+          padding: 12,
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: 'rgba(237,232,223,0.45)',
+            font: { size: 10, family: 'Space Grotesk' },
+          }
+        },
+        y: {
+          min: 0, max: 100,
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: 'rgba(237,232,223,0.35)',
+            font: { size: 10 },
+            callback: v => v + '%'
+          }
+        }
+      }
+    }
+  });
+}
+
+show(0);
+</script>
+</body>
+</html>

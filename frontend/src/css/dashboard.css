@@ -1,0 +1,11 @@
+/* dashboard.css — Ponto de Entrada Modular de Estilos */
+
+@import './base.css';
+@import './sidebar.css';
+@import './components.css';
+@import './modals.css';
+@import './tab_dashboard.css';
+@import './tab_features.css';
+@import './tab_financeiro.css';
+@import './slide_studio.css';
+

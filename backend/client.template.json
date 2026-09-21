@@ -1,0 +1,208 @@
+{
+  "_comment": "Template em branco para onboarding de novo cliente. Preencha todos os campos e renomeie para client.json na pasta do projeto.",
+  "_instructions": "Campos com <PREENCHER> são obrigatórios. Campos com valores padrão podem ser mantidos como estão.",
+
+  "meta": {
+    "clientId": "<ID_UNICO_SEM_ESPACO>",
+    "clientName": "<NOME_DA_MARCA>",
+    "handle": "@<handle_instagram>",
+    "creator": "<NOME_DO_CRIADOR>",
+    "language": "pt-BR",
+    "version": "1.0.0",
+    "createdAt": "<YYYY-MM-DD>"
+  },
+
+  "brand": {
+    "niche": [
+      "<NICHO_PRINCIPAL>",
+      "<NICHO_2>",
+      "<NICHO_3>"
+    ],
+    "product": "<NOME_DO_PRODUTO_PRINCIPAL>",
+    "cta_keyword": "<PALAVRA_PARA_COMENTAR>",
+    "enemy": "<SISTEMA_OU_FORCA_RESPONSAVEL_PELO_PROBLEMA_DO_AVATAR>",
+
+    "avatar": {
+      "dor_atual": "<SITUACAO_CONCRETA_DO_AVATAR_HOJE>",
+      "desejo_profundo": "<O_QUE_ELE_REALMENTE_QUER_NAO_O_DECLARADO>",
+      "crenca_falsa": "<A_NARRATIVA_QUE_ELE_CONTA_PARA_SI_MESMO>",
+      "verdade_oculta": "<O_QUE_O_CONTEUDO_VAI_REVELAR>",
+      "frustracoes": [
+        "<O_QUE_JA_TENTOU_E_NAO_FUNCIONOU_1>",
+        "<O_QUE_JA_TENTOU_E_NAO_FUNCIONOU_2>",
+        "<O_QUE_JA_TENTOU_E_NAO_FUNCIONOU_3>"
+      ],
+      "raiva_disponivel": [
+        "<CULPADO_NOMEAVEL_COM_EVIDENCIA_1>",
+        "<CULPADO_NOMEAVEL_COM_EVIDENCIA_2>"
+      ]
+    }
+  },
+
+  "voice": {
+    "tone": ["<TOM_1>", "<TOM_2>", "<TOM_3>"],
+    "density": "<DESCRICAO_DO_VOCABULARIO>",
+    "description": "<COMO_SONA_A_VOZ_DA_MARCA_EM_1_FRASE>",
+
+    "vocabulary": {
+      "allowed": [
+        "<PALAVRA_OU_EXPRESSAO_DA_MARCA_1>",
+        "<PALAVRA_OU_EXPRESSAO_DA_MARCA_2>"
+      ],
+      "forbidden": [
+        "<EXPRESSAO_PROIBIDA_1>",
+        "<EXPRESSAO_PROIBIDA_2>"
+      ],
+      "forbidden_structures": []
+    },
+
+    "narration": {
+      "voice_ref": "<NOME_DA_VOZ_NO_ELEVENLABS>",
+      "voice_provider": "ElevenLabs",
+      "voice_qualities": "<GRAVE_SUAVE_ENERGICA_ETC>",
+      "pause_marker": "│",
+      "emphasis_style": "MAIÚSCULAS",
+      "speed_options": ["lento", "normal", "acelerado"],
+      "tone_options": ["<TOM_NARRAÇÃO_1>", "<TOM_NARRAÇÃO_2>"]
+    }
+  },
+
+  "method": {
+    "name": "<NOME_DO_METODO>",
+    "type": "reel_script",
+    "structure": {
+      "format": "<7_falas_OU_OUTRO>",
+      "fala_length": "<10-15 palavras>",
+      "scene_duration_sec": "4-5",
+      "video_total_sec": "30-40",
+      "beats": [
+        { "id": 1, "name": "<NOME_BEAT_1>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 2, "name": "<NOME_BEAT_2>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 3, "name": "<NOME_BEAT_3>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 4, "name": "<NOME_BEAT_4>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 5, "name": "<NOME_BEAT_5>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 6, "name": "<NOME_BEAT_6>", "description": "<O_QUE_ACONTECE_AQUI>" },
+        { "id": 7, "name": "<NOME_BEAT_7>", "description": "<O_QUE_ACONTECE_AQUI>" }
+      ]
+    }
+  },
+
+  "carousel": {
+    "total_slides": 10,
+    "states": [
+      "DISRUPÇÃO", "DESCIDA", "NOMEAÇÃO", "PROFUNDIDADE",
+      "QUEDA FUNDA", "ESPELHO", "ASCENSÃO", "CRISTALIZAÇÃO",
+      "SETUP CTA", "CTA FIXO"
+    ],
+    "slide_rules": {
+      "s1": { "mode": "image", "layout": "fullbleed", "cover": true },
+      "s4": { "mode": "text" },
+      "s5": { "mode": "text" },
+      "s6": { "mode": "text" },
+      "s10": {
+        "mode": "image",
+        "layout": "fullbleed",
+        "image_concept": "<IMAGEM_SIMBOLO_DO_CLIENTE>",
+        "title_fixed": "COMENTE\n<CTA_KEYWORD>",
+        "body_template": "E eu te envio <PRODUTO> capaz de {resultado_pilar} usando o <MECANISMO>.",
+        "mechanism": "<MECANISMO>"
+      }
+    },
+    "presets": {
+      "<PRESET_1_ID>": { "label": "<NOME_PRESET_1>", "palette": "<DESCRICAO_CORES>" },
+      "<PRESET_2_ID>": { "label": "<NOME_PRESET_2>", "palette": "<DESCRICAO_CORES>" }
+    },
+    "layouts": ["fullbleed", "dramatico", "etereo", "text_only", "card"],
+    "pracas": ["<PRACA_1>", "<PRACA_2>", "<PRACA_3>"],
+    "formats": ["A", "B", "C", "D"]
+  },
+
+  "visual": {
+    "aesthetic": ["<ESTILO_VISUAL_1>", "<ESTILO_VISUAL_2>"],
+    "human_figures": "<silhueta_apenas_sem_rosto_OU_OUTRO>",
+    "forbidden_visuals": [
+      "<O_QUE_NUNCA_APARECE_1>",
+      "<O_QUE_NUNCA_APARECE_2>"
+    ],
+    "preferred_visuals": [
+      "<METAFORA_VISUAL_FAVORITA_1>",
+      "<METAFORA_VISUAL_FAVORITA_2>"
+    ],
+    "prompt_language": "en"
+  },
+
+  "audio": {
+    "style": ["<ESTILO_AUDIO_1>", "<ESTILO_AUDIO_2>"],
+    "allowed_types": ["drones", "ambiências", "<TIPO_ESPECIFICO>"],
+    "forbidden_types": ["<O_QUE_NAO_ENTRA>"],
+    "prompt_language": "en",
+    "sfx_length": "8-15 palavras",
+    "references": ["<REFERENCIA_SONORA>"]
+  },
+
+  "agents": {
+    "copywriter": {
+      "persona_name": "<NOME_DO_COPYWRITER>",
+      "persona_role": "Copywriter",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "diretor_cena": {
+      "persona_name": "<NOME_DO_DIRETOR>",
+      "persona_role": "Diretor de Cena",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>",
+      "output_language": "en",
+      "chat_language": "pt-BR"
+    },
+    "sonoplasta": {
+      "persona_name": "<NOME_DO_SONOPLASTA>",
+      "persona_role": "Sonoplasta",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "voz": {
+      "persona_name": "<NOME_DO_NARRADOR>",
+      "persona_role": "Narrador",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "diretor_artistico": {
+      "persona_name": "<NOME_DO_DIRETOR_ARTISTICO>",
+      "persona_role": "Diretor Artístico",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "engenheiro_reels": {
+      "persona_name": "<NOME_DO_ENGENHEIRO>",
+      "persona_role": "Engenheiro de Reels",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "roteirista": {
+      "persona_name": "<NOME_DO_ROTEIRISTA>",
+      "persona_role": "Roteirista",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    },
+    "oraculo": {
+      "persona_name": "<NOME_DO_ORACULO>",
+      "persona_role": "Oráculo de Métricas",
+      "description": "<UMA_LINHA_SOBRE_ESPECIALIDADE>"
+    }
+  },
+
+  "metrics": {
+    "platform": "Instagram",
+    "handle": "@<handle>",
+    "last_updated": "<YYYY-MM-DD>",
+    "posts": 0,
+    "likes": 0,
+    "comments": 0,
+    "saves": 0,
+    "shares": 0,
+    "reach": 0,
+    "followers_gained_organic": 0
+  },
+
+  "publishing": {
+    "platform": "Instagram",
+    "auto_publish": false,
+    "schedule_days": ["segunda", "quarta", "sexta"],
+    "preferred_time": "18:00",
+    "timezone": "America/Sao_Paulo"
+  }
+}

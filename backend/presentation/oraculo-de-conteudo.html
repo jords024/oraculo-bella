@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oráculo de Conteúdo — Jordão</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #C9A84C;
+    --gold-light: #F0CC6A;
+    --gold-dim: rgba(201,168,76,0.15);
+    --gold-border: rgba(201,168,76,0.3);
+    --bg: #050505;
+    --bg-card: rgba(255,255,255,0.03);
+    --white: #FFFFFF;
+    --muted: rgba(255,255,255,0.55);
+    --font-head: 'Space Grotesk', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-body);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .progress-bar {
+    position: fixed; top: 0; left: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width 0.4s ease;
+    z-index: 1000;
+    box-shadow: 0 0 12px rgba(201,168,76,0.6);
+  }
+
+  .slide-deck {
+    position: relative;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    width: 100%; height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 52px 80px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease;
+    overflow: hidden;
+  }
+  .slide.active { opacity: 1; visibility: visible; }
+
+  .slide::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .cosmic-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 40% 60% at 80% 20%, rgba(201,168,76,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse 30% 40% at 10% 80%, rgba(201,168,76,0.03) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(201,168,76,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── TYPOGRAPHY ─────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.1s ease forwards;
+  }
+
+  h1.hero {
+    font-family: var(--font-head);
+    font-size: clamp(48px, 7vw, 96px);
+    font-weight: 700;
+    line-height: 1.0;
+    background: linear-gradient(135deg, #FFFFFF 0%, var(--gold-light) 60%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.2s ease forwards;
+  }
+
+  h2.slide-title {
+    font-family: var(--font-head);
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 700;
+    line-height: 1.1;
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.15s ease forwards;
+  }
+
+  h2.slide-title .gold { color: var(--gold); }
+
+  .subtitle {
+    font-size: clamp(14px, 1.6vw, 18px);
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+    max-width: 680px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.3s ease forwards;
+  }
+
+  .hook {
+    font-family: var(--font-head);
+    font-size: clamp(17px, 2.2vw, 26px);
+    font-weight: 600;
+    color: var(--white);
+    text-align: center;
+    line-height: 1.4;
+    max-width: 700px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .gold-line {
+    width: 60px; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.25s ease forwards;
+  }
+
+  /* ── CARDS ───────────────────────────────────────────────────────────── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    width: 100%;
+    max-width: 860px;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.4s ease forwards;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .card-icon { font-size: 26px; margin-bottom: 10px; display: block; }
+
+  .card-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--gold-light);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .card-text { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── PAIN LIST ───────────────────────────────────────────────────────── */
+  .pain-list {
+    list-style: none;
+    max-width: 700px;
+    width: 100%;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.4s ease forwards;
+  }
+
+  .pain-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: clamp(14px, 1.5vw, 17px);
+    line-height: 1.5;
+    color: var(--muted);
+  }
+
+  .pain-list li:last-child { border-bottom: none; }
+  .pain-list .marker { color: var(--gold); font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+  .pain-list .label { color: var(--white); font-weight: 600; }
+
+  /* ── STATS ───────────────────────────────────────────────────────────── */
+  .stats-row {
+    display: flex;
+    gap: 60px;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.5s ease forwards;
+  }
+
+  .stat-block { text-align: center; }
+
+  .stat-number {
+    font-family: var(--font-head);
+    font-size: clamp(44px, 6vw, 76px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-top: 8px;
+  }
+
+  /* ── TIMELINE ────────────────────────────────────────────────────────── */
+  .timeline {
+    width: 100%;
+    max-width: 900px;
+    position: relative;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .timeline-track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    position: relative;
+  }
+
+  .timeline-track::before {
+    content: '';
+    position: absolute;
+    top: 28px; left: 28px; right: 28px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), rgba(201,168,76,0.3));
+  }
+
+  .timeline-step {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 6px;
+  }
+
+  .step-dot {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(201,168,76,0.2);
+  }
+
+  .step-highlight .step-dot {
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: #050505;
+    border-color: var(--gold-light);
+    box-shadow: 0 0 30px rgba(201,168,76,0.5);
+  }
+
+  .step-name {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+
+  .step-desc { font-size: 10px; color: var(--muted); line-height: 1.5; max-width: 110px; }
+
+  .step-tag {
+    display: inline-block;
+    margin-top: 7px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .tag-milestone {
+    background: rgba(201,168,76,0.15);
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+  }
+
+  /* ── DELIVERABLES ────────────────────────────────────────────────────── */
+  .deliverables-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 900px;
+    width: 100%;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .deliverable-item {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    padding: 16px 15px;
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+  }
+
+  .del-icon { font-size: 19px; flex-shrink: 0; margin-top: 2px; }
+  .del-text { font-size: 12.5px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+  .del-text strong { display: block; color: var(--white); font-size: 13px; margin-bottom: 2px; }
+
+  /* ── PILLARS ─────────────────────────────────────────────────────────── */
+  .pillar-row {
+    display: flex;
+    gap: 14px;
+    max-width: 900px;
+    width: 100%;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .pillar {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    padding: 22px 16px;
+    text-align: center;
+    position: relative;
+  }
+
+  .pillar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20%; right: 20%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .pillar-number {
+    font-family: var(--font-head);
+    font-size: 38px;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .pillar-title {
+    font-family: var(--font-head);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gold-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+  }
+
+  .pillar-text { font-size: 11.5px; color: var(--muted); line-height: 1.6; }
+
+  /* ── CTA BOX ─────────────────────────────────────────────────────────── */
+  .cta-box {
+    border: 1px solid var(--gold-border);
+    border-radius: 20px;
+    padding: 36px 56px;
+    text-align: center;
+    max-width: 680px;
+    width: 100%;
+    background: rgba(201,168,76,0.04);
+    position: relative;
+    overflow: hidden;
+    opacity: 0;
+    animation: fadeUp 0.7s 0.4s ease forwards;
+  }
+
+  .cta-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .cta-step {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 13px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: left;
+  }
+
+  .cta-step:last-child { border-bottom: none; }
+
+  .cta-num {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    color: #050505;
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .cta-step-text { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.4; }
+  .cta-step-text strong { color: var(--white); }
+
+  /* ── CHART ───────────────────────────────────────────────────────────── */
+  .chart-wrap {
+    width: 100%;
+    max-width: 700px;
+    height: clamp(160px, 25vh, 240px);
+    opacity: 0;
+    animation: fadeUp 0.7s 0.5s ease forwards;
+  }
+
+  /* ── PROOF BADGE ─────────────────────────────────────────────────────── */
+  .proof-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 18px;
+    border: 1px solid var(--gold-border);
+    border-radius: 40px;
+    background: rgba(201,168,76,0.08);
+    font-size: 12px;
+    color: var(--gold-light);
+    font-weight: 600;
+    margin-top: 8px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.6s ease forwards;
+  }
+
+  /* ── BRAND MARK ──────────────────────────────────────────────────────── */
+  .brand-mark {
+    position: fixed;
+    bottom: 26px; left: 40px;
+    font-family: var(--font-head);
+    font-size: 11px;
+    color: rgba(255,255,255,0.18);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 100;
+  }
+
+  /* ── NAV ─────────────────────────────────────────────────────────────── */
+  .nav-controls {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    z-index: 1000;
+    background: rgba(5,5,5,0.8);
+    padding: 7px 18px;
+    border-radius: 40px;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
+  }
+
+  .nav-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+  }
+
+  .nav-btn:hover { color: var(--gold); }
+  .slide-counter { color: var(--muted); font-size: 12px; min-width: 50px; text-align: center; }
+
+  /* ── ANIMATIONS ──────────────────────────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(22px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── SLIDE-SPECIFIC ──────────────────────────────────────────────────── */
+  .slide-cover {
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(201,168,76,0.08) 0%, transparent 70%);
+  }
+
+  .fine-print {
+    font-size: 11px;
+    color: rgba(255,255,255,0.22);
+    text-align: center;
+    margin-top: 8px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.7s ease forwards;
+  }
+
+  /* ── METRICS SHOWCASE ────────────────────────────────────────────────── */
+  .metrics-showcase {
+    width: 100%; max-width: 900px;
+    display: flex; flex-direction: column; gap: 12px;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .metric-hero {
+    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
+    border: 1px solid var(--gold-border);
+    border-radius: 14px;
+    padding: 18px 30px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .metric-hero-num {
+    font-family: var(--font-head);
+    font-size: clamp(34px, 4.5vw, 52px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+
+  .metric-hero-label { font-size: 14px; color: var(--muted); text-align: right; line-height: 1.4; }
+  .metrics-row-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px; padding: 14px 16px;
+    text-align: center;
+  }
+
+  .metric-card--dim { border-color: rgba(201,168,76,0.15); }
+  .mc-num { font-family: var(--font-head); font-weight: 700; font-size: clamp(20px, 2.6vw, 28px); color: var(--gold-light); line-height: 1.1; margin-bottom: 3px; }
+  .mc-label { font-size: 12px; color: var(--white); font-weight: 600; margin-bottom: 2px; }
+  .mc-sub { font-size: 10px; color: var(--muted); }
+
+  /* ── SCREENSHOTS ─────────────────────────────────────────────────────── */
+  .screenshots-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 12px; max-width: 940px; width: 100%;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .screenshot-frame {
+    border: 1px solid var(--gold-border);
+    border-radius: 16px; overflow: hidden;
+    position: relative;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    height: clamp(260px, 36vh, 380px);
+    cursor: zoom-in;
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+
+  .screenshot-frame:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 16px 48px rgba(201,168,76,0.25);
+    border-color: var(--gold);
+  }
+
+  .screenshot-frame img {
+    width: 100%; height: 100%;
+    object-fit: cover; object-position: top;
+    display: block;
+  }
+
+  .screenshot-badge {
+    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+    background: rgba(5,5,5,0.92);
+    border: 1px solid var(--gold-border);
+    color: var(--gold-light);
+    font-size: 10px; font-weight: 700;
+    padding: 4px 12px; border-radius: 20px;
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+    transition: opacity 0.2s;
+  }
+
+  .screenshot-frame:hover .screenshot-badge { opacity: 0; }
+
+  .screenshot-zoom-hint {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(5,5,5,0.85);
+    border: 1px solid var(--gold-border);
+    color: var(--gold-light);
+    font-size: 11px; font-weight: 600;
+    padding: 7px 14px; border-radius: 20px;
+    backdrop-filter: blur(8px);
+    opacity: 0; transition: opacity 0.2s;
+    pointer-events: none;
+  }
+
+  .screenshot-frame:hover .screenshot-zoom-hint { opacity: 1; }
+
+  /* ── LIGHTBOX ────────────────────────────────────────────────────────── */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,0.92);
+    display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(8px);
+    cursor: zoom-out;
+  }
+
+  .lightbox.open { display: flex; }
+
+  .lightbox-inner {
+    position: relative;
+    max-width: min(420px, 85vw);
+    max-height: 90vh;
+    border-radius: 22px;
+    overflow: hidden;
+    border: 1px solid var(--gold-border);
+    box-shadow: 0 0 80px rgba(201,168,76,0.2);
+    animation: lbIn 0.3s ease;
+  }
+
+  @keyframes lbIn {
+    from { opacity: 0; transform: scale(0.88); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .lightbox-inner img { width: 100%; height: auto; display: block; }
+
+  .lightbox-badge {
+    position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+    background: rgba(5,5,5,0.9);
+    border: 1px solid var(--gold-border);
+    color: var(--gold-light); font-weight: 700;
+    padding: 5px 18px; border-radius: 20px; font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .lightbox-close {
+    position: absolute; top: 12px; right: 12px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: rgba(5,5,5,0.85); border: 1px solid var(--gold-border);
+    color: var(--gold-light); font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-weight: 700; line-height: 1;
+  }
+
+  .lightbox-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 38px; height: 38px; border-radius: 50%;
+    background: rgba(5,5,5,0.85); border: 1px solid var(--gold-border);
+    color: var(--gold-light); font-size: 17px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-weight: 700;
+    transition: background 0.2s;
+  }
+
+  .lightbox-nav:hover { background: rgba(201,168,76,0.2); }
+  .lightbox-prev { left: -54px; }
+  .lightbox-next { right: -54px; }
+
+  /* ── ROI COMPARE ─────────────────────────────────────────────────────── */
+  .roi-compare {
+    display: flex; align-items: stretch; gap: 0;
+    max-width: 820px; width: 100%;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .roi-col {
+    flex: 1; border-radius: 14px;
+    padding: 22px 26px; display: flex; flex-direction: column; gap: 8px;
+  }
+
+  .roi-col--bad { background: rgba(255,60,60,0.05); border: 1px solid rgba(255,80,80,0.2); }
+  .roi-col--good { background: rgba(201,168,76,0.08); border: 1px solid var(--gold-border); box-shadow: 0 0 40px rgba(201,168,76,0.08); }
+
+  .roi-col-header { font-family: var(--font-head); font-weight: 700; font-size: 17px; line-height: 1.3; margin-bottom: 5px; }
+  .roi-col--bad .roi-col-header { color: rgba(255,180,180,0.8); }
+  .roi-col--good .roi-col-header { color: var(--gold-light); }
+  .roi-col-header span { font-size: 11px; font-weight: 400; opacity: 0.6; display: block; }
+
+  .roi-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.4; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .roi-x { color: rgba(255,80,80,0.7); font-weight: 700; flex-shrink: 0; }
+  .roi-check { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+  .roi-total { margin-top: 10px; padding: 11px; border-radius: 8px; text-align: center; font-family: var(--font-head); font-weight: 700; font-size: 20px; }
+  .roi-total--bad { background: rgba(255,60,60,0.1); color: rgba(255,120,120,0.9); }
+  .roi-total--good { background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(201,168,76,0.05)); color: var(--gold-light); }
+  .roi-vs { display: flex; align-items: center; justify-content: center; padding: 0 18px; font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--muted); }
+
+  /* ── EDU FLOW ────────────────────────────────────────────────────────── */
+  .edu-flow {
+    display: flex; align-items: stretch; gap: 0;
+    max-width: 820px; width: 100%;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+    margin-bottom: 18px;
+  }
+
+  .edu-step { flex: 1; background: var(--bg-card); border: 1px solid var(--gold-border); border-radius: 12px; padding: 22px 18px; text-align: center; }
+  .edu-icon { font-size: 30px; margin-bottom: 10px; }
+  .edu-title { font-family: var(--font-head); font-weight: 700; font-size: 17px; color: var(--gold-light); margin-bottom: 8px; }
+  .edu-text { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .edu-arrow { display: flex; align-items: center; justify-content: center; padding: 0 14px; color: var(--gold); font-size: 20px; opacity: 0.6; }
+
+  .edu-proof {
+    display: flex; align-items: center; gap: 0;
+    max-width: 820px; width: 100%;
+    background: rgba(201,168,76,0.05);
+    border: 1px solid var(--gold-border); border-radius: 12px;
+    overflow: hidden;
+    opacity: 0; animation: fadeUp 0.7s 0.55s ease forwards;
+  }
+
+  .edu-proof-item { flex: 1; padding: 16px 18px; text-align: center; }
+  .edu-proof-divider { width: 1px; background: var(--gold-border); align-self: stretch; }
+  .ep-num { font-family: var(--font-head); font-weight: 700; font-size: clamp(20px, 2.8vw, 28px); color: var(--gold-light); margin-bottom: 3px; }
+  .ep-label { font-size: 11px; color: var(--muted); line-height: 1.5; }
+  .ep-label span { display: block; font-size: 10px; opacity: 0.7; }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     NOVOS COMPONENTES — OFERTA R$8K
+  ════════════════════════════════════════════════════════════════════════ */
+
+  /* ── PIPELINE 10 AGENTES ─────────────────────────────────────────────── */
+  .pipeline-wrap {
+    width: 100%; max-width: 960px;
+    opacity: 0; animation: fadeUp 0.7s 0.3s ease forwards;
+  }
+
+  .pipeline-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 10px;
+  }
+
+  .agent-node {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+
+  .agent-node.highlight {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.07);
+    box-shadow: 0 0 20px rgba(201,168,76,0.15);
+  }
+
+  .agent-node .an-num {
+    font-family: var(--font-head);
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .agent-node .an-name {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.3;
+    margin-bottom: 3px;
+  }
+
+  .agent-node .an-desc {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .pipe-arrow {
+    flex-shrink: 0;
+    padding: 0 6px;
+    color: var(--gold);
+    font-size: 14px;
+    opacity: 0.5;
+  }
+
+  .pipeline-output {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .po-item {
+    flex: 1;
+    background: linear-gradient(135deg, rgba(201,168,76,0.12), rgba(201,168,76,0.04));
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
+  .po-num {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: clamp(22px, 3vw, 30px);
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .po-label { font-size: 11px; color: var(--muted); line-height: 1.4; }
+
+  /* ── SCORE CRITERIA ──────────────────────────────────────────────────── */
+  .criteria-list {
+    width: 100%; max-width: 820px;
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .criterion {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    padding: 14px 20px;
+  }
+
+  .criterion-code {
+    font-family: var(--font-head);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 2px;
+    min-width: 28px;
+    flex-shrink: 0;
+  }
+
+  .criterion-info { flex: 1; }
+
+  .criterion-title {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 2px;
+  }
+
+  .criterion-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  .criterion-dots {
+    display: flex;
+    gap: 5px;
+    flex-shrink: 0;
+  }
+
+  .dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+  }
+
+  .dot.dim { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); }
+
+  .score-badge-wrap {
+    text-align: center;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.6s ease forwards;
+  }
+
+  .score-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 28px;
+    border: 1px solid var(--gold);
+    border-radius: 40px;
+    background: rgba(201,168,76,0.1);
+    font-family: var(--font-head);
+    font-weight: 700;
+    color: var(--gold-light);
+    font-size: 15px;
+    box-shadow: 0 0 30px rgba(201,168,76,0.15);
+  }
+
+  /* ── 6-MONTH TIMELINE ────────────────────────────────────────────────── */
+  .six-month-wrap {
+    width: 100%; max-width: 900px;
+    opacity: 0; animation: fadeUp 0.7s 0.3s ease forwards;
+  }
+
+  .six-month-header {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .six-month-block {
+    flex: 1;
+    border-radius: 12px;
+    padding: 16px 14px;
+    text-align: center;
+    border: 1px solid var(--gold-border);
+  }
+
+  .six-month-block.system-block {
+    background: rgba(201,168,76,0.06);
+    grid-column: span 2;
+    flex: 2;
+  }
+
+  .six-month-block.strategy-block {
+    background: rgba(201,168,76,0.12);
+    border-color: var(--gold);
+  }
+
+  .smb-label {
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .smb-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 6px;
+  }
+
+  .smb-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  .meetings-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  .meeting-card {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+
+  .meeting-card.active-meeting {
+    border-color: var(--gold);
+    background: rgba(201,168,76,0.08);
+  }
+
+  .meeting-num {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gold-light);
+    margin-bottom: 4px;
+  }
+
+  .meeting-date {
+    font-size: 9px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .meeting-theme {
+    font-size: 10px;
+    color: var(--white);
+    font-weight: 600;
+    margin-bottom: 3px;
+    line-height: 1.3;
+  }
+
+  .meeting-desc { font-size: 9px; color: var(--muted); line-height: 1.4; }
+
+  /* ── ENTREGÁVEIS HERO ────────────────────────────────────────────────── */
+  .entregaveis-wrap {
+    width: 100%; max-width: 900px;
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; animation: fadeUp 0.7s 0.3s ease forwards;
+  }
+
+  .entregavel-hero {
+    display: flex;
+    gap: 10px;
+  }
+
+  .eh-item {
+    flex: 1;
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid var(--gold-border);
+    text-align: center;
+    background: linear-gradient(135deg, rgba(201,168,76,0.1), rgba(201,168,76,0.03));
+  }
+
+  .eh-num {
+    font-family: var(--font-head);
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--gold-light), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 5px;
+  }
+
+  .eh-label { font-size: 12px; color: var(--white); font-weight: 600; margin-bottom: 3px; }
+  .eh-sub { font-size: 10px; color: var(--muted); }
+
+  .entregavel-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .el-item {
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .el-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .el-text { font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+  .el-text strong { display: block; color: var(--white); font-size: 12.5px; margin-bottom: 1px; }
+
+  /* ── PREÇO ───────────────────────────────────────────────────────────── */
+  .price-wrap {
+    width: 100%; max-width: 860px;
+    display: flex;
+    gap: 16px;
+    opacity: 0; animation: fadeUp 0.7s 0.3s ease forwards;
+  }
+
+  .price-main {
+    flex: 1.4;
+    border: 1px solid var(--gold);
+    border-radius: 20px;
+    padding: 32px 36px;
+    background: rgba(201,168,76,0.06);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(201,168,76,0.12);
+    text-align: center;
+  }
+
+  .price-main::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .price-tag-small {
+    font-size: 11px;
+    color: var(--gold);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .price-amount {
+    font-family: var(--font-head);
+    font-size: clamp(44px, 6vw, 72px);
+    font-weight: 700;
+    background: linear-gradient(135deg, #FFFFFF, var(--gold-light), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .price-period {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  .price-monthly {
+    display: inline-block;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid var(--gold-border);
+    border-radius: 30px;
+    padding: 6px 18px;
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gold-light);
+    margin-bottom: 20px;
+  }
+
+  .price-divider {
+    height: 1px;
+    background: var(--gold-border);
+    margin: 16px 0;
+  }
+
+  .price-include-title {
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .price-includes {
+    list-style: none;
+    text-align: left;
+  }
+
+  .price-includes li {
+    font-size: 12.5px;
+    color: rgba(255,255,255,0.8);
+    padding: 5px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .price-includes li:last-child { border-bottom: none; }
+  .price-includes .pi-check { color: var(--gold); font-weight: 700; flex-shrink: 0; }
+
+  .price-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .price-compare-item {
+    background: var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .pci-label { font-size: 12px; color: var(--muted); }
+  .pci-label strong { display: block; color: var(--white); font-size: 13px; margin-bottom: 2px; }
+  .pci-price { font-family: var(--font-head); font-size: 14px; font-weight: 700; color: rgba(255,120,120,0.8); text-align: right; }
+  .pci-price span { display: block; font-size: 10px; color: var(--muted); font-weight: 400; }
+
+  .price-total-saved {
+    background: rgba(201,168,76,0.08);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    margin-top: auto;
+  }
+
+  .pts-label { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 4px; }
+  .pts-num { font-family: var(--font-head); font-size: 22px; font-weight: 700; color: var(--gold-light); }
+
+  /* ── PARA QUEM ───────────────────────────────────────────────────────── */
+  .for-whom-list {
+    width: 100%; max-width: 820px;
+    display: flex; flex-direction: column; gap: 10px;
+    opacity: 0; animation: fadeUp 0.7s 0.35s ease forwards;
+  }
+
+  .fw-item {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--gold-border);
+    border-radius: 12px;
+    padding: 16px 22px;
+  }
+
+  .fw-check {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.15);
+    border: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold);
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .fw-text { font-size: 14px; color: rgba(255,255,255,0.85); line-height: 1.4; }
+  .fw-text strong { color: var(--white); }
+
+  .fw-not {
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.3);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 12px;
+    margin-top: 4px;
+    opacity: 0;
+    animation: fadeUp 0.6s 0.65s ease forwards;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="brand-mark">Jordão · Oráculo de Conteúdo</div>
+
+<div class="slide-deck">
+
+<!-- ══ SLIDE 01 — CAPA ═══════════════════════════════════════════════════ -->
+<div class="slide slide-cover active">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Sistema de Presença Digital com IA</p>
+  <h1 class="hero">Oráculo de<br>Conteúdo</h1>
+  <div class="gold-line"></div>
+  <p class="hook">
+    Você não precisa postar mais.<br>
+    Você precisa de uma inteligência que pense, escreva<br>
+    e publique por você — com critério de neurocientista.
+  </p>
+  <p class="fine-print" style="animation-delay:0.8s">6 meses · 540 carrosseis · publicação automática · estratégia orquestrada</p>
+</div>
+
+<!-- ══ SLIDE 02 — O PROBLEMA ══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">O diagnóstico honesto</p>
+  <h2 class="slide-title">Conteúdo manual não<br>constrói <span class="gold">autoridade que escala.</span></h2>
+  <div class="gold-line"></div>
+  <ul class="pain-list">
+    <li>
+      <span class="marker">◆</span>
+      <span><span class="label">Você troca horas por posts.</span> Cada carrossel exige briefing, redação, design, revisão. O ciclo nunca para e o resultado é irregular.</span>
+    </li>
+    <li>
+      <span class="marker">◆</span>
+      <span><span class="label">A voz se perde na execução.</span> Você sabe o que quer comunicar. Entre a ideia e o post publicado, algo se dilui. O conteúdo sai genérico — parece qualquer um.</span>
+    </li>
+    <li>
+      <span class="marker">◆</span>
+      <span><span class="label">Consistência depende do seu humor.</span> Se você trava por 3 dias, o algoritmo te pune por 3 semanas. Presença real exige volume que nenhum humano sustenta sozinho.</span>
+    </li>
+  </ul>
+</div>
+
+<!-- ══ SLIDE 03 — A NOVA CATEGORIA ═══════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">A nova categoria</p>
+  <h2 class="slide-title">Não é agência. Não é ferramenta.<br><span class="gold">É infraestrutura de inteligência.</span></h2>
+  <div class="gold-line"></div>
+  <div class="card-grid">
+    <div class="card">
+      <span class="card-icon">🏗️</span>
+      <div class="card-title">Arquitetura</div>
+      <div class="card-text">10 agentes de IA em sequência, com critérios científicos e editoriais rígidos. Cada post passa por aprovação antes de ser publicado.</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">⚡</span>
+      <div class="card-title">Volume Impossível para Humanos</div>
+      <div class="card-text">90 carrosseis por mês com copy de nível sênior. Sem bloqueio criativo. Sem dias ruins. Score mínimo 12/15 em cada publicação.</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">🎙️</span>
+      <div class="card-title">Sua Voz — Calibrada</div>
+      <div class="card-text">O sistema aprende a voz, os valores e a arqueologia do seu prospect. Cada post soa como você — não como IA genérica.</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">🔄</span>
+      <div class="card-title">Publicação Automática</div>
+      <div class="card-text">09h, 13h e 20h todos os dias, via Instagram Graph API. Você recebe o relatório. Não opera o processo.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 04 — PROVA SOCIAL ════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Prova em números</p>
+  <h2 class="slide-title">O sistema <span class="gold">funciona.</span><br>Os dados confirmam.</h2>
+  <div class="gold-line"></div>
+  <div class="stats-row">
+    <div class="stat-block">
+      <div class="stat-number" id="stat1">0</div>
+      <div class="stat-label">Seguidores nos primeiros<br>4 carrosseis</div>
+    </div>
+    <div class="stat-block" style="display:flex;align-items:center;color:var(--gold);font-size:28px;opacity:0.4;margin-top:-18px">→</div>
+    <div class="stat-block">
+      <div class="stat-number" id="stat2">0</div>
+      <div class="stat-label">Seguidores adicionais<br>nas semanas seguintes</div>
+    </div>
+  </div>
+  <div class="chart-wrap">
+    <canvas id="growthChart"></canvas>
+  </div>
+  <div class="proof-badge">🔥 Crescimento orgânico · Sem tráfego pago · Sistema gerando 3×/dia</div>
+</div>
+
+<!-- ══ SLIDE 05 — NÚMEROS REAIS ═══════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Prova irrefutável</p>
+  <h2 class="slide-title">Esses números são reais.<br><span class="gold">De posts gerados pelo sistema.</span></h2>
+  <div class="gold-line"></div>
+  <div class="metrics-showcase">
+    <div class="metric-hero">
+      <div class="metric-hero-num">252.494</div>
+      <div class="metric-hero-label">Visualizações · 1 único carrossel</div>
+    </div>
+    <div class="metrics-row-3">
+      <div class="metric-card">
+        <div class="mc-num">57.032</div>
+        <div class="mc-label">❤️ Curtidas</div>
+        <div class="mc-sub">post mais curtido</div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num">41.207</div>
+        <div class="mc-label">🔁 Compartilhamentos</div>
+        <div class="mc-sub">viral orgânico puro</div>
+      </div>
+      <div class="metric-card">
+        <div class="mc-num">20.998</div>
+        <div class="mc-label">🔖 Salvamentos</div>
+        <div class="mc-sub">conteúdo que educa</div>
+      </div>
+    </div>
+    <div class="metrics-row-3">
+      <div class="metric-card metric-card--dim">
+        <div class="mc-num">8.521</div>
+        <div class="mc-label">👤 Seguidores</div>
+        <div class="mc-sub">de 1 post</div>
+      </div>
+      <div class="metric-card metric-card--dim">
+        <div class="mc-num">22.000+</div>
+        <div class="mc-label">📈 Total novos seguidores</div>
+        <div class="mc-sub">8 carrosseis gerados</div>
+      </div>
+      <div class="metric-card metric-card--dim">
+        <div class="mc-num">53.212</div>
+        <div class="mc-label">⚡ Interações totais</div>
+        <div class="mc-sub">post de 252k views</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 06 — SCREENSHOTS ════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Screenshots reais · Instagram Insights</p>
+  <h2 class="slide-title">Cada número é de um<br><span class="gold">carrossel gerado pelo sistema.</span></h2>
+  <div class="gold-line"></div>
+  <div class="screenshots-grid">
+    <div class="screenshot-frame" onclick="openLightbox(0)">
+      <img src="proof-imgs/IMG_2422.PNG" alt="57k curtidas">
+      <div class="screenshot-badge">57k curtidas · 41k shares</div>
+      <div class="screenshot-zoom-hint">🔍 Ver completo</div>
+    </div>
+    <div class="screenshot-frame" onclick="openLightbox(1)">
+      <img src="proof-imgs/IMG_2428.PNG" alt="252k views">
+      <div class="screenshot-badge">252k views · 53k interações</div>
+      <div class="screenshot-zoom-hint">🔍 Ver completo</div>
+    </div>
+    <div class="screenshot-frame" onclick="openLightbox(2)">
+      <img src="proof-imgs/IMG_2424.PNG" alt="31k curtidas">
+      <div class="screenshot-badge">31k curtidas · 3.8k seguidores</div>
+      <div class="screenshot-zoom-hint">🔍 Ver completo</div>
+    </div>
+    <div class="screenshot-frame" onclick="openLightbox(3)">
+      <img src="proof-imgs/IMG_2421.PNG" alt="18k curtidas">
+      <div class="screenshot-badge">18k curtidas · 7k shares</div>
+      <div class="screenshot-zoom-hint">🔍 Ver completo</div>
+    </div>
+  </div>
+  <div class="lightbox" id="lightbox" onclick="closeLightbox(event)">
+    <div class="lightbox-inner" id="lightboxInner">
+      <img id="lightboxImg" src="" alt="">
+      <div class="lightbox-badge" id="lightboxBadge"></div>
+      <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+      <div class="lightbox-nav lightbox-prev" onclick="lbNav(-1,event)">‹</div>
+      <div class="lightbox-nav lightbox-next" onclick="lbNav(1,event)">›</div>
+    </div>
+  </div>
+  <p class="subtitle" style="font-size:12px;margin-top:14px">Sem tráfego pago. Sem impulsionamento. Conteúdo orgânico gerado por IA treinada na essência do cliente.</p>
+</div>
+
+<!-- ══ SLIDE 07 — OS 10 AGENTES ══════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">A arquitetura proprietária</p>
+  <h2 class="slide-title">10 agentes trabalhando<br><span class="gold">enquanto você dorme.</span></h2>
+  <div class="gold-line"></div>
+  <div class="pipeline-wrap">
+    <div class="pipeline-row">
+      <div class="agent-node">
+        <div class="an-num">01</div>
+        <div class="an-name">Gestor de Projetos</div>
+        <div class="an-desc">Orquestra todo o fluxo</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="agent-node">
+        <div class="an-num">02</div>
+        <div class="an-name">Método Jordânico</div>
+        <div class="an-desc">Define ângulo e tese</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="agent-node">
+        <div class="an-num">03</div>
+        <div class="an-name">Oráculo V2</div>
+        <div class="an-desc">Valida relevância e timing</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="agent-node">
+        <div class="an-num">04</div>
+        <div class="an-name">Hook Forge</div>
+        <div class="an-desc">Forja o gancho viral</div>
+      </div>
+      <div class="pipe-arrow">→</div>
+      <div class="agent-node highlight">
+        <div class="an-num">05</div>
+        <div class="an-name">Copy Squad</div>
+        <div class="an-desc">Dan Koe + Halbert · 8 slides</div>
+      </div>
+    </div>
+    <div class="pipeline-row" style="justify-content:flex-end">
+      <div class="agent-node highlight">
+        <div class="an-num">10</div>
+        <div class="an-name">Nano Banana 2</div>
+        <div class="an-desc">Gera imagens · DNA visual proprietário</div>
+      </div>
+      <div class="pipe-arrow">←</div>
+      <div class="agent-node">
+        <div class="an-num">09</div>
+        <div class="an-name">Prompt Engineer</div>
+        <div class="an-desc">Calibra geração visual</div>
+      </div>
+      <div class="pipe-arrow">←</div>
+      <div class="agent-node">
+        <div class="an-num">08</div>
+        <div class="an-name">Diretor de Arte</div>
+        <div class="an-desc">7 camadas de instrução visual</div>
+      </div>
+      <div class="pipe-arrow">←</div>
+      <div class="agent-node highlight">
+        <div class="an-num">07</div>
+        <div class="an-name">Oráculo Revisor</div>
+        <div class="an-desc">Score /15 · mínimo 12 para publicar</div>
+      </div>
+      <div class="pipe-arrow">←</div>
+      <div class="agent-node">
+        <div class="an-num">06</div>
+        <div class="an-name">Humanizador</div>
+        <div class="an-desc">Remove marcadores de IA</div>
+      </div>
+    </div>
+    <div class="pipeline-output">
+      <div class="po-item">
+        <div class="po-num">3</div>
+        <div class="po-label">carrosseis publicados<br>por dia, todo dia</div>
+      </div>
+      <div class="po-item">
+        <div class="po-num">90</div>
+        <div class="po-label">posts por mês,<br>todos aprovados</div>
+      </div>
+      <div class="po-item">
+        <div class="po-num">100%</div>
+        <div class="po-label">automático · sem<br>intervenção manual</div>
+      </div>
+      <div class="po-item">
+        <div class="po-num">0</div>
+        <div class="po-label">dias ruins · sistema<br>não tem bloqueio criativo</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 08 — O CRITÉRIO DE QUALIDADE ════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">O que nenhuma agência garante</p>
+  <h2 class="slide-title">Nenhum post publica sem<br><span class="gold">score mínimo 12/15.</span></h2>
+  <div class="gold-line"></div>
+  <div class="criteria-list">
+    <div class="criterion">
+      <span class="criterion-code">C1</span>
+      <div class="criterion-info">
+        <div class="criterion-title">Gancho Paradoxal</div>
+        <div class="criterion-desc">Quebra uma crença dominante nos primeiros 3 segundos. Sem isso, o dedo passa.</div>
+      </div>
+      <div class="criterion-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+    <div class="criterion">
+      <span class="criterion-code">C2</span>
+      <div class="criterion-info">
+        <div class="criterion-title">Arco Emocional em 8 Etapas</div>
+        <div class="criterion-desc">Paradoxo → Validação → Nomeação → Evidência → Mecanismo → Identificação → Esperança → Cristalização.</div>
+      </div>
+      <div class="criterion-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+    <div class="criterion">
+      <span class="criterion-code">C3</span>
+      <div class="criterion-info">
+        <div class="criterion-title">Evidência Científica Verificável</div>
+        <div class="criterion-desc">Pesquisador real, instituição real, ano real, dado mensurável. Nunca genérico. Nunca sem fonte.</div>
+      </div>
+      <div class="criterion-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+    <div class="criterion">
+      <span class="criterion-code">C4</span>
+      <div class="criterion-info">
+        <div class="criterion-title">CTA Tribal</div>
+        <div class="criterion-desc">Pertencimento, não venda. "Comente X se você…" acessa experiência interna real — não instrução de compra.</div>
+      </div>
+      <div class="criterion-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+    <div class="criterion">
+      <span class="criterion-code">C5</span>
+      <div class="criterion-info">
+        <div class="criterion-title">Slide 08 em Três Camadas</div>
+        <div class="criterion-desc">Cristalização irrefutável + chamada de experiência interna + acesso. Nessa ordem. Sempre.</div>
+      </div>
+      <div class="criterion-dots">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+      </div>
+    </div>
+  </div>
+  <div class="score-badge-wrap" style="margin-top:14px">
+    <span class="score-badge">⚡ Abaixo de 12/15 — o agente reescreve. O cliente nunca vê conteúdo abaixo do padrão.</span>
+  </div>
+</div>
+
+<!-- ══ SLIDE 09 — O NOTION ════════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Visibilidade total · controle zero esforço</p>
+  <h2 class="slide-title">Cada post entra no seu<br><span class="gold">Notion com a copy completa.</span></h2>
+  <div class="gold-line"></div>
+  <div class="deliverables-grid">
+    <div class="deliverable-item">
+      <span class="del-icon">📋</span>
+      <div class="del-text"><strong>Título Editorial + Big Idea</strong>A tese central e o ângulo estratégico de cada carrossel, antes de qualquer slide.</div>
+    </div>
+    <div class="deliverable-item">
+      <span class="del-icon">🎭</span>
+      <div class="del-text"><strong>Arco Dramático Completo</strong>8 slides com copy integral, etapa do arco, referências científicas verificáveis.</div>
+    </div>
+    <div class="deliverable-item">
+      <span class="del-icon">🏷️</span>
+      <div class="del-text"><strong>Praça + Formato + Horário</strong>MENTE, SISTEMA, CORPO, ESPÍRITO ou ALAVANCA. Formato A, B, C ou D. Sem repetição no mesmo dia.</div>
+    </div>
+    <div class="deliverable-item">
+      <span class="del-icon">📱</span>
+      <div class="del-text"><strong>Caption Otimizada</strong>Com pesquisador, dado mensurável e CTA tribal específico para a Praça do post.</div>
+    </div>
+    <div class="deliverable-item">
+      <span class="del-icon">🔄</span>
+      <div class="del-text"><strong>Status em Tempo Real</strong>Planejado → Pronto → Publicando → Publicado. Rastreável. Editável. Auditável.</div>
+    </div>
+    <div class="deliverable-item">
+      <span class="del-icon">🗓️</span>
+      <div class="del-text"><strong>30 Dias Sempre à Frente</strong>O calendário editorial está sempre completo. Você nunca acorda sem conteúdo planejado.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — ENTREGÁVEIS ═════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">O que você tem em mãos em 6 meses</p>
+  <h2 class="slide-title">540 carrosseis.<br><span class="gold">540 copies. 540 imagens.</span></h2>
+  <div class="gold-line"></div>
+  <div class="entregaveis-wrap">
+    <div class="entregavel-hero">
+      <div class="eh-item">
+        <div class="eh-num">540</div>
+        <div class="eh-label">Carrosseis publicados</div>
+        <div class="eh-sub">3/dia × 180 dias · automático</div>
+      </div>
+      <div class="eh-item">
+        <div class="eh-num">540</div>
+        <div class="eh-label">Copies no Notion</div>
+        <div class="eh-sub">arco + tese + slides completos</div>
+      </div>
+      <div class="eh-item">
+        <div class="eh-num">540</div>
+        <div class="eh-label">Sets de Imagens</div>
+        <div class="eh-sub">DNA visual cinematográfico</div>
+      </div>
+      <div class="eh-item">
+        <div class="eh-num">6</div>
+        <div class="eh-label">Encontros Estratégicos</div>
+        <div class="eh-sub">1 a cada 15 dias · 3 meses</div>
+      </div>
+    </div>
+    <div class="entregavel-list">
+      <div class="el-item">
+        <span class="el-icon">🧠</span>
+        <div class="el-text"><strong>Pipeline de 10 Agentes</strong>Configurado para sua voz e seu nicho específico.</div>
+      </div>
+      <div class="el-item">
+        <span class="el-icon">🎨</span>
+        <div class="el-text"><strong>DNA Visual Proprietário</strong>Protocolo cinematográfico: Caravaggio, Beksinski, Doré, Turrell, Alex Grey.</div>
+      </div>
+      <div class="el-item">
+        <span class="el-icon">📊</span>
+        <div class="el-text"><strong>Dashboard de Performance</strong>Análise de engajamento por Praça e formato todo mês.</div>
+      </div>
+      <div class="el-item">
+        <span class="el-icon">⚙️</span>
+        <div class="el-text"><strong>Automação de Publicação</strong>Task Scheduler + Instagram API. Zero intervenção manual.</div>
+      </div>
+      <div class="el-item">
+        <span class="el-icon">📅</span>
+        <div class="el-text"><strong>Grade Editorial 30 Dias</strong>Planejamento gerado automaticamente com 1 comando.</div>
+      </div>
+      <div class="el-item">
+        <span class="el-icon">🗺️</span>
+        <div class="el-text"><strong>Mapa de Funil Revisado</strong>Jornada do seguidor para lead, otimizada a cada 15 dias.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — A ESTRATÉGIA ═══════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Componente estratégico · 3 meses</p>
+  <h2 class="slide-title">6 encontros que<br><span class="gold">orquestram seus números.</span></h2>
+  <div class="gold-line"></div>
+  <div class="six-month-wrap">
+    <div class="six-month-header">
+      <div class="six-month-block system-block">
+        <div class="smb-label">Sistema Ativo</div>
+        <div class="smb-title">6 meses de infraestrutura completa</div>
+        <div class="smb-desc">3 publicações/dia · automáticas · Notion sempre atualizado · 540 carrosseis entregues</div>
+      </div>
+      <div class="six-month-block strategy-block">
+        <div class="smb-label">Estratégia Orquestrada</div>
+        <div class="smb-title">3 meses de encontros quinzenais</div>
+        <div class="smb-desc">6 sessões de trabalho · decisões executadas · funil calibrado</div>
+      </div>
+    </div>
+    <div class="meetings-grid">
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R1</div>
+        <div class="meeting-date">Mês 1 · Sem 2</div>
+        <div class="meeting-theme">Diagnóstico de Funil</div>
+        <div class="meeting-desc">Calibrar Praças prioritárias para sua audiência atual</div>
+      </div>
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R2</div>
+        <div class="meeting-date">Mês 1 · Sem 4</div>
+        <div class="meeting-theme">Análise de Dados</div>
+        <div class="meeting-desc">Primeiros resultados · ajuste de formatos e horários</div>
+      </div>
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R3</div>
+        <div class="meeting-date">Mês 2 · Sem 2</div>
+        <div class="meeting-theme">Conteúdo Âncora</div>
+        <div class="meeting-desc">Identificar posts de maior tração · amplificação estratégica</div>
+      </div>
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R4</div>
+        <div class="meeting-date">Mês 2 · Sem 4</div>
+        <div class="meeting-theme">Jornada do Lead</div>
+        <div class="meeting-desc">Mapeamento seguidor → lead → cliente</div>
+      </div>
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R5</div>
+        <div class="meeting-date">Mês 3 · Sem 2</div>
+        <div class="meeting-theme">Otimização de CTA</div>
+        <div class="meeting-desc">Calibrar CTA por Praça · melhorar taxa de captura</div>
+      </div>
+      <div class="meeting-card active-meeting">
+        <div class="meeting-num">R6</div>
+        <div class="meeting-date">Mês 3 · Sem 4</div>
+        <div class="meeting-theme">Expansão</div>
+        <div class="meeting-desc">Estratégia para os próximos 3 meses com dados reais</div>
+      </div>
+    </div>
+  </div>
+  <p class="subtitle" style="font-size:13px;margin-top:14px;opacity:0;animation:fadeUp 0.6s 0.65s ease forwards">
+    Cada encontro é uma sessão de trabalho — não uma call de alinhamento. Saímos com decisões executadas.
+  </p>
+</div>
+
+<!-- ══ SLIDE 12 — O QUE CUSTARIA ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">A matemática que muda a perspectiva</p>
+  <h2 class="slide-title">Montar isso no mercado<br>custa <span class="gold">R$81k a R$174k.</span></h2>
+  <div class="gold-line"></div>
+  <div class="roi-compare">
+    <div class="roi-col roi-col--bad">
+      <div class="roi-col-header">Mercado Tradicional<br><span>em 6 meses · com 12 posts/mês</span></div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>Gestor de redes sociais: R$18k–36k</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>Redator de copy sênior: R$15k–30k</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>Designer cinematográfico: R$18k–48k</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>Estrategista quinzenal: R$30k–60k</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>12 posts/mês · sem automação</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-x">✗</span>
+        <span>Sem critério científico de aprovação</span>
+      </div>
+      <div class="roi-total roi-total--bad">R$81.000–174.000</div>
+    </div>
+    <div class="roi-vs">vs</div>
+    <div class="roi-col roi-col--good">
+      <div class="roi-col-header">Oráculo de Conteúdo<br><span>6 meses de infraestrutura completa</span></div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>90 posts/mês · score mínimo 12/15</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>Copy completa em cada post · no Notion</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>DNA visual cinematográfico · 7 camadas</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>6 encontros estratégicos quinzenais</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>Publicação automática 09h, 13h, 20h</span>
+      </div>
+      <div class="roi-item">
+        <span class="roi-check">✓</span>
+        <span>540 carrosseis em 180 dias</span>
+      </div>
+      <div class="roi-total roi-total--good">R$8.000</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 13 — O INVESTIMENTO ════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">O investimento</p>
+  <h2 class="slide-title"><span class="gold">R$8.000</span> pelos próximos<br>6 meses de infraestrutura.</h2>
+  <div class="gold-line"></div>
+  <div class="price-wrap">
+    <div class="price-main">
+      <span class="price-tag-small">Investimento total</span>
+      <div class="price-amount">R$8.000</div>
+      <div class="price-period">por 6 meses · pagamento único ou 2× R$4.000</div>
+      <div class="price-monthly">= R$1.333/mês</div>
+      <div class="price-divider"></div>
+      <div class="price-include-title">Inclui tudo isso</div>
+      <ul class="price-includes">
+        <li><span class="pi-check">✓</span>540 carrosseis publicados (3/dia × 180 dias)</li>
+        <li><span class="pi-check">✓</span>10 agentes de IA configurados para sua voz</li>
+        <li><span class="pi-check">✓</span>Publicação automática 09h · 13h · 20h</li>
+        <li><span class="pi-check">✓</span>Copy completa no Notion com arco + slides</li>
+        <li><span class="pi-check">✓</span>DNA visual cinematográfico exclusivo</li>
+        <li><span class="pi-check">✓</span>6 encontros estratégicos quinzenais</li>
+        <li><span class="pi-check">✓</span>Dashboard de performance mensal</li>
+      </ul>
+    </div>
+    <div class="price-side">
+      <div class="price-compare-item">
+        <div class="pci-label"><strong>Gestor de redes sociais</strong>12 posts/mês · voz genérica</div>
+        <div class="pci-price">R$36.000<span>em 6 meses</span></div>
+      </div>
+      <div class="price-compare-item">
+        <div class="pci-label"><strong>Redator de copy sênior</strong>sem automação · sem sistema</div>
+        <div class="pci-price">R$30.000<span>em 6 meses</span></div>
+      </div>
+      <div class="price-compare-item">
+        <div class="pci-label"><strong>Designer cinematográfico</strong>sem pipeline · sem critério</div>
+        <div class="pci-price">R$48.000<span>em 6 meses</span></div>
+      </div>
+      <div class="price-compare-item">
+        <div class="pci-label"><strong>Estrategista de conteúdo</strong>sem dados reais do sistema</div>
+        <div class="pci-price">R$60.000<span>em 6 meses</span></div>
+      </div>
+      <div class="price-total-saved">
+        <div class="pts-label">Economia vs. mercado</div>
+        <div class="pts-num">R$73.000 – 166.000</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SLIDE 14 — PARA QUEM ═══════════════════════════════════════════════ -->
+<div class="slide">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Qualificação · não é para todos</p>
+  <h2 class="slide-title">Este sistema foi construído<br>para <span class="gold">um perfil específico.</span></h2>
+  <div class="gold-line"></div>
+  <div class="for-whom-list">
+    <div class="fw-item">
+      <div class="fw-check">✓</div>
+      <div class="fw-text"><strong>Fundador ou especialista com ticket médio acima de R$3.000.</strong> O sistema gera autoridade que vende — não vaidade digital.</div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-check">✓</div>
+      <div class="fw-text"><strong>Que entende autoridade digital como ativo de longo prazo,</strong> não gasto de marketing de curto prazo.</div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-check">✓</div>
+      <div class="fw-text"><strong>Que já tentou produzir conteúdo manualmente</strong> e viu o colapso na consistência — e sabe que o problema não é disciplina.</div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-check">✓</div>
+      <div class="fw-text"><strong>Que quer ser referência reconhecida no nicho,</strong> não apenas visible no feed por 3 semanas.</div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-check">✓</div>
+      <div class="fw-text"><strong>Que tem clareza sobre sua oferta</strong> e precisa que o conteúdo converta — não apenas engaje.</div>
+    </div>
+  </div>
+  <p class="fw-not">Se você ainda está construindo a oferta, este não é o momento. Volte quando o produto estiver validado.</p>
+</div>
+
+<!-- ══ SLIDE 15 — CTA FINAL ═══════════════════════════════════════════════ -->
+<div class="slide slide-cover">
+  <div class="cosmic-bg"></div>
+  <p class="eyebrow">Próximo passo</p>
+  <h2 class="slide-title">Uma conversa de<br><span class="gold">diagnóstico de 45 minutos.</span></h2>
+  <div class="gold-line"></div>
+  <div class="cta-box">
+    <div class="cta-step">
+      <div class="cta-num">1</div>
+      <div class="cta-step-text"><strong>Sessão de diagnóstico gratuita (45 min)</strong> — mapeamos posicionamento, Praças com maior potencial e como o sistema se configura para seu negócio.</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">2</div>
+      <div class="cta-step-text"><strong>Se fizer sentido para os dois lados,</strong> avançamos para onboarding e configuração do sistema na sua voz.</div>
+    </div>
+    <div class="cta-step">
+      <div class="cta-num">3</div>
+      <div class="cta-step-text"><strong>Se não fizer,</strong> você sai com um mapa editorial que pode implementar por conta própria. Sem pressão.</div>
+    </div>
+  </div>
+  <p class="subtitle" style="margin-top:18px;font-size:14px;opacity:0;animation:fadeUp 0.6s 0.65s ease forwards">
+    Vagas limitadas por ciclo — cada cliente recebe atenção total durante a configuração.
+  </p>
+  <p class="fine-print" style="animation-delay:0.9s">Jordão · [inserir link ou contato aqui]</p>
+</div>
+
+</div><!-- /.slide-deck -->
+
+<div class="nav-controls">
+  <button class="nav-btn" onclick="prevSlide()">←</button>
+  <span class="slide-counter"><span id="current">1</span> / <span id="total">15</span></span>
+  <button class="nav-btn" onclick="nextSlide()">→</button>
+</div>
+
+<script>
+// ── NAV ──────────────────────────────────────────────────────────────────────
+let current = 1;
+const slides = document.querySelectorAll('.slide');
+const total  = slides.length;
+document.getElementById('total').textContent = total;
+
+function showSlide(n) {
+  if (n < 1) n = 1;
+  if (n > total) n = total;
+  current = n;
+  slides.forEach((s, i) => {
+    s.classList.toggle('active', i === n - 1);
+    if (i === n - 1) {
+      const animEls = s.querySelectorAll('.eyebrow,.gold-line,.subtitle,.hook,.card-grid,.pain-list,.stats-row,.chart-wrap,.timeline,.deliverables-grid,.pillar-row,.cta-box,.proof-badge,.fine-print,.metrics-showcase,.screenshots-grid,.roi-compare,.edu-flow,.edu-proof,.pipeline-wrap,.criteria-list,.score-badge-wrap,.six-month-wrap,.entregaveis-wrap,.price-wrap,.for-whom-list,.fw-not,[style*="animation"]');
+      animEls.forEach(el => {
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+      });
+      // Also re-trigger h2 animation
+      const h2 = s.querySelector('h2.slide-title');
+      if (h2) { h2.style.animation = 'none'; h2.offsetHeight; h2.style.animation = ''; }
+    }
+  });
+  document.getElementById('current').textContent = n;
+  document.getElementById('progressBar').style.width = (n / total * 100) + '%';
+  if (n === 4) { initChart(); animateStats(); }
+}
+
+function nextSlide() { showSlide(current + 1); }
+function prevSlide() { showSlide(current - 1); }
+
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('lightbox');
+  if (lb && lb.classList.contains('open')) {
+    if (e.key === 'Escape') lb.classList.remove('open');
+    if (e.key === 'ArrowRight') { lbIndex = (lbIndex + 1) % lbData.length; renderLb(); e.stopPropagation(); }
+    if (e.key === 'ArrowLeft')  { lbIndex = (lbIndex - 1 + lbData.length) % lbData.length; renderLb(); e.stopPropagation(); }
+    return;
+  }
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); nextSlide(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); prevSlide(); }
+});
+
+let touchStartX = 0;
+document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; });
+document.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  if (Math.abs(dx) > 50) dx < 0 ? nextSlide() : prevSlide();
+});
+
+showSlide(1);
+
+// ── CHART ─────────────────────────────────────────────────────────────────────
+let chartInited = false;
+function initChart() {
+  if (chartInited) return;
+  chartInited = true;
+  new Chart(document.getElementById('growthChart'), {
+    type: 'line',
+    data: {
+      labels: ['Pré-sistema', 'Carrossel 1', 'Carrossel 2', 'Carrossel 3', 'Carrossel 4', 'Semana 2', 'Semana 3', 'Semana 4'],
+      datasets: [{
+        data: [0, 800, 2200, 4100, 6800, 11000, 17500, 25000],
+        borderColor: '#C9A84C',
+        backgroundColor: 'rgba(201,168,76,0.08)',
+        borderWidth: 2.5,
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#C9A84C',
+        pointRadius: 4,
+        pointHoverRadius: 7,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(5,5,5,0.9)',
+          borderColor: 'rgba(201,168,76,0.3)',
+          borderWidth: 1,
+          titleColor: '#C9A84C',
+          bodyColor: '#fff',
+          callbacks: { label: ctx => `+${ctx.raw.toLocaleString('pt-BR')} seguidores` }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          ticks: {
+            color: 'rgba(255,255,255,0.4)', font: { size: 11 },
+            callback: v => v >= 1000 ? (v/1000).toFixed(0)+'k' : v
+          }
+        }
+      }
+    }
+  });
+}
+
+// ── COUNTER ───────────────────────────────────────────────────────────────────
+let statsInited = false;
+function animateStats() {
+  if (statsInited) return;
+  statsInited = true;
+  animateCount('stat1', 6800, 'k', 1500);
+  setTimeout(() => animateCount('stat2', 18000, 'k', 1800), 300);
+}
+
+function animateCount(id, target, suffix, duration) {
+  const el = document.getElementById(id);
+  const start = Date.now();
+  const tick = () => {
+    const p    = Math.min((Date.now() - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - p, 3);
+    const val  = Math.round(ease * target);
+    el.textContent = val >= 1000 ? (val/1000).toFixed(1) + 'k+' : val + suffix;
+    if (p < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+// ── LIGHTBOX ──────────────────────────────────────────────────────────────────
+const lbData = [
+  { src: 'proof-imgs/IMG_2422.PNG', badge: '57.032 curtidas · 41.207 compartilhamentos · 8.521 seguidores' },
+  { src: 'proof-imgs/IMG_2428.PNG', badge: '252.494 visualizações · 53.212 interações · 5.043 seguidores' },
+  { src: 'proof-imgs/IMG_2424.PNG', badge: '31.402 curtidas · 15.558 compartilhamentos · 3.801 seguidores' },
+  { src: 'proof-imgs/IMG_2421.PNG', badge: '18.104 curtidas · 7.293 compartilhamentos · 1.784 seguidores' },
+];
+let lbIndex = 0;
+
+function openLightbox(idx) {
+  lbIndex = idx;
+  renderLb();
+  document.getElementById('lightbox').classList.add('open');
+}
+
+function renderLb() {
+  document.getElementById('lightboxImg').src = lbData[lbIndex].src;
+  document.getElementById('lightboxBadge').textContent = lbData[lbIndex].badge;
+}
+
+function closeLightbox(e) {
+  if (e && e.target !== document.getElementById('lightbox') && !e.target.classList.contains('lightbox-close')) return;
+  document.getElementById('lightbox').classList.remove('open');
+}
+
+function lbNav(dir, e) {
+  if (e) e.stopPropagation();
+  lbIndex = (lbIndex + dir + lbData.length) % lbData.length;
+  renderLb();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "biblioteca": "bella-visual-flow-references-v1",
+  "criada_em": "2026-08-31",
+  "origem": "Análise de referências trazidas pelo usuário (carrossel Nicole Holz) + case de rejeição do próprio carrossel da Bella",
+  "objetivo": "Servir de inspiração de textura/layout/flow para AG09 (Tradutor) e AG10 (Curador) na hora de decidir a composição visual de cada slide — sem virar um 5º preset fixo. É repertório, não template.",
+  "arquivos": [
+    "ref-00-anti-padrao-card-solido-sobre-blur.json",
+    "ref-01-capa-foto-em-movimento.json",
+    "ref-02-grafico-puro-sem-foto.json",
+    "ref-03-painel-dividido-foto-lateral.json",
+    "ref-04-cartao-flutuante-sobre-foto.json",
+    "ref-05-textura-tipografica-fantasma.json"
+  ],
+  "principios_transversais_de_flow": {
+    "1_variedade_de_arquetipo_por_slide": "Um carrossel forte não repete o mesmo layout em toda lâmina. Ele alterna entre pelo menos 3 arquétipos diferentes (fotográfico puro, gráfico puro, painel dividido, card flutuante, textura tipográfica) ao longo de 8-10 slides. É essa alternância que cria a sensação de 'deslizar e cada página respirar diferente' que o usuário descreveu.",
+    "2_motivo_recorrente_como_fio_condutor": "Pelo menos um elemento visual simples (uma forma, uma cor de destaque, um ícone) deve atravessar 2+ slides consecutivos (ver ref-02/ref-03, o círculo). Isso costura o carrossel sem exigir repetir o layout inteiro.",
+    "3_intensidade_visual_acompanha_a_carga_emocional": "Slides de maior peso narrativo (climax, verdade que dói) merecem o tratamento visual mais forte/único do carrossel (ver ref-05). Se todo slide tiver a mesma intensidade, nada se destaca.",
+    "4_card_e_container_e_ferramenta_nao_padrao": "Um card/caixa só deve aparecer quando o conteúdo pede contenção (lista, citação, CTA) — nunca como solução automática para gancho/capa. Quando usado, sua cor precisa já existir em outro ponto do carrossel (ver ref-04 vs ref-00).",
+    "5_variedade_de_capa_sem_forcar_figura_humana": "A capa pode ser: foto ambiente com presença humana em movimento (ref-01), 100% gráfica/objeto (ref-02), ou detalhe/ambiente sem pessoa. Mulher na capa é uma opção entre várias, não o padrão default — a figura feminina pode entrar em slides de meio de carrossel (problema/mecanismo) em vez de sempre na capa.",
+    "6_foto_tratada_para_a_paleta_nao_a_paleta_encaixada_na_foto": "Fotos usadas em slides não-capa devem ser levemente tratadas (dessaturação, tom de luz) para conversar com a paleta do restante do carrossel, em vez de entrarem 'cruas' com cores próprias que destoam.",
+    "7_alternancia_tipografica_entre_lâminas": "Trocar conscientemente entre serifado e sans-serif de um slide para o outro (não usar a mesma fonte-título em todo o carrossel) ajuda a diferenciar o 'peso' de cada beat da narrativa."
+  },
+  "como_usar_no_pipeline": {
+    "AG09_tradutor": "Ao montar o briefing de 7 camadas de cada slide, consultar este índice para escolher o arquétipo de composição (camada 5 — Composição & Respiro) em vez de repetir sempre 'foto + card'. Ver também a camada 7 (Presença Humana) à luz do princípio 5.",
+    "AG10_curador": "Ao aplicar os presets visuais oficiais, verificar contra ref-00 se o resultado não caiu no anti-padrão de card isolado sobre foto escurecida — especialmente em slides de capa/gancho (S1)."
+  },
+  "importante": "Esta biblioteca é repertório de princípios, não um 5º preset fixo de cores. Não criar uma opção 'estilo Nicole Holz' engessada — o objetivo é a IA aprender A LÓGICA por trás de cada peça (por que funciona) e aplicar com variação em cada tema novo da Bella."
+}

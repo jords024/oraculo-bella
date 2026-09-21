@@ -1,0 +1,19 @@
+Pillow>=10.0.0
+numpy>=1.24.0
+openai>=1.30.0
+python-dotenv>=1.0.0
+# Cliente HTTP para integração com Meta Graph API e serviços de publicação
+requests>=2.31.0
+# Cliente AWS S3 / MinIO para upload de imagens públicas para a Meta API
+boto3>=1.28.0
+# Linter e formatador de código rápido para Python
+ruff>=0.3.0
+# Auditor de vulnerabilidades e CVEs para dependências Python
+pip-audit>=2.7.0
+# Gerenciador de migrações e versionamento de esquema do banco de dados PostgreSQL
+alembic>=1.13.0
+# Driver nativo de alta performance para conexão do Python/Alembic com PostgreSQL
+psycopg2-binary>=2.9.9
+# Toolkit SQL e ORM para definição e manipulação de esquemas com Alembic
+SQLAlchemy>=2.0.0
+

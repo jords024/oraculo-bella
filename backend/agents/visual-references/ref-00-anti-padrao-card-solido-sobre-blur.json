@@ -1,0 +1,24 @@
+{
+  "ref_id": "ref-00-anti-padrao-card-solido-sobre-blur",
+  "fonte": "Print do próprio dashboard do Oráculo, carrossel 'Evitar conflitos não te trouxe paz' (case rejeitado pelo usuário em 2026-08-31)",
+  "papel_no_carrossel": "capa (S1) — é exatamente o slide que mais precisa acertar, e é o que menos acerta hoje",
+  "layout_arquetipo": "anti_padrao_card_solido_sobre_foto_escurecida",
+  "problema_observado": [
+    "retângulo azul sólido de bordas retas, sem sombra perceptível, 'colado' sobre uma foto escura de corredor — sem transição de luz entre os dois",
+    "a foto de fundo é escurecida a ponto de virar quase preto, então o card não dialoga com nenhuma cor da foto — parece dois elementos de origens diferentes empilhados",
+    "essa mesma estrutura (foto + card) é aplicada como padrão para a CAPA, que é justamente o slide que mais pede impacto direto de fotografia (como em ref-01) ou impacto gráfico puro (como em ref-02) — não uma caixa de texto",
+    "a cor azul do card não se repete em nenhum outro lugar visível do carrossel — é uma escolha isolada, sem função de fio condutor"
+  ],
+  "causa_raiz_apontada_pelo_usuario": "o pipeline de geração tende a cair sempre no mesmo padrão (foto + mulher + caixa com blur) porque a IA 'pensa por padrões' — vira um comportamento engessado em vez de uma decisão de composição por slide.",
+  "comparacao_direta": {
+    "quando_o_card_flutuante_funciona": "ver ref-04 — cor recorrente na paleta do carrossel, foto de fundo ainda quente/legível, conteúdo do tipo lista/citação que justifica emolduramento",
+    "por_que_falha_aqui": "nenhuma dessas três condições está presente: cor isolada, foto apagada, conteúdo de gancho/capa (não deveria estar emoldurado)"
+  },
+  "regra_corretiva": [
+    "capa (S1) nunca deve usar 'card sólido sobre foto escurecida' como solução padrão — escolher entre: tipografia direta sobre foto com respiro natural (ref-01), slide 100% gráfico/tipográfico (ref-02), ou painel dividido (ref-03)",
+    "card flutuante só é permitido em slides de lista, citação isolada ou CTA — nunca em gancho/capa",
+    "se um card for usado em qualquer slide, sua cor precisa aparecer em pelo menos mais um ponto do mesmo carrossel (título, badge, marcador) para não parecer isolado",
+    "a foto de fundo, quando escurecida para leitura, deve manter gradiente parcial (mais escuro embaixo, mais claro em cima ou vice-versa) em vez de um bloco opaco cobrindo a cena inteira"
+  ],
+  "sobre_a_reclamacao_da_mulher_sempre_na_capa": "o usuário não proíbe figura humana nas capas — proíbe que ela seja o padrão automático toda vez. A regra de variedade fica assim: alternar entre capas fotográficas com presença humana em movimento (ref-01), capas 100% gráficas/objeto (ref-02), e capas de ambiente/detalhe sem pessoa — a figura feminina pode aparecer em slides de 'problema/mecanismo' no meio do carrossel, não precisa carregar a capa inteira."
+}

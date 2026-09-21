@@ -1,0 +1,20 @@
+{
+  "version": "bella-visual-memory-v1",
+  "purpose": "Referências orientam ritmo, hierarquia, contraste, matéria e intensidade; nunca devem ser copiadas literalmente.",
+  "references": [
+    {
+      "id": "expansive-symbolic-cover",
+      "photographic_crop": "../../../.analysis/conteudo-modelado/2.png",
+      "layouts": ["bella_essential_01", "bella_sequence_01", "bella_editorial_cover"],
+      "photo_treatments": ["esoteric", "surreal", "mixed-media", "cinematic"],
+      "visual_roles": ["gancho", "estranhamento", "capa", "expansão"]
+    },
+    {
+      "id": "editorial-rhythm-reference",
+      "photographic_crop": "../../../.analysis/conteudo-modelado/6.png",
+      "layouts": ["bella_sequence_02", "bella_sequence_03", "bella_sequence_04"],
+      "photo_treatments": ["editorial", "graphic", "analog"],
+      "visual_roles": ["nomeação", "ruptura", "reconhecimento", "explicação"]
+    }
+  ]
+}

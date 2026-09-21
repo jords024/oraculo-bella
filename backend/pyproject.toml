@@ -1,0 +1,26 @@
+[tool.ruff]
+# Versão do Python alvo
+target-version = "py310"
+
+# Regras a serem habilitadas/desabilitadas
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes (erros lógicos, variáveis não usadas, etc.)
+    "I",   # isort (ordenação automática de imports)
+    "UP",  # pyupgrade (sintaxe moderna)
+]
+
+ignore = []
+
+# Evitar analisar pastas de dependências ou temporárias
+exclude = [
+    ".git",
+    "node_modules",
+    "__pycache__",
+    "venv",
+    ".venv",
+    "dist",
+]
+
+line-length = 120

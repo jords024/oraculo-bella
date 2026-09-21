@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fonte Oculta — Agent Workflow</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: #07070f;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 48px 24px 24px;
+  }
+  .header-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #c9a84c22, #c9a84c11);
+    border: 1px solid #c9a84c44;
+    color: #c9a84c;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 6px 18px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #fff 60%, #c9a84c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+  .header p {
+    color: #ffffff55;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+
+  /* ── CANVAS WRAPPER ── */
+  .canvas-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1320px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  canvas#lines {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* ── PIPELINE ── */
+  .pipeline {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ── SPACERS ── */
+  .spacer { height: 52px; }
+  .spacer-sm { height: 36px; }
+
+  /* ── AGENT CARD ── */
+  .agent {
+    position: relative;
+    border-radius: 14px;
+    padding: 16px 22px;
+    border: 1px solid transparent;
+    cursor: default;
+    transition: all 0.4s ease;
+    min-width: 280px;
+    max-width: 340px;
+  }
+  .agent.active {
+    box-shadow: 0 0 32px var(--glow), 0 0 64px var(--glow2);
+    border-color: var(--border);
+    transform: scale(1.03);
+  }
+
+  .agent-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+    display: block;
+  }
+  .agent-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-bottom: 4px;
+  }
+  .agent-name {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .agent-desc {
+    font-size: 11px;
+    opacity: 0.55;
+    line-height: 1.5;
+  }
+
+  .status-dot {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #333;
+    transition: all 0.3s;
+  }
+  .agent.active .status-dot {
+    background: var(--dot);
+    box-shadow: 0 0 8px var(--dot);
+    animation: pulse-dot 1s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,100% { transform: scale(1); opacity:1; }
+    50% { transform: scale(1.5); opacity:0.7; }
+  }
+
+  /* ── COLORS ── */
+  .c-input  { --glow:#c9a84c33; --glow2:#c9a84c11; --border:#c9a84c66; --dot:#c9a84c;
+              background: linear-gradient(135deg, #1a1508, #0f0e0a); }
+  .c-strategy{ --glow:#8b5cf633; --glow2:#8b5cf611; --border:#8b5cf666; --dot:#a78bfa;
+               background: linear-gradient(135deg, #0f0a1a, #0a0a12); }
+  .c-copy   { --glow:#3b82f633; --glow2:#3b82f611; --border:#3b82f666; --dot:#60a5fa;
+              background: linear-gradient(135deg, #080e1a, #080a12); }
+  .c-human  { --glow:#10b98133; --glow2:#10b98111; --border:#10b98166; --dot:#34d399;
+              background: linear-gradient(135deg, #081210, #080e0a); }
+  .c-review { --glow:#f59e0b33; --glow2:#f59e0b11; --border:#f59e0b66; --dot:#fcd34d;
+              background: linear-gradient(135deg, #130f04, #0e0b06); }
+  .c-score  { background: linear-gradient(135deg, #0d0d0d, #111); border:1px solid #333; }
+  .c-design { --glow:#ec489933; --glow2:#ec489911; --border:#ec489966; --dot:#f472b6;
+              background: linear-gradient(135deg, #130810, #0e0609); }
+  .c-director { --glow:#a855f733; --glow2:#a855f711; --border:#a855f766; --dot:#c084fc;
+               background: linear-gradient(135deg, #0f0820, #0a0614); }
+  .c-output { --glow:#06b6d433; --glow2:#06b6d411; --border:#06b6d466; --dot:#22d3ee;
+              background: linear-gradient(135deg, #04100f, #040b0c); }
+
+  /* ── REVIEW SECTION ── */
+  .review-section {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .review-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: #f59e0b88;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .reviewers-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .reviewer {
+    flex: 1;
+    min-width: 170px;
+    max-width: 200px;
+    border-radius: 12px;
+    padding: 14px 16px;
+    border: 1px solid #f59e0b22;
+    background: linear-gradient(135deg, #130f04, #0e0b06);
+    transition: all 0.4s;
+    position: relative;
+  }
+  .reviewer.active {
+    border-color: #f59e0b88;
+    box-shadow: 0 0 24px #f59e0b33;
+    transform: translateY(-4px);
+  }
+  .reviewer-num {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #f59e0b88;
+    margin-bottom: 6px;
+  }
+  .reviewer-name {
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+  .reviewer-check {
+    font-size: 10px;
+    color: #ffffff44;
+    line-height: 1.4;
+  }
+  .reviewer-score {
+    margin-top: 10px;
+    display: flex;
+    gap: 4px;
+  }
+  .score-pip {
+    width: 18px; height: 4px;
+    border-radius: 2px;
+    background: #333;
+    transition: all 0.3s;
+  }
+  .reviewer.active .score-pip.lit {
+    background: #f59e0b;
+    box-shadow: 0 0 6px #f59e0b;
+  }
+
+  /* ── SCORE BOX ── */
+  .score-box {
+    border-radius: 14px;
+    padding: 18px 32px;
+    border: 1px solid #333;
+    background: #0d0d0d;
+    text-align: center;
+    min-width: 280px;
+    transition: all 0.4s;
+  }
+  .score-box.pass { border-color: #10b98166; box-shadow: 0 0 24px #10b98122; }
+  .score-box.fail { border-color: #ef444466; box-shadow: 0 0 24px #ef444422; }
+  .score-box.rewrite { border-color: #f59e0b66; box-shadow: 0 0 24px #f59e0b22; }
+  .score-num {
+    font-size: 40px;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .score-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; opacity: 0.5; }
+  .score-decision {
+    margin-top: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 4px 16px;
+    border-radius: 20px;
+    display: inline-block;
+  }
+  .score-decision.pass-d { background:#10b98122; color:#34d399; }
+  .score-decision.rewrite-d { background:#f59e0b22; color:#fcd34d; }
+  .score-decision.fail-d { background:#ef444422; color:#f87171; }
+
+  /* ── OUTPUT ROW ── */
+  .output-row {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .output-row .agent { min-width: 220px; max-width: 260px; }
+
+  /* ── HOOK VARIANTS ── */
+  .hook-variants {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .hook-chip {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 3px 10px;
+    border-radius: 10px;
+    border: 1px solid #3b82f633;
+    color: #60a5fa88;
+    transition: all 0.3s;
+  }
+  .hook-chip.chosen {
+    background: #3b82f622;
+    border-color: #60a5fa;
+    color: #60a5fa;
+    box-shadow: 0 0 8px #3b82f633;
+  }
+
+  /* ── ARROW LABEL ── */
+  .arrow-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff22;
+    text-align: center;
+    margin: -6px 0;
+    position: relative;
+    z-index: 3;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 24px;
+    border-top: 1px solid #ffffff0a;
+    margin-top: 40px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #ffffff55;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">Sistema de Agentes</div>
+  <h1>Fonte Oculta — Content Agent Workflow</h1>
+  <p>Pipeline com Partitura Emocional obrigatória · Densidade Vertical · Revisão Cirúrgica /15</p>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="lines"></canvas>
+
+  <div class="pipeline">
+
+    <!-- INPUT -->
+    <div class="agent c-input" id="a-input" data-id="input">
+      <div class="status-dot"></div>
+      <span class="agent-icon">💡</span>
+      <div class="agent-label">Entrada</div>
+      <div class="agent-name">Tema + Briefing</div>
+      <div class="agent-desc">Tema escolhido, público-alvo, formato (A/B/C/D), bolha A vs bolha B, gatilhos prioritários</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- ORÁCULO -->
+    <div class="agent c-strategy" id="a-oraculo" data-id="oraculo">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🔮</span>
+      <div class="agent-label">Agente Estratégico</div>
+      <div class="agent-name">Oráculo do Conteúdo V2</div>
+      <div class="agent-desc">Mapeia a <strong>Partitura Emocional</strong> — estado emocional nomeado por slide (DISRUPÇÃO → DESCIDA → NOMEAÇÃO → PROFUNDIDADE → QUEDA FUNDA → ESPELHO → ASCENSÃO → CRISTALIZAÇÃO), gatilhos por posição, bolha A e B. A copy executa a partitura — não o contrário.</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- HOOK FORGE -->
+    <div class="agent c-copy" id="a-hook" data-id="hook" style="max-width:360px">
+      <div class="status-dot"></div>
+      <span class="agent-icon">⚡</span>
+      <div class="agent-label">Agente de Gancho</div>
+      <div class="agent-name">Hook Forge</div>
+      <div class="agent-desc">Sequência obrigatória: <strong>Confronto Direto → Inversão de Crença → Paradoxo Sagrado</strong>. O mais seguro vem por último. Justifica o descarte dos dois não escolhidos. Seleciona o que cria maior tensão cognitiva para ESTE tema específico.</div>
+      <div class="hook-variants" id="hook-variants">
+        <div class="hook-chip" id="hc1">Paradoxo</div>
+        <div class="hook-chip" id="hc2">Confronto</div>
+        <div class="hook-chip" id="hc3">Inversão</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- COPY SQUAD -->
+    <div class="agent c-copy" id="a-copy" data-id="copy">
+      <div class="status-dot"></div>
+      <span class="agent-icon">✍️</span>
+      <div class="agent-label">Copy Squad</div>
+      <div class="agent-name">Agente Copywriter</div>
+      <div class="agent-desc">Executa a Partitura Emocional com <strong>Densidade Vertical</strong> — cada slide desce um nível mais fundo que o anterior. Regra: se S5 poderia existir no lugar de S4 sem diferença perceptível, o arco está plano. S1-S2 têm 1-2 frases. S5 é a frase mais difícil de escrever e de ler.</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- HUMANIZER -->
+    <div class="agent c-copy" id="a-human" data-id="humanizer">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🗣️</span>
+      <div class="agent-label">Agente de Voz</div>
+      <div class="agent-name">Humanizer Fonte Oculta</div>
+      <div class="agent-desc">Remove <strong>apenas marcadores sintáticos de IA</strong> (travessões excessivos, construções acadêmicas, "Ademais"). <strong>Preserva todas as arestas cortantes</strong> — a intensidade emocional é intocável. A frase que desconforta antes de seduzir é sempre a certa.</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- REVIEW SECTION -->
+    <div class="review-section" id="review-section">
+      <div class="review-label">Camada de Revisão Autônoma — 5 Agentes em Paralelo</div>
+      <div class="reviewers-row">
+
+        <div class="reviewer" id="r1">
+          <div class="reviewer-num">R1</div>
+          <div class="reviewer-name">Revisor de Gancho</div>
+          <div class="reviewer-check">O slide 01 cria paradoxo insolúvel ou faz promessa genérica?</div>
+          <div class="reviewer-score">
+            <div class="score-pip" id="r1p1"></div>
+            <div class="score-pip" id="r1p2"></div>
+            <div class="score-pip" id="r1p3"></div>
+          </div>
+        </div>
+
+        <div class="reviewer" id="r2">
+          <div class="reviewer-num">R2</div>
+          <div class="reviewer-name">Revisor de Arco</div>
+          <div class="reviewer-check">Verifica a <strong>oscilação</strong> da curva — não a presença dos 8 slides. S4 e S5 em níveis distintos? S2 mais baixo que S1? S5 é o fundo antes da ascensão? Curva plana = score 1.</div>
+          <div class="reviewer-score">
+            <div class="score-pip" id="r2p1"></div>
+            <div class="score-pip" id="r2p2"></div>
+            <div class="score-pip" id="r2p3"></div>
+          </div>
+        </div>
+
+        <div class="reviewer" id="r3">
+          <div class="reviewer-num">R3</div>
+          <div class="reviewer-name">Revisor de Raiva Coletiva</div>
+          <div class="reviewer-check">Existe ao menos 1 slide nomeando o sistema responsável com evidência específica?</div>
+          <div class="reviewer-score">
+            <div class="score-pip" id="r3p1"></div>
+            <div class="score-pip" id="r3p2"></div>
+            <div class="score-pip" id="r3p3"></div>
+          </div>
+        </div>
+
+        <div class="reviewer" id="r4">
+          <div class="reviewer-num">R4</div>
+          <div class="reviewer-name">Revisor de CTA Tribal</div>
+          <div class="reviewer-check">Verbaliza <strong>estado interno não-nomeado</strong> — não comportamento externo observável. O seguidor sente que alguém finalmente nomeou algo que carregava sem nome. CTA com comportamento externo = score 1.</div>
+          <div class="reviewer-score">
+            <div class="score-pip" id="r4p1"></div>
+            <div class="score-pip" id="r4p2"></div>
+            <div class="score-pip" id="r4p3"></div>
+          </div>
+        </div>
+
+        <div class="reviewer" id="r5">
+          <div class="reviewer-num">R5</div>
+          <div class="reviewer-name">Revisor Slide 08</div>
+          <div class="reviewer-check">Slide 08 tem as 3 camadas na ordem: Cristalização + Ativação Tribal + Portal Sutil?</div>
+          <div class="reviewer-score">
+            <div class="score-pip" id="r5p1"></div>
+            <div class="score-pip" id="r5p2"></div>
+            <div class="score-pip" id="r5p3"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- SCORE -->
+    <div class="score-box" id="score-box">
+      <div class="score-num" id="score-num">—</div>
+      <div class="score-label">Score / 15</div>
+      <div class="score-decision pass-d" id="score-decision" style="display:none"></div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- DESIGN DIRECTOR -->
+    <div class="agent c-director" id="a-director" data-id="director" style="max-width:380px">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🎨</span>
+      <div class="agent-label">Agente de Identidade Visual</div>
+      <div class="agent-name">Design Director</div>
+      <div class="agent-desc">Escolha estratégica — não estética. O preset amplifica a tensão emocional do conteúdo. <strong>Arqueologia epigenética → Manuscrito Sagrado</strong> (arqueologia, desenterrar). <strong>Sistema financeiro → Cinematográfico Crimson</strong> (frieza institucional). O visual cria tensão com o texto — não o ilustra.</div>
+      <div class="hook-variants" id="design-variants">
+        <div class="hook-chip" id="dv1" style="border-color:#c9a84c44;color:#c9a84c88">Manuscrito</div>
+        <div class="hook-chip" id="dv2" style="border-color:#1a6eff44;color:#1a6eff88">Cinemático</div>
+        <div class="hook-chip" id="dv3" style="border-color:#a855f744;color:#a855f788">Esotérico</div>
+      </div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- PROMPT ENGINEER -->
+    <div class="agent c-design" id="a-prompt" data-id="prompt">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🖼️</span>
+      <div class="agent-label">Agente de Prompt Visual</div>
+      <div class="agent-name">Prompt Engineer</div>
+      <div class="agent-desc">Regra: a imagem <strong>cria tensão com o texto — não o ilustra</strong>. Se o slide diz "seu campo chega antes de você", a imagem mostra uma presença ausente — não um campo eletromagnético. Especifica: estado emocional do slide → metáfora visual → composição → fonte de luz única.</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- NANO BANANA -->
+    <div class="agent c-design" id="a-nano" data-id="nano">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🍌</span>
+      <div class="agent-label">Geração de Imagem</div>
+      <div class="agent-name">Nano Banana 2</div>
+      <div class="agent-desc">Gera 8 imagens via Gemini API (gemini-3.1-flash-image-preview) com prompts específicos por slide em alta resolução</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- DESIGN COMPOSITOR -->
+    <div class="agent c-design" id="a-design" data-id="design">
+      <div class="status-dot"></div>
+      <span class="agent-icon">🎨</span>
+      <div class="agent-label">Composição Final</div>
+      <div class="agent-name">Design Compositor</div>
+      <div class="agent-desc">Python + Pillow: combina imagem + tipografia Franklin Gothic/Inter + watermark Afonteoculta + gradiente → JPEG 1080x1350</div>
+    </div>
+
+    <div class="spacer"></div>
+
+    <!-- OUTPUT ROW -->
+    <div class="output-row">
+
+      <div class="agent c-output" id="a-notion" data-id="notion">
+        <div class="status-dot"></div>
+        <span class="agent-icon">📋</span>
+        <div class="agent-label">Banco de Dados</div>
+        <div class="agent-name">Notion MCP</div>
+        <div class="agent-desc">Registra o carrossel com copy, status, scores, caption e slides na base "Produção de Carrosséis"</div>
+      </div>
+
+      <div class="agent c-output" id="a-dash" data-id="dash">
+        <div class="status-dot"></div>
+        <span class="agent-icon">📊</span>
+        <div class="agent-label">Dashboard</div>
+        <div class="agent-name">Painel de Produção</div>
+        <div class="agent-desc">Exibe carrosséis gerados, status, thumbnails dos slides e métricas de produção em tempo real</div>
+      </div>
+
+    </div>
+
+  </div><!-- /pipeline -->
+</div><!-- /canvas-wrap -->
+
+<!-- LEGEND -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#c9a84c"></div>Entrada</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6"></div>Estratégia</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6"></div>Copy & Voz</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>Revisão Autônoma</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a855f7"></div>Design Director</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>Design & Imagem</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#06b6d4"></div>Output</div>
+</div>
+
+<script>
+// ── SEQUENCE ──────────────────────────────────────────────────────────────
+const sequence = [
+  { id:'a-input',    delay:0,     dur:1200 },
+  { id:'a-oraculo',  delay:1000,  dur:1400 },
+  { id:'a-hook',     delay:2200,  dur:1600, hook:true },
+  { id:'a-copy',     delay:3600,  dur:1400 },
+  { id:'a-human',    delay:4800,  dur:1200 },
+  { id:'review',     delay:5800,  dur:2400 },
+  { id:'score-box',  delay:8000,  dur:1600 },
+  { id:'a-director', delay:9400,  dur:1400, design:true },
+  { id:'a-prompt',   delay:10600, dur:1200 },
+  { id:'a-nano',     delay:11600, dur:1600 },
+  { id:'a-design',   delay:13000, dur:1400 },
+  { id:'a-notion',   delay:14200, dur:1000 },
+  { id:'a-dash',     delay:14600, dur:1000 },
+];
+
+const totalDur = 16500;
+
+// ── PARTICLES ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('lines');
+const ctx    = canvas.getContext('2d');
+let particles = [];
+let animFrame;
+let started = false;
+
+function resize() {
+  const wrap = canvas.parentElement;
+  canvas.width  = wrap.offsetWidth;
+  canvas.height = wrap.offsetHeight;
+}
+
+function getCenter(el) {
+  const wrap = canvas.parentElement.getBoundingClientRect();
+  const r    = el.getBoundingClientRect();
+  return {
+    x: r.left - wrap.left + r.width/2,
+    y: r.top  - wrap.top  + r.height/2,
+    top: r.top - wrap.top,
+    bottom: r.bottom - wrap.top,
+    left: r.left - wrap.left,
+    right: r.right - wrap.left,
+    width: r.width,
+    height: r.height,
+  };
+}
+
+function spawnParticle(from, to, color) {
+  const f = getCenter(document.getElementById(from));
+  const t = getCenter(document.getElementById(to));
+  particles.push({
+    x: f.x, y: f.bottom,
+    tx: t.x, ty: t.top,
+    progress: 0,
+    speed: 0.012 + Math.random()*0.008,
+    color,
+    size: 3 + Math.random()*2,
+    alpha: 1,
+  });
+}
+
+function spawnReviewParticles() {
+  const from = 'a-human';
+  ['r1','r2','r3','r4','r5'].forEach((rid,i) => {
+    setTimeout(() => spawnParticle(from, rid, '#f59e0b'), i*60);
+  });
+}
+
+function spawnReviewToScore() {
+  ['r1','r2','r3','r4','r5'].forEach((rid,i) => {
+    setTimeout(() => {
+      const f = getCenter(document.getElementById(rid));
+      const t = getCenter(document.getElementById('score-box'));
+      particles.push({ x:f.x, y:f.bottom, tx:t.x, ty:t.top,
+        progress:0, speed:0.016, color:'#f59e0b', size:3, alpha:1 });
+    }, i*80);
+  });
+}
+
+const edges = [
+  ['a-input','a-oraculo','#c9a84c'],
+  ['a-oraculo','a-hook','#8b5cf6'],
+  ['a-hook','a-copy','#3b82f6'],
+  ['a-copy','a-human','#3b82f6'],
+  ['score-box','a-director','#a855f7'],
+  ['a-director','a-prompt','#ec4899'],
+  ['a-prompt','a-nano','#ec4899'],
+  ['a-nano','a-design','#ec4899'],
+];
+
+let particleTimer = null;
+
+function loopParticles() {
+  edges.forEach(([f,t,c]) => spawnParticle(f,t,c));
+  spawnReviewParticles();
+  setTimeout(spawnReviewToScore, 800);
+}
+
+function drawParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // draw lines
+  const linePairs = [
+    ['a-input','a-oraculo','#c9a84c22'],
+    ['a-oraculo','a-hook','#8b5cf622'],
+    ['a-hook','a-copy','#3b82f622'],
+    ['a-copy','a-human','#3b82f622'],
+    ['score-box','a-director','#a855f722'],
+    ['a-director','a-prompt','#ec489922'],
+    ['a-prompt','a-nano','#ec489922'],
+    ['a-nano','a-design','#ec489922'],
+  ];
+  linePairs.forEach(([f,t,c]) => {
+    const fe = document.getElementById(f);
+    const te = document.getElementById(t);
+    if (!fe||!te) return;
+    const fc = getCenter(fe), tc = getCenter(te);
+    ctx.beginPath();
+    ctx.moveTo(fc.x, fc.bottom);
+    ctx.lineTo(tc.x, tc.top);
+    ctx.strokeStyle = c;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  });
+
+  // review lines
+  const hum = document.getElementById('a-human');
+  if (hum) {
+    const hc = getCenter(hum);
+    ['r1','r2','r3','r4','r5'].forEach(rid => {
+      const r = document.getElementById(rid);
+      if (!r) return;
+      const rc = getCenter(r);
+      ctx.beginPath();
+      ctx.moveTo(hc.x, hc.bottom);
+      ctx.lineTo(rc.x + rc.width/2, rc.top);
+      ctx.strokeStyle = '#f59e0b18';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+    // reviewer to score
+    const sc = document.getElementById('score-box');
+    if (sc) {
+      const scc = getCenter(sc);
+      ['r1','r2','r3','r4','r5'].forEach(rid => {
+        const r = document.getElementById(rid);
+        if (!r) return;
+        const rc = getCenter(r);
+        ctx.beginPath();
+        ctx.moveTo(rc.x + rc.width/2, rc.bottom);
+        ctx.lineTo(scc.x, scc.top);
+        ctx.strokeStyle = '#f59e0b12';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      });
+    }
+  }
+
+  // output lines
+  ['a-notion','a-dash'].forEach(id => {
+    const d = document.getElementById(id);
+    const de = document.getElementById('a-design');
+    if (!d||!de) return;
+    const dc = getCenter(de), oc = getCenter(d);
+    ctx.beginPath();
+    ctx.moveTo(dc.x, dc.bottom);
+    ctx.lineTo(oc.x, oc.top);
+    ctx.strokeStyle = '#06b6d422';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  });
+
+  // particles
+  particles = particles.filter(p => {
+    p.progress += p.speed;
+    if (p.progress > 1) { p.alpha -= 0.08; return p.alpha > 0; }
+    const x = p.x + (p.tx - p.x) * p.progress;
+    const y = p.y + (p.ty - p.y) * p.progress;
+    ctx.beginPath();
+    ctx.arc(x, y, p.size, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.globalAlpha = p.alpha * (1 - Math.abs(p.progress - 0.5)*0.5);
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur  = 8;
+    ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.shadowBlur  = 0;
+    return true;
+  });
+
+  animFrame = requestAnimationFrame(drawParticles);
+}
+
+// ── SCORES ────────────────────────────────────────────────────────────────
+const scores = { r1:3, r2:3, r3:2, r4:3, r5:3 };
+
+function activateReviewer(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.add('active');
+  const s = scores[id];
+  for (let i=1;i<=3;i++) {
+    setTimeout(() => {
+      const pip = document.getElementById(id+'p'+i);
+      if (pip && i<=s) pip.classList.add('lit');
+    }, i*180);
+  }
+}
+
+function showScore() {
+  const total = Object.values(scores).reduce((a,b)=>a+b,0);
+  const box   = document.getElementById('score-box');
+  const num   = document.getElementById('score-num');
+  const dec   = document.getElementById('score-decision');
+  let cur = 0;
+  const step = () => {
+    cur = Math.min(cur+1, total);
+    num.textContent = cur;
+    if (cur < total) setTimeout(step, 80);
+    else {
+      dec.style.display = 'inline-block';
+      if (total >= 12) {
+        box.classList.add('pass');
+        num.style.color = '#34d399';
+        dec.textContent = '✓ APROVADO — Segue para Design';
+        dec.className = 'score-decision pass-d';
+      } else if (total >= 8) {
+        box.classList.add('rewrite');
+        num.style.color = '#fcd34d';
+        dec.textContent = '↻ REESCRITA — Elementos Score 1';
+        dec.className = 'score-decision rewrite-d';
+      } else {
+        box.classList.add('fail');
+        num.style.color = '#f87171';
+        dec.textContent = '⚠ ESCALA — Requer Aprovação Humana';
+        dec.className = 'score-decision fail-d';
+      }
+    }
+  };
+  step();
+}
+
+// ── ANIMATION LOOP ────────────────────────────────────────────────────────
+let timeouts = [];
+
+function resetAll() {
+  document.querySelectorAll('.agent').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.reviewer').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.score-pip').forEach(el => el.classList.remove('lit'));
+  document.querySelectorAll('.hook-chip').forEach(el => el.classList.remove('chosen'));
+  ['dv1','dv2','dv3'].forEach(id => {
+    const c = document.getElementById(id);
+    if (!c) return;
+    c.style.opacity = ''; c.style.transform = '';
+    c.style.fontWeight = ''; c.style.letterSpacing = '';
+    c.style.boxShadow = ''; c.style.background = '';
+    c.style.borderColor = ''; c.style.color = '';
+  });
+  const box = document.getElementById('score-box');
+  box.className = 'score-box';
+  document.getElementById('score-num').textContent = '—';
+  document.getElementById('score-num').style.color = '';
+  const dec = document.getElementById('score-decision');
+  dec.style.display = 'none';
+  dec.textContent = '';
+  particles = [];
+}
+
+function runSequence() {
+  resetAll();
+  timeouts.forEach(clearTimeout);
+  timeouts = [];
+
+  sequence.forEach(step => {
+    if (step.id === 'review') {
+      const t = setTimeout(() => {
+        ['r1','r2','r3','r4','r5'].forEach((rid,i) => {
+          setTimeout(() => activateReviewer(rid), i*120);
+        });
+        spawnReviewParticles();
+        setTimeout(spawnReviewToScore, 600);
+      }, step.delay);
+      timeouts.push(t);
+    } else if (step.id === 'score-box') {
+      const t = setTimeout(() => showScore(), step.delay);
+      timeouts.push(t);
+    } else {
+      const t = setTimeout(() => {
+        const el = document.getElementById(step.id);
+        if (!el) return;
+        el.classList.add('active');
+        if (step.hook) {
+          setTimeout(() => {
+            ['hc1','hc2','hc3'].forEach((id,i) => {
+              setTimeout(() => document.getElementById(id)?.classList.add('chosen'), i*200);
+            });
+            setTimeout(() => {
+              ['hc1','hc2'].forEach(id => document.getElementById(id)?.classList.remove('chosen'));
+            }, 800);
+          }, 400);
+        }
+        if (step.design) {
+          const dvIds = ['dv1','dv2','dv3'];
+          setTimeout(() => {
+            dvIds.forEach((id,i) => {
+              setTimeout(() => {
+                const chip = document.getElementById(id);
+                if (!chip) return;
+                const colors = ['#c9a84c','#1a6eff','#a855f7'];
+                const glows  = ['#c9a84c33','#1a6eff33','#a855f733'];
+                chip.style.borderColor = colors[i];
+                chip.style.color       = colors[i];
+                chip.style.background  = colors[i] + '18';
+                chip.style.boxShadow   = '0 0 8px ' + glows[i];
+              }, i * 220);
+            });
+            const chosen = Math.floor(Math.random() * 3);
+            setTimeout(() => {
+              dvIds.forEach((id, i) => {
+                const chip = document.getElementById(id);
+                if (!chip) return;
+                if (i !== chosen) {
+                  chip.style.opacity    = '0.2';
+                  chip.style.boxShadow  = 'none';
+                } else {
+                  chip.style.transform  = 'scale(1.12)';
+                  chip.style.fontWeight = '900';
+                  chip.style.letterSpacing = '2px';
+                }
+              });
+            }, 900);
+          }, 350);
+        }
+      }, step.delay);
+      timeouts.push(t);
+    }
+  });
+
+  // particle loop
+  if (particleTimer) clearInterval(particleTimer);
+  particleTimer = setInterval(loopParticles, 2200);
+
+  // restart
+  const restart = setTimeout(runSequence, totalDur);
+  timeouts.push(restart);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  resize();
+  drawParticles();
+  setTimeout(runSequence, 400);
+});
+window.addEventListener('resize', () => { resize(); });
+</script>
+</body>
+</html>

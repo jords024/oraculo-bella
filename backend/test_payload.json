@@ -1,0 +1,17 @@
+{
+  "title": "Teste Historico Visual",
+  "theme": "teste-historico-visual",
+  "format": "A",
+  "caption": "Legenda de teste do histórico",
+  "notes": "Notas de teste",
+  "slides": [
+    {
+      "num": "01",
+      "estado": "DISRUPÇÃO",
+      "layout": "fullbleed",
+      "title": "Slide de Teste",
+      "body": "Este é um slide de teste para validar o histórico",
+      "prompt": "Futuristic neon city background with coding dashboard"
+    }
+  ]
+}

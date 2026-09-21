@@ -1,0 +1,39 @@
+{
+  "ref_id": "ref-01-capa-foto-em-movimento",
+  "fonte": "Referência enviada pelo usuário (carrossel Nicole Holz, slide 1/capa)",
+  "papel_no_carrossel": "capa / gancho (S1)",
+  "layout_arquetipo": "capa_fotografica_ambiente_sem_caixa",
+  "resumo": "Foto real full-bleed de mulher de costas, cabelo ao vento, em movimento, olhando para longe — nunca para a câmera. O céu ocupa área generosa como respiro para a tipografia.",
+  "fundo": {
+    "tipo": "fotografia_full_bleed",
+    "descricao": "Fotografia ambiente (céu azul, nuvens, luz natural de dia), sem overlay, sem blur, sem caixa colorida por cima."
+  },
+  "textura": "nenhuma textura artificial aplicada; a textura vem da própria fotografia (tecido do vestido, nuvens, cabelo em movimento).",
+  "tipografia": {
+    "hierarquia": [
+      "kicker superior: nome + categoria em caixa alta pequena, cantos opostos (esquerda/direita)",
+      "linha fina horizontal separando o kicker do título",
+      "título misto: serif regular + trecho em bold, tamanho médio",
+      "palavra final em serifada itálica display, escala muito maior que o resto, com ligatura estilizada (ex: 'ti' conectado)"
+    ],
+    "principio": "a hierarquia é criada por SALTO DE ESCALA e peso, não por caixas ou cores. O texto convive com a foto usando apenas contraste tonal (tipografia clara sobre céu escuro)."
+  },
+  "motivos_decorativos": [
+    "linha horizontal fina como divisor",
+    "tag inferior esquerda com nome/categoria",
+    "indicador 'arrasta para o lado' inferior direito com ícone de seta"
+  ],
+  "tratamento_de_foto": {
+    "enquadramento": "corpo inteiro, de costas, levemente descentralizado",
+    "regra_humana": "presença humana em movimento real, nunca posada olhando pro espectador — compatível com a regra já existente do AG09 (camada 7)."
+  },
+  "paleta": "definida pela própria foto (azul-céu, branco-nuvem, off-white do vestido) — não é uma paleta de marca aplicada por cima, é extraída da cena.",
+  "papel_no_fluxo": "abre o carrossel com respiração e movimento; por não ter caixa nem blur, cria contraste de ritmo com slides seguintes que podem ser mais densos/gráficos.",
+  "por_que_parece_intencional_e_nao_improvisado": "o texto nunca precisa de um retângulo de apoio porque a própria composição da foto (céu limpo em cima) já reserva o espaço. Isso é planejado na hora de escolher/gerar a foto, não corrigido depois com uma caixa.",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "o 'respiro natural' pode vir de céu, parede lisa, água, tecido — não precisa ser sempre céu",
+    "a figura humana pode ser trocada por objeto/ambiente em outras capas (ver ref-02) sem perder o princípio",
+    "a palavra em destaque muda a cada carrossel; o que se mantém é o salto de escala, não a palavra específica"
+  ],
+  "nao_copiar_literalmente": "não é sobre repetir 'mulher de vestido de costas olhando o céu' em toda capa — é sobre reservar espaço negativo real na composição da imagem para o texto, em vez de empilhar uma caixa depois."
+}

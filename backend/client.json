@@ -1,0 +1,227 @@
+{
+  "_comment": "Camada narrativa da plataforma calibrada para Isabella Dalcin (@isabella.dalcin - Academia Sete).",
+
+  "meta": {
+    "clientId": "bella-dalcin",
+    "clientName": "Isabella Dalcin",
+    "handle": "@isabella.dalcin",
+    "creator": "Bella Dalcin",
+    "school": "Academia Sete",
+    "language": "pt-BR",
+    "version": "2.0.0",
+    "createdAt": "2026-08-25"
+  },
+
+  "brand": {
+    "niche": [
+      "maturidade emocional",
+      "autonomia espiritual",
+      "saúde feminina",
+      "autoconhecimento",
+      "T.A.F.A",
+      "integração"
+    ],
+    "product": "Academia Sete",
+    "cta_keyword": "BELLA",
+    "enemy": "A indústria espiritual que lucra mantendo a mulher em busca permanente ao invés de integrar o que já viveu",
+
+    "avatar": {
+      "dor_atual": "Sabe muito, integra pouco. Já fez ayahuasca, leu Jung, foi em retiro, tem terapeuta. E ainda se diminui, ainda busca validação, ainda não consegue dizer não.",
+      "desejo_profundo": "Acordar na segunda-feira sentindo que a vida que vive é a vida que escolheu. Não mais expansão: sustentação do que já sabe.",
+      "crenca_falsa": "Se eu tiver a experiência certa, a prática certa, o professor certo, eu vou finalmente chegar lá.",
+      "verdade_oculta": "Você não precisa de mais um portal ou experiência. Você precisa de coragem para viver segunda-feira de manhã com o que já sabe.",
+      "frustracoes": [
+        "Retiro após retiro sem mudança duradoura",
+        "Terapia que explica mas não transforma",
+        "Práticas que funcionam no espaço sagrado mas não na segunda-feira",
+        "Cansaço de evoluir sem colher paz"
+      ],
+      "raiva_disponivel": [
+        "Indústria espiritual que lucra com a busca contínua e a incompletude",
+        "Mercado que prefere vender novas experiências a ensinar sustentação no cotidiano"
+      ]
+    }
+  },
+
+  "voice": {
+    "tone": ["calmo", "revelador", "iniciático", "acolhedor", "denso", "firme"],
+    "density": "denso, poético, rústico, preciso, sem clichês",
+    "description": "A calma de quem já foi até lá e voltou, conversando com quem está prestes a ir. Não motiva: reflete e inicia.",
+
+    "vocabulary": {
+      "allowed": [
+        "autonomia", "sensibilidade", "maturidade", "integração", "essência",
+        "discernimento", "presença", "iniciação", "sustentação", "compaixão",
+        "enraizamento", "Eu Superior", "corpo", "ciclos", "raízes", "estrutura",
+        "fluxo", "transmutação", "expressão", "unidade"
+      ],
+      "forbidden": [
+        "melhor versão", "vibra alto", "se tornar quem você sempre foi",
+        "despertar", "feminino sagrado", "potência", "abundância",
+        "frequência alta", "manifestação", "bruxa", "últimas vagas",
+        "só até hoje", "promessa rápida", "estudos mostram", "a verdade é que"
+      ],
+      "forbidden_structures": [
+        "Não é sobre X, mas sim sobre Y",
+        "Não é X. É Y. (repetido mais de 2x)",
+        "É sobre isso.",
+        "E está tudo bem.",
+        "No post de hoje...",
+        "Prepare-se para...",
+        "Mergulhe comigo...",
+        "travessões (—) no meio de frases"
+      ]
+    },
+
+    "narration": {
+      "voice_ref": "Bella",
+      "voice_provider": "ElevenLabs",
+      "voice_qualities": "suave, densa, acolhedora, firme e consciente",
+      "pause_marker": "│",
+      "emphasis_style": "MAIÚSCULAS",
+      "speed_options": ["lento", "normal", "acelerado"],
+      "tone_options": ["iniciático", "íntimo", "revelador", "firme", "acolhedor"]
+    }
+  },
+
+  "method": {
+    "name": "Método T.A.F.A",
+    "type": "carousel_and_reels",
+    "elements": {
+      "terra": "Enraizamento, corpo, raízes, fundação, estrutura, consistência",
+      "agua": "Intuição, fluxo, feminino, emoção, ciclos, adaptação",
+      "fogo": "Transmutação, vontade, coragem, limpeza, ação",
+      "ar": "Expressão, comunicação, leveza, expansão, ensinamento",
+      "eter": "Integração, síntese, unidade, transcendência"
+    },
+    "structure": {
+      "format": "10_slides",
+      "beats": [
+        { "id": 1, "name": "ESPELHO", "description": "Reconhecimento perturbador — é sobre mim (Nó na garganta)" },
+        { "id": 2, "name": "VALIDAÇÃO", "description": "Você não estava errada em sentir isso (Afrouxamento no peito)" },
+        { "id": 3, "name": "NOMEAÇÃO", "description": "Existe um sistema que mantém isso assim (Raiva na mandíbula)" },
+        { "id": 4, "name": "MECANISMO", "description": "Como isso se manifesta no corpo e nos ciclos (Peso no estômago)" },
+        { "id": 5, "name": "DESCIDA FUNDA", "description": "A verdade que dói: a cumplicidade interna (Aperto no coração)" },
+        { "id": 6, "name": "RECONHECIMENTO", "description": "Ela se vê no espelho sem desviar o olhar (Olhos marejando)" },
+        { "id": 7, "name": "O CAMINHO", "description": "Integração T.A.F.A com saída nomeada (Abertura no peito)" },
+        { "id": 8, "name": "CRISTALIZAÇÃO", "description": "Síntese pura sem CTA de venda (Paz com peso)" },
+        { "id": 9, "name": "SETUP", "description": "Existe uma estrutura e um próximo passo real" },
+        { "id": 10, "name": "PORTAL", "description": "CTA fixo com convite ao retorno interno (Comente BELLA)" }
+      ]
+    }
+  },
+
+  "carousel": {
+    "total_slides": 10,
+    "states": [
+      "ESPELHO", "VALIDAÇÃO", "NOMEAÇÃO", "MECANISMO",
+      "DESCIDA FUNDA", "RECONHECIMENTO", "O CAMINHO",
+      "CRISTALIZAÇÃO", "SETUP", "PORTAL"
+    ],
+    "slide_rules": {
+      "s1": { "mode": "image", "layout": "brands_cover", "cover": true },
+      "s2": { "mode": "card", "layout": "brands_split" },
+      "s3": { "mode": "image", "layout": "brands_editorial" },
+      "s4": { "mode": "card", "layout": "brands_split" },
+      "s5": { "mode": "image", "layout": "brands_editorial" },
+      "s6": { "mode": "card", "layout": "brands_split" },
+      "s7": { "mode": "image", "layout": "brands_editorial" },
+      "s8": { "mode": "card", "layout": "brands_editorial" },
+      "s9": { "mode": "card", "layout": "brands_split" },
+      "s10": { "mode": "image", "layout": "brands_outro" }
+    },
+    "presets": {
+      "bella_organico_terracota": {
+        "palette": "Terracota #C1784F, Creme #FAF6F0, Dourado Antigo #B8972A",
+        "description": "Feminino terroso, orgânico e ancestral com tipografia editorial serifada"
+      },
+      "bella_verde_musgo": {
+        "palette": "Verde-musgo #5C7A5E, Creme #FAF6F0, Terracota #C1784F",
+        "description": "Equilíbrio botânico, natureza e cura com iluminação suave"
+      },
+      "bella_ambar_sagrado": {
+        "palette": "Âmbar #C9973A, Creme #FAF6F0, Dourado #B8972A",
+        "description": "Luz solar suave filtrada e acolhimento sagrado"
+      },
+      "brands_decoded_principal": {
+        "palette": "Vermelho #FF3300, Carvão #0D0D0D, Bege #F4F1EA",
+        "description": "Alto contraste e impacto editorial para estudos de caso"
+      },
+      "brands_decoded_autoral": {
+        "palette": "Vinho #2B0E09, Terracota #E62E00, Creme #F5EFEB",
+        "description": "Editorial sofisticado em bordeaux e serif display"
+      }
+    }
+  },
+
+  "visual": {
+    "aesthetic": [
+      "sacred organic illustration",
+      "earthy feminine aesthetic",
+      "warm terracota and sage green palette",
+      "soft natural lighting without harsh shadows",
+      "botanical elements (roots, seeds, herbs, flowers)",
+      "handcrafted texture with ancient wisdom visual language",
+      "no digital gloss"
+    ],
+    "palette": {
+      "primary": ["#C1784F", "#5C7A5E", "#C9973A"],
+      "secondary": ["#FAF6F0", "#B8972A"],
+      "background": "#FAF6F0"
+    },
+    "forbidden_visuals": [
+      "metálico, urbano, tecnológico",
+      "brilho digital, gloss, neon",
+      "figuras heroicas de palco ou poder performático",
+      "cenas literais sem metáfora"
+    ],
+    "preferred_visuals": [
+      "botânica do século XIX",
+      "pintura sacra feminina suave",
+      "mulher em ritual / contato com a terra e água",
+      "luz solar difusa e texturas naturais"
+    ],
+    "human_figures": "mulher em presença orgânica, contemplação ou conexão com a terra"
+  },
+
+  "audio": {
+    "style": "orgânico, acolhedor, elementos da natureza (vento, água, fogueira sutil)",
+    "allowed_types": ["sons da natureza", "instrumentos acústicos sutis", "vento nas folhas", "água corrente suave"],
+    "forbidden_types": ["sintetizadores pesados", "drops eletrônicos", "batidas de trap"],
+    "sfx_length": "8-15 palavras",
+    "references": "soundscapes de natureza, meditações e frequências orgânicas"
+  },
+
+  "metrics": {
+    "posts": 140,
+    "likes": 850000,
+    "comments": 45000,
+    "saves": 120000,
+    "shares": 95000,
+    "reach": 2400000,
+    "followers_gained_organic": 48000
+  },
+
+  "agents": {
+    "copywriter": {
+      "persona_name": "Artesão da Palavra",
+      "role": "Copywriter especializado no Método T.A.F.A e voz de Bella Dalcin"
+    },
+    "diretor_cena": {
+      "persona_name": "Curador Visual",
+      "role": "Diretor de Arte Botânica e Estética Orgânica Feminina"
+    },
+    "sonoplasta": {
+      "persona_name": "Alquimista Sonoro",
+      "role": "Sonoplastia de frequências naturais e ambiências orgânicas"
+    },
+    "voz": {
+      "persona_name": "Guia de Narração",
+      "role": "Diretor de locução acolhedora e firme"
+    },
+    "diretor_artistico": {
+      "persona_name": "Arquiteto de Canvas",
+      "role": "Composição tipográfica e equilíbrio de layouts de carrossel"
+    }
+  }
+}

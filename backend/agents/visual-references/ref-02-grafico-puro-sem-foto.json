@@ -1,0 +1,33 @@
+{
+  "ref_id": "ref-02-grafico-puro-sem-foto",
+  "fonte": "Referência enviada pelo usuário (carrossel Nicole Holz, slide gráfico com andorinhas)",
+  "papel_no_carrossel": "validação / respiro reflexivo (meio de carrossel)",
+  "layout_arquetipo": "grafico_puro_sem_fotografia",
+  "resumo": "Sem nenhuma foto ou figura humana. Fundo de cor sólida + uma forma abstrata (círculo de borda suave) + um motivo pictórico simples (duas andorinhas voando) como única metáfora visual.",
+  "fundo": {
+    "tipo": "cor_solida",
+    "descricao": "Bege/creme neutro, sem textura de papel ou grão."
+  },
+  "textura": "plana, digital, sem grão — contraste proposital com slides fotográficos vizinhos, criando variação de textura entre lâminas.",
+  "tipografia": {
+    "hierarquia": [
+      "título grande serifado azul, com uma palavra em itálico, alinhado à esquerda",
+      "corpo de texto preto simples alinhado à direita/embaixo, contido por uma linha fina em 'L' (canto arredondado) em vez de uma caixa fechada"
+    ],
+    "principio": "a moldura do corpo de texto é uma linha aberta (dois lados apenas), não um retângulo fechado — sugere contenção sem parecer uma etiqueta colada."
+  },
+  "motivos_decorativos": [
+    "círculo grande de cor neutra sangrando pela borda superior direita (nunca totalmente contido no quadro)",
+    "duas andorinhas sobrepostas ao círculo, funcionando como metáfora de partida/liberdade ligada ao texto ('não nasce do outro')"
+  ],
+  "tratamento_de_foto": "nenhuma foto — 100% ilustrativo/gráfico.",
+  "paleta": "creme neutro + um único azul de destaque para o título + preto para o corpo + tom terroso no círculo.",
+  "papel_no_fluxo": "depois de uma capa fotográfica de alto impacto (ref-01), este slide baixa a intensidade visual — é o 'respiro' que dá ritmo ao carrossel. Sem essa variação, o carrossel inteiro pareceria uma sequência de fotos repetidas.",
+  "por_que_parece_intencional_e_nao_improvisado": "o motivo (andorinhas) não é decoração aleatória: ele ilustra literalmente a ideia do texto (partida, ausência). A composição é assimétrica (título canto superior esquerdo, motivo canto superior direito, corpo inferior direito) — evita a sensação de template centralizado.",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "o motivo pictórico muda conforme a metáfora do slide (não precisa ser sempre pássaro — pode ser semente, onda, raiz, conforme o texto)",
+    "a cor de destaque do título pode variar dentro da paleta da marca, desde que haja só uma cor de destaque por slide",
+    "a moldura em 'L' pode abrir para qualquer canto, não fixo"
+  ],
+  "nao_copiar_literalmente": "não é sobre usar sempre andorinhas — é sobre garantir que pelo menos alguns slides do carrossel sejam 100% gráficos/tipográficos, sem depender de gerar uma nova foto para cada lâmina."
+}

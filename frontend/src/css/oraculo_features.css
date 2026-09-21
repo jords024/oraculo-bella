@@ -1,0 +1,184 @@
+/* ── Oráculo ─────────────────────────────────────────────────────────────── */
+.oraculo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 32px 0;
+}
+
+.oraculo-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+
+.oraculo-subtitle {
+  font-size: 12px;
+  color: var(--text-2);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.oraculo-stats {
+  display: flex;
+  gap: 12px;
+  padding: 20px 32px;
+  flex-wrap: wrap;
+}
+
+.oraculo-stat {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 20px;
+  min-width: 120px;
+}
+
+.oraculo-stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.oraculo-stat-label {
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.oraculo-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  padding: 0 32px 24px;
+}
+
+.oraculo-total-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--accent, var(--gold));
+  border-radius: 10px;
+  padding: 16px 18px;
+  text-align: center;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.oraculo-total-card:hover { transform: translateY(-1px); }
+
+.oraculo-total-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent, var(--gold));
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.oraculo-total-label {
+  font-size: 9px;
+  color: var(--text-3);
+  margin-top: 6px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.oraculo-table-wrap {
+  padding: 0 32px 40px;
+  overflow-x: auto;
+}
+
+.oraculo-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.oraculo-table th {
+  background: #0d0d0f;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--text-3);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.oraculo-table th:hover,
+.oraculo-table th.sorted { color: var(--gold); }
+
+.oraculo-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.oraculo-table tr:hover td { background: rgba(255,255,255,0.02); }
+.oraculo-table tbody tr:nth-child(even) td { background: rgba(255,255,255,0.012); }
+.oraculo-num { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+.oraculo-highlight { color: var(--gold); }
+.oraculo-link { color: var(--blue); text-decoration: none; font-size: 11px; }
+.oraculo-link:hover { color: var(--gold); }
+.oraculo-caption { max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+.oraculo-date { color: var(--text-3); font-size: 11px; white-space: nowrap; }
+.oraculo-bar { display: inline-block; height: 4px; background: var(--gold); border-radius: 2px; vertical-align: middle; margin-right: 6px; opacity: 0.7; }
+.oraculo-empty { text-align: center; padding: 60px 20px; color: var(--text-3); }
+.oraculo-sync-info { font-size: 11px; color: var(--text-3); }
+
+/* main-header action buttons */
+.header-actions .btn,
+.header-actions .btn-sync {
+  font-size: 11px;
+  padding: 6px 12px;
+}
+
+/* ── Oráculo sync info ── */
+.ig-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeInModal 0.2s ease-out;
+}
+.ig-modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  width: 580px;
+  max-width: 96vw;
+  padding: 30px;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+  animation: slideUpModal 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes fadeInModal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUpModal {
+  from { transform: translateY(20px) scale(0.97); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.ig-modal h3 { font-size: 18px; font-weight: 700; color: var(--gold); margin-bottom: 2px; display: flex; align-items: center; gap: 8px; }
+.ig-modal p  { font-size: 13px; color: var(--text-3); margin-bottom: 4px; line-height: 1.5; }
+.ig-modal textarea { width: 100%; min-height: 160px; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-size: 13px; resize: vertical; font-family: inherit; line-height: 1.6; box-sizing: border-box; transition: border-color 0.15s; }
+.ig-modal textarea:focus { border-color: var(--gold); outline: none; }
+.ig-modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px; }
+.ig-progress { display: none; background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; padding: 14px; font-size: 12px; color: var(--text-2); white-space: pre-wrap; line-height: 1.6; max-height: 200px; overflow-y: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+.ig-progress.show { display: block; }

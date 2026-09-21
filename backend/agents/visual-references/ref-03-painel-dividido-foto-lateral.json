@@ -1,0 +1,35 @@
+{
+  "ref_id": "ref-03-painel-dividido-foto-lateral",
+  "fonte": "Referência enviada pelo usuário (carrossel Nicole Holz, slide de foto lateral)",
+  "papel_no_carrossel": "mecanismo / explicação (meio de carrossel)",
+  "layout_arquetipo": "painel_dividido_foto_lateral",
+  "resumo": "Divisão vertical assimétrica (~30/70): foto encostada na borda esquerda, resto do espaço em cor sólida creme para o texto. A foto não é full-bleed nem um card flutuante — é um painel fixo na borda.",
+  "fundo": {
+    "tipo": "misto_foto_e_cor_solida",
+    "descricao": "Painel fotográfico (interior suave, luz de janela, pessoa desfocada ao fundo) colado na borda esquerda; restante em creme sólido igual ao slide anterior (ref-02), mantendo continuidade de paleta entre lâminas."
+  },
+  "textura": "a foto é levemente dessaturada para se aproximar da paleta creme/azul do restante do carrossel — não entra 'crua' com cores próprias, é tratada para conversar com o resto.",
+  "tipografia": {
+    "hierarquia": [
+      "título em sans-serif preto, bold, ocupando o bloco direito",
+      "sem corpo de texto extra separado — o próprio título carrega a frase completa"
+    ],
+    "principio": "troca proposital de família tipográfica em relação ao slide anterior (que era serifado) — alternância serif/sans entre lâminas é o que cria a sensação de 'flow' em vez de cada slide parecer um carimbo do mesmo template."
+  },
+  "motivos_decorativos": [
+    "o mesmo círculo tan/terroso do slide anterior reaparece sangrando por trás da foto — é o fio condutor visual (motivo recorrente) que costura os slides sem repetir o layout inteiro"
+  ],
+  "tratamento_de_foto": {
+    "enquadramento": "recorte vertical apertado, sem rosto em destaque, luz suave",
+    "regra_humana": "figura humana desfocada ao fundo, sem pose, sem contato visual com a câmera"
+  },
+  "paleta": "mesma paleta creme/azul/terroso do carrossel inteiro — a foto foi tratada para caber na paleta, não o contrário.",
+  "papel_no_fluxo": "depois do respiro gráfico (ref-02), a densidade visual sobe de novo com a volta da foto — mas ainda contida, preparando o próximo salto de intensidade.",
+  "por_que_parece_intencional_e_nao_improvisado": "o motivo do círculo se repetir entre este slide e o anterior é o que faz o olho perceber continuidade — sem esse fio, cada slide pareceria de um carrossel diferente.",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "a proporção do painel (30/70) pode inverter de lado a cada uso, para não virar fórmula fixa",
+    "o motivo recorrente pode ser qualquer forma simples (círculo, arco, linha) desde que apareça em pelo menos 2 slides consecutivos",
+    "a foto pode ser substituída por textura/objeto quando não houver foto adequada disponível"
+  ],
+  "nao_copiar_literalmente": "não é sobre usar sempre uma foto de mulher desfocada numa janela — é sobre ter pelo menos um elemento visual (aqui, o círculo) que atravessa dois ou mais slides."
+}
