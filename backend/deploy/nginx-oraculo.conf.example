@@ -1,0 +1,26 @@
+# /etc/nginx/sites-available/oraculo  (troque SEU_DOMINIO e a porta, se mudou o PORT do .env)
+server {
+    listen 80;
+    server_name SEU_DOMINIO;
+
+    client_max_body_size 60m;               # upload de imagens de referência
+
+    location / {
+        proxy_pass http://127.0.0.1:3131;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # A geração de carrosséis e o chat usam SSE (resposta em fluxo) e levam minutos.
+        # Sem isto o nginx segura a resposta e corta em 60 s.
+        proxy_buffering off;
+        proxy_cache off;
+        proxy_read_timeout 900s;
+        proxy_send_timeout 900s;
+    }
+}
+# Depois: sudo ln -s /etc/nginx/sites-available/oraculo /etc/nginx/sites-enabled/
+#         sudo nginx -t && sudo systemctl reload nginx
+#         sudo certbot --nginx -d SEU_DOMINIO      (HTTPS)

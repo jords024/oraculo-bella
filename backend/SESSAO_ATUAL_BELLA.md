@@ -121,7 +121,7 @@ npm --prefix backend run dashboard
 # abre em http://localhost:47821
 ```
 
-Login: `admin@exemplo.com.br` / `senha_ficticia_123` (ver `backend/.env`, campos `DASHBOARD_USER`/`DASHBOARD_PASS`).
+Login: usuário e senha estão em `backend/.env` (`DASHBOARD_USER` / `DASHBOARD_PASS`). Não existe senha padrão no código: sem essas variáveis o acesso de super admin fica desligado.
 
 ---
 

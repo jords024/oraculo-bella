@@ -336,7 +336,7 @@ function getCachedDesktopDir() {
     const normalDesktop = path.join(userProfile, 'Desktop');
     cachedDesktopDir = fs.existsSync(onedrivePath) ? onedrivePath : normalDesktop;
   } else {
-    cachedDesktopDir = "/app/backend/storage/carousels";
+    cachedDesktopDir = path.resolve(__dirname, '..', 'storage', 'carousels');
   }
   return cachedDesktopDir;
 }

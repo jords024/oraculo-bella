@@ -384,10 +384,15 @@ export async function initDb() {
       logger.warn('[DB]', `⚠️ ${orphaned.rowCount} carrossel(is) órfão(s) em "generating" resetados para "rascunho".`);
     }
 
-    // Garantir existência de usuário admin padrão
+    // Usuário admin de desenvolvimento (senha fixa conhecida). NUNCA em produção: em produção o acesso
+    // administrativo vem de DASHBOARD_USER/DASHBOARD_PASS no ambiente.
     try {
       const userCheck = await query("SELECT id FROM dashboard_users WHERE email = $1", ['admin@exemplo.com.br']);
-      if (userCheck.rows.length === 0) {
+      if (process.env.NODE_ENV === 'production') {
+        if (userCheck.rows.length > 0) {
+          logger.warn('[DB]', '⚠️ SEGURANÇA: existe o usuário de desenvolvimento admin@exemplo.com.br em produção. Apague-o ou troque a senha.');
+        }
+      } else if (userCheck.rows.length === 0) {
         const { hashPassword } = await import('./state.js');
         const defaultHash = await hashPassword('senha_ficticia_123');
         await query(

@@ -1,4 +1,5 @@
 import express from "express";
+import crypto from "crypto";
 import { query } from "../db.js";
 import {
   hashPassword,
@@ -11,18 +12,25 @@ import { logger } from '../logger.js';
 
 const router = express.Router();
 
+// Comparação em tempo constante para não vazar a senha por diferença de tempo de resposta.
+const safeEqual = (a, b) => {
+  const x = Buffer.from(String(a ?? ''));
+  const y = Buffer.from(String(b ?? ''));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
+};
+
 // ── Rotas de Auth ─────────────────────────────────────────────────────────────
 router.post('/auth/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // 1. Verifica contra o Super Admin (legados incluídos)
+  // 1. Super Admin definido só por variáveis de ambiente. Não existe senha padrão no código:
+  // se DASHBOARD_PASS (ou DASHBOARD_PASS2) não estiver definida, esse acesso fica desligado.
   const superAdminUser = getSuperAdminEmail();
-  const superAdminPass = process.env.DASHBOARD_PASS || 'fonteoculta2024';
-  
-  const isSuper = (username === superAdminUser && password === superAdminPass) ||
-                  (username === 'afonteoculta@gmail.com' && password === (process.env.DASHBOARD_PASS2 || 'FonteOculta@2025')) ||
-                  (username === 'afonteoculta' && password === (process.env.DASHBOARD_PASS2 || 'FonteOculta@2025')) ||
-                  (username === 'admin@exemplo.com.br' && password === 'senha_ficticia_123');
+  const superAdminPass = process.env.DASHBOARD_PASS;
+  const secondAdminPass = process.env.DASHBOARD_PASS2;
+
+  const isSuper = (!!superAdminPass && username === superAdminUser && safeEqual(password, superAdminPass)) ||
+                  (!!secondAdminPass && (username === 'afonteoculta@gmail.com' || username === 'afonteoculta') && safeEqual(password, secondAdminPass));
 
   if (isSuper) {
     const payload = {

@@ -84,7 +84,8 @@ export function getSuperAdminEmail() {
 // Helper para verificar se um e-mail pertence ao Super Admin
 export function isUserSuperAdmin(email) {
   const superAdminUser = getSuperAdminEmail();
-  return email === superAdminUser || email === 'afonteoculta@gmail.com' || email === 'afonteoculta' || email === 'admin@exemplo.com.br';
+  const secondAdminEnabled = !!process.env.DASHBOARD_PASS2;
+  return email === superAdminUser || (secondAdminEnabled && (email === 'afonteoculta@gmail.com' || email === 'afonteoculta'));
 }
 
 // Auth middleware

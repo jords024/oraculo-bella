@@ -221,14 +221,10 @@ def main():
     else:
         carousel_id = str(carousel_id)
 
-    if IS_WIN:
-        # Antes gravava direto em OneDrive/Área de Trabalho — uma pasta sincronizada
-        # pelo OneDrive, que já causou perda de carrosséis inteiros quando a sincronização
-        # reconciliou o estado local após uma queda do notebook. Agora tudo fica dentro
-        # do próprio projeto (ROOT/storage/carousels), fora do caminho sincronizado.
-        out_dir = ROOT / "storage" / "carousels" / f"{carousel_id}-{slug}"
-    else:
-        out_dir = Path(f"/app/backend/storage/carousels/{carousel_id}-{slug}")
+    # Tudo fica dentro do próprio projeto (ROOT/storage/carousels), em qualquer sistema:
+    # fora de pastas sincronizadas (OneDrive já causou perda de carrosséis) e sem depender
+    # de o servidor estar instalado em /app. Em Docker (/app/backend) o resultado é o mesmo.
+    out_dir = ROOT / "storage" / "carousels" / f"{carousel_id}-{slug}"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     total = len(slides)

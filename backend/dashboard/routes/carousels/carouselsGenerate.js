@@ -354,7 +354,7 @@ router.post('/api/criador/generate', async (req, res) => {
       ? path.join(onedrivePath, `${newId}-${slug}`).replace(/\\/g, '/')
       : path.join(userProfile, 'Desktop', `${newId}-${slug}`).replace(/\\/g, '/');
   } else {
-    outDir = `/app/backend/storage/carousels/${newId}-${slug}`;
+    outDir = path.resolve(__dirname, '..', '..', '..', 'storage', 'carousels', `${newId}-${slug}`);
   }
 
   const noImageSlidesCount = payload.noImageSlidesCount !== undefined ? Number(payload.noImageSlidesCount) : (existingCarousel?.noImageSlidesCount || 0);
