@@ -3,7 +3,7 @@ version: "3.7"
 services:
   # ── Backend (Node.js + Python + Pillow) ──────────────────────────────────────
   backend:
-    image: aryalvesfernandes/oraculo-bella:backend-1.0.0
+    image: aryalvesfernandes/oraculo-bella:backend-1.0.1
     build:
       context: ..
       dockerfile: docker/Dockerfile.backend
@@ -75,7 +75,7 @@ services:
 
   # ── Frontend (Vite + React) ──────────────────────────────────────────────────
   frontend:
-    image: aryalvesfernandes/oraculo-bella:frontend-1.0.0
+    image: aryalvesfernandes/oraculo-bella:frontend-1.0.1
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend
