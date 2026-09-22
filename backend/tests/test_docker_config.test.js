@@ -75,6 +75,13 @@ test('Dockerfile.frontend — deve configurar Node 22 para Vite', () => {
   assert.match(content, /package\*\.json/, 'deve copiar os arquivos de pacotes');
   assert.match(content, /EXPOSE 5176/, 'deve expor a porta 5176');
   assert.match(content, /CMD/, 'deve definir comando de execução');
+
+  // Valida que o vite.config.js permite os hosts de produção (allowedHosts)
+  const viteConfigPath = path.join(projectRoot, 'frontend', 'vite.config.js');
+  if (fs.existsSync(viteConfigPath)) {
+    const viteConfigContent = fs.readFileSync(viteConfigPath, 'utf8');
+    assert.match(viteConfigContent, /allowedHosts:\s*true/, 'vite.config.js deve possuir allowedHosts: true para permitir acesso via domínio reverso Traefik');
+  }
 });
 
 test('.env.docker.example — deve conter variáveis cruciais pré-configuradas', () => {
