@@ -39,7 +39,7 @@ describe('Email Verification & Brevo Integration Tests', () => {
     assert.ok(html.includes('Isabella'), 'HTML deve conter o cabeçalho padrão de branding');
   });
 
-  test('sendBrevoEmail sem BREVO_API_KEY deve retornar simulated: true sem quebrar', async () => {
+  test('sendBrevoEmail sem BREVO_API_KEY deve retornar ok: false e mensagem amigável solicitando configuração', async () => {
     const originalKey = process.env.BREVO_API_KEY;
     delete process.env.BREVO_API_KEY;
 
@@ -51,8 +51,9 @@ describe('Email Verification & Brevo Integration Tests', () => {
         htmlContent: '<p>Teste</p>'
       });
 
-      assert.equal(res.ok, true, 'Deve retornar ok: true');
-      assert.equal(res.simulated, true, 'Deve indicar envio simulado quando chave ausente');
+      assert.equal(res.ok, false, 'Deve retornar ok: false se não configurado');
+      assert.equal(res.configured, false, 'Deve indicar que não está configurado');
+      assert.ok(res.error.includes('BREVO_API_KEY ausente'), 'Deve orientar que a BREVO_API_KEY está ausente');
     } finally {
       if (originalKey) process.env.BREVO_API_KEY = originalKey;
     }

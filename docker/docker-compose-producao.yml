@@ -34,6 +34,10 @@ services:
       FAL_KEY: ${FAL_KEY:-}
       ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
       CONTENT_WORKSPACE: ${CONTENT_WORKSPACE:-bella}
+      # Serviço de Envio de E-mails (Brevo) para confirmação de cadastro
+      BREVO_API_KEY: ${BREVO_API_KEY:-}
+      BREVO_SENDER_EMAIL: ${BREVO_SENDER_EMAIL:-}
+      BREVO_SENDER_NAME: ${BREVO_SENDER_NAME:-Oráculo Bella}
       # Conexão com o MinIO existente no servidor
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
       MINIO_PUBLIC_URL: https://${MINIO_S3_DOMAIN:-s3bellanazar.aryaraj.shop}

@@ -18,11 +18,11 @@ export async function sendBrevoEmail({ toEmail, toName, subject, htmlContent }) 
   const senderName = process.env.BREVO_SENDER_NAME || 'Oráculo Bella';
 
   if (!apiKey) {
-    logger.warn('[EMAIL]', `⚠️ BREVO_API_KEY não configurada. E-mail simulado para ${toEmail}. Assunto: "${subject}"`);
+    logger.error('[EMAIL]', `❌ BREVO_API_KEY não configurada no servidor. Tentativa de envio para ${toEmail} abortada.`);
     return {
-      ok: true,
-      simulated: true,
-      message: 'BREVO_API_KEY não configurada no servidor. E-mail simulado com sucesso.'
+      ok: false,
+      configured: false,
+      error: 'O serviço de envio de e-mails (Brevo) não foi configurado no servidor (BREVO_API_KEY ausente). Entre em contato com o administrador do sistema.'
     };
   }
 
