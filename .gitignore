@@ -10,6 +10,7 @@
 .env
 .env.*
 !.env.example
+!*.example
 .mcp.json
 *.pem
 *.key

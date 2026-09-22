@@ -175,6 +175,18 @@ export async function initDb() {
     );
   `;
 
+  const createEmailVerificationsTable = `
+    CREATE TABLE IF NOT EXISTS email_verifications (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) NOT NULL,
+      invite_id VARCHAR(100) NOT NULL,
+      code VARCHAR(10) NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      verified BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
   const createBackupConfigTable = `
     CREATE TABLE IF NOT EXISTS backup_config (
       id INTEGER PRIMARY KEY DEFAULT 1,
@@ -288,6 +300,8 @@ export async function initDb() {
     await query(createDashboardUsersTable);
     await query(createCreatorChatsTable);
     await query(createInvitationsTable);
+    await query(createEmailVerificationsTable);
+    await query("CREATE INDEX IF NOT EXISTS idx_email_verif_lookup ON email_verifications (email, invite_id, code)");
     await query(createBackupConfigTable);
     await query(createBackupLogsTable);
     await query(createAgentPromptsTable);
