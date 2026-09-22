@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export default function EditUserModal({
   isOpen,
@@ -16,7 +16,77 @@ export default function EditUserModal({
   onSubmit,
   PAGES_TO_CONTROL
 }) {
+  const [showResetSection, setShowResetSection] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [showPasswordText, setShowPasswordText] = useState(false);
+  const [notifyEmail, setNotifyEmail] = useState(true);
+  const [resetSubmitting, setResetSubmitting] = useState(false);
+  const [resetStatus, setResetStatus] = useState(null);
+
   if (!isOpen || !editingUser) return null;
+
+  // Gerador de senha forte aleatória
+  const generateStrongPassword = () => {
+    const charsUpper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+    const charsLower = 'abcdefghijkmnopqrstuvwxyz';
+    const charsNums = '23456789';
+    const charsSymbols = '@#$%&*!+-=';
+
+    let pass = '';
+    pass += charsUpper[Math.floor(Math.random() * charsUpper.length)];
+    pass += charsLower[Math.floor(Math.random() * charsLower.length)];
+    pass += charsNums[Math.floor(Math.random() * charsNums.length)];
+    pass += charsSymbols[Math.floor(Math.random() * charsSymbols.length)];
+
+    const all = charsUpper + charsLower + charsNums + charsSymbols;
+    for (let i = 0; i < 8; i++) {
+      pass += all[Math.floor(Math.random() * all.length)];
+    }
+
+    // Embaralha
+    const shuffled = pass.split('').sort(() => 0.5 - Math.random()).join('');
+    setNewPassword(shuffled);
+    setShowPasswordText(true);
+    setResetStatus(null);
+  };
+
+  const handleResetPasswordAction = async () => {
+    if (!newPassword || newPassword.length < 10) {
+      setResetStatus({ type: 'error', message: 'A senha deve conter no mínimo 10 caracteres.' });
+      return;
+    }
+
+    setResetSubmitting(true);
+    setResetStatus(null);
+
+    try {
+      const res = await fetch(`/api/users/${editingUser.id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          newPassword,
+          notifyEmail
+        })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setResetStatus({
+          type: 'success',
+          message: data.emailNotified
+            ? '✅ Senha redefinida e enviada por e-mail com sucesso!'
+            : '✅ Senha redefinida com sucesso!'
+        });
+        setNewPassword('');
+      } else {
+        setResetStatus({ type: 'error', message: data.error || 'Erro ao redefinir senha.' });
+      }
+    } catch (err) {
+      setResetStatus({ type: 'error', message: 'Erro de rede ao redefinir senha.' });
+    } finally {
+      setResetSubmitting(false);
+    }
+  };
 
   return (
     <div className="form-modal open">
@@ -120,6 +190,148 @@ export default function EditUserModal({
               </table>
             </div>
           </div>
+
+          {/* Seção: Redefinição de Senha */}
+          {!editingUser.isSuperAdmin && (
+            <div style={{
+              marginTop: '18px',
+              marginBottom: '20px',
+              padding: '14px 16px',
+              background: 'rgba(201,168,76,0.04)',
+              border: '1px solid rgba(201,168,76,0.2)',
+              borderRadius: '6px'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '15px' }}>🔑</span>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text)' }}>Redefinição de Senha</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-dim)' }}>Redefina a senha de acesso deste colaborador</div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  id="toggleResetPassBtn"
+                  onClick={() => setShowResetSection(prev => !prev)}
+                  style={{
+                    background: 'none',
+                    border: '1px solid var(--border)',
+                    borderRadius: '4px',
+                    padding: '4px 10px',
+                    fontSize: '11px',
+                    color: 'var(--gold)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {showResetSection ? 'Ocultar' : 'Redefinir Senha'}
+                </button>
+              </div>
+
+              {showResetSection && (
+                <div id="resetPasswordContainer" style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ marginBottom: '8px' }}>
+                    <label className="form-label" style={{ fontSize: '11px' }}>Nova Senha</label>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <input
+                          id="newPasswordInput"
+                          type={showPasswordText ? "text" : "password"}
+                          className="form-input"
+                          placeholder="Digite a nova senha..."
+                          value={newPassword}
+                          onChange={(e) => {
+                            setNewPassword(e.target.value);
+                            setResetStatus(null);
+                          }}
+                          style={{ paddingRight: '36px', fontSize: '12px' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordText(prev => !prev)}
+                          style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            color: 'var(--text-dim)',
+                            fontSize: '13px'
+                          }}
+                          title={showPasswordText ? "Ocultar" : "Mostrar"}
+                        >
+                          {showPasswordText ? '👁️' : '🔒'}
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        id="generateStrongPassBtn"
+                        onClick={generateStrongPassword}
+                        style={{
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '4px',
+                          padding: '0 10px',
+                          color: 'var(--text-2)',
+                          fontSize: '11px',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap'
+                        }}
+                        title="Gerar uma senha segura aleatória"
+                      >
+                        ⚡ Gerar Forte
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ fontSize: '10px', color: 'var(--text-3)', marginBottom: '10px' }}>
+                    Requisitos: Mínimo 10 caracteres, com letras, números e caractere especial (@#$%...).
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <input
+                      type="checkbox"
+                      id="notifyEmailCheck"
+                      checked={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.checked)}
+                      style={{ cursor: 'pointer', accentColor: 'var(--gold)' }}
+                    />
+                    <label htmlFor="notifyEmailCheck" style={{ fontSize: '11px', color: 'var(--text-2)', cursor: 'pointer' }}>
+                      Notificar nova senha para o e-mail via Brevo
+                    </label>
+                  </div>
+
+                  {resetStatus && (
+                    <div style={{
+                      padding: '8px 10px',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      marginBottom: '10px',
+                      background: resetStatus.type === 'success' ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                      border: `1px solid ${resetStatus.type === 'success' ? 'rgba(34,197,94,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                      color: resetStatus.type === 'success' ? 'var(--green)' : '#f87171'
+                    }}>
+                      {resetStatus.message}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      id="submitResetPasswordBtn"
+                      className="btn btn-gold btn-sm"
+                      onClick={handleResetPasswordAction}
+                      disabled={resetSubmitting || !newPassword}
+                      style={{ fontSize: '11px', padding: '6px 14px' }}
+                    >
+                      {resetSubmitting ? 'Redefinindo...' : 'Aplicar Nova Senha'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancelar</button>

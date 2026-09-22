@@ -105,3 +105,44 @@ export function generateVerificationEmailHtml(code, userName = 'Usuário') {
   </html>
   `;
 }
+
+/**
+ * Gera um template HTML para notificação de redefinição de senha
+ * @param {string} userName
+ * @param {string} [newPassword]
+ * @returns {string}
+ */
+export function generatePasswordResetEmailHtml(userName = 'Usuário', newPassword = null) {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <title>Sua Senha Foi Redefinida</title>
+  </head>
+  <body style="background-color: #080808; color: #EDE8DF; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px 20px; margin: 0;">
+    <div style="max-width: 520px; margin: 0 auto; background: #0E0E0E; border: 1px solid rgba(201,168,76,0.25); border-radius: 8px; padding: 40px 30px; text-align: center;">
+      <h3 style="color: #C9A84C; font-size: 11px; letter-spacing: 0.35em; text-transform: uppercase; margin-bottom: 8px;">ESTÚDIO DE CONTEÚDO</h3>
+      <h1 style="color: #EDE8DF; font-size: 26px; font-weight: 300; margin: 0 0 16px 0;">Isabella <span style="color: #C9A84C; font-style: italic;">Dalcin</span></h1>
+      <div style="width: 36px; height: 1px; background: #C9A84C; opacity: 0.4; margin: 0 auto 24px auto;"></div>
+      
+      <p style="font-size: 15px; color: #EDE8DF; line-height: 1.6; margin-bottom: 20px;">
+        Olá, <strong>${userName}</strong>! A sua senha de acesso ao painel do estúdio foi redefinida pelo administrador.
+      </p>
+
+      ${newPassword ? `
+      <div style="background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.3); border-radius: 6px; padding: 16px 20px; display: inline-block; margin-bottom: 20px;">
+        <div style="font-size: 11px; color: #C9A84C; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;">Sua Nova Senha Provisória:</div>
+        <span style="font-size: 18px; font-weight: bold; letter-spacing: 0.1em; color: #FFF; font-family: monospace;">${newPassword}</span>
+      </div>
+      ` : ''}
+
+      <p style="font-size: 12px; color: rgba(237,232,223,0.5); line-height: 1.5; margin-bottom: 0;">
+        Recomendamos que você faça login e atualize sua senha caso deseje.<br>
+        Se você não reconhece essa ação, entre em contato imediatamente com o administrador.
+      </p>
+    </div>
+  </body>
+  </html>
+  `;
+}
