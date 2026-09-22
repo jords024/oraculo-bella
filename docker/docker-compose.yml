@@ -1,0 +1,77 @@
+name: oraculo-bella
+
+services:
+  # ── Banco de Dados PostgreSQL ────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: oraculo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
+      POSTGRES_DB: ${DB_NAME:-oracle_manager}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-oracle_manager}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - oraculo-network
+
+  # ── Backend (Node.js + Python + Pillow) ──────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: oraculo-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ../backend/.env
+    environment:
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${PORT:-3131}
+      DB_HOST: db
+      DB_PORT: 5432
+      CONTENT_WORKSPACE: ${CONTENT_WORKSPACE:-bella}
+    ports:
+      - "${PORT:-3131}:3131"
+    volumes:
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+    networks:
+      - oraculo-network
+
+  # ── Frontend (Vite + React) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: oraculo-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      VITE_BACKEND_URL: http://backend:3131
+    ports:
+      - "${FRONTEND_PORT:-5177}:5176"
+    networks:
+      - oraculo-network
+
+networks:
+  oraculo-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_logs:
+    driver: local

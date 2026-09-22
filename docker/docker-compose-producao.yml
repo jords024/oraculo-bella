@@ -1,0 +1,107 @@
+version: "3.7"
+
+services:
+  # ── Backend (Node.js + Python + Pillow) ──────────────────────────────────────
+  backend:
+    image: aryalvesfernandes/oraculo-bella:backend-1.0.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    hostname: "{{.Service.Name}}.{{.Task.Slot}}"
+    networks:
+      - network_swarm_public
+    volumes:
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+    environment:
+      NODE_ENV: production
+      PORT: 3131
+      # Conexão com o PostgreSQL existente no servidor
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-123456}
+      DB_NAME: ${DB_NAME:-oracle_manager}
+      JWT_SECRET: ${JWT_SECRET:-caa0820f-ed58-4be5-b283-eb5a7c72b1ba}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER:-cef079c7-2d4f-464b-b2ae-f20c7b62ad5f}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://oraculobella.aryaraj.shop,https://appbellanazar.aryaraj.shop}
+      DASHBOARD_USER: ${DASHBOARD_USER:-aryaraj}
+      DASHBOARD_PASS: ${DASHBOARD_PASS:-123456}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CONTENT_WORKSPACE: ${CONTENT_WORKSPACE:-bella}
+      # Conexão com o MinIO existente no servidor
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_URL: https://${MINIO_S3_DOMAIN:-s3bellanazar.aryaraj.shop}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-explain}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-Av5nvj7ezFQRjEQAyIpx6y}
+      MINIO_BUCKET: ${MINIO_BUCKET:-oraculo-bucket}
+      B2_KEY_ID: ${B2_KEY_ID:-}
+      B2_APPLICATION_KEY: ${B2_APPLICATION_KEY:-}
+      B2_BUCKET_NAME: ${B2_BUCKET_NAME:-}
+      B2_ENDPOINT: ${B2_ENDPOINT:-}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "2"
+          memory: 3072M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.oraculo_backend.rule=Host(`${BACKEND_DOMAIN:-api-oraculobella.aryaraj.shop}`)
+        - traefik.http.routers.oraculo_backend.entrypoints=websecure
+        - traefik.http.routers.oraculo_backend.tls.certresolver=letsencryptresolver
+        - traefik.http.services.oraculo_backend.loadbalancer.server.port=3131
+        - traefik.http.services.oraculo_backend.loadbalancer.passHostHeader=true
+        - traefik.http.routers.oraculo_backend.service=oraculo_backend
+
+  # ── Frontend (Vite + React) ──────────────────────────────────────────────────
+  frontend:
+    image: aryalvesfernandes/oraculo-bella:frontend-1.0.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    hostname: "{{.Service.Name}}.{{.Task.Slot}}"
+    networks:
+      - network_swarm_public
+    environment:
+      VITE_BACKEND_URL: https://${BACKEND_DOMAIN:-api-oraculobella.aryaraj.shop}
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1024M
+      labels:
+        - traefik.enable=true
+        - traefik.http.routers.oraculo_frontend.rule=Host(`${FRONTEND_DOMAIN:-oraculobella.aryaraj.shop}`)
+        - traefik.http.routers.oraculo_frontend.entrypoints=websecure
+        - traefik.http.routers.oraculo_frontend.tls.certresolver=letsencryptresolver
+        - traefik.http.services.oraculo_frontend.loadbalancer.server.port=5176
+        - traefik.http.services.oraculo_frontend.loadbalancer.passHostHeader=true
+        - traefik.http.routers.oraculo_frontend.service=oraculo_frontend
+
+# Definição dos Volumes do Stack
+volumes:
+  backend_storage:
+    external: true
+    name: oraculo_backend_storage
+  backend_logs:
+    external: true
+    name: oraculo_backend_logs
+
+# Definição dos Network do Stack
+networks:
+  network_swarm_public:
+    external: true
+    name: network_swarm_public

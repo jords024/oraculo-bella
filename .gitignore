@@ -1,8 +1,10 @@
-# Somente backend/ e frontend/ entram no repositório
+# Somente backend/, frontend/, docker/ e README.md entram no repositório
 /*
 !/.gitignore
+!/README.md
 !/backend/
 !/frontend/
+!/docker/
 
 # Segredos e configuração local
 .env
