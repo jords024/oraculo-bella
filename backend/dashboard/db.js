@@ -426,4 +426,21 @@ export async function initDb() {
   }
 }
 
+export async function closeDb() {
+  if (pool) {
+    try {
+      await pool.end();
+    } catch (e) {}
+    pool = null;
+  }
+  if (pgliteInstance) {
+    try {
+      if (typeof pgliteInstance.close === 'function') {
+        await pgliteInstance.close();
+      }
+    } catch (e) {}
+    pgliteInstance = null;
+  }
+}
+
 export default pool;

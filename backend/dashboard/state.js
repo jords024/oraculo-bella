@@ -165,7 +165,7 @@ setInterval(() => {
       rateLimitsMap.delete(key);
     }
   }
-}, 600000); // 10 minutos (600.000 ms)
+}, 600000).unref(); // 10 minutos (600.000 ms)
 
 // Middleware de Rate Limit paramétrico
 export function rateLimiter(maxRequests, windowMs) {

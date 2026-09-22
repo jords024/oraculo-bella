@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { generateVerificationEmailHtml, sendBrevoEmail } from '../dashboard/services/emailService.js';
-import { query, initDb } from '../dashboard/db.js';
+import { query, initDb, closeDb } from '../dashboard/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +26,10 @@ const projectRoot = path.resolve(__dirname, '..', '..');
 describe('Email Verification & Brevo Integration Tests', () => {
   before(async () => {
     await initDb();
+  });
+
+  after(async () => {
+    await closeDb();
   });
 
   test('generateVerificationEmailHtml deve formatar o código e o nome do usuário corretamente', () => {

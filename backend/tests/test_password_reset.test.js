@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { generatePasswordResetEmailHtml } from '../dashboard/services/emailService.js';
-import { query, initDb } from '../dashboard/db.js';
+import { query, initDb, closeDb } from '../dashboard/db.js';
 import { hashPassword, verifyPassword, validatePasswordComplexity } from '../dashboard/state.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +27,10 @@ const projectRoot = path.resolve(__dirname, '..', '..');
 describe('User Password Reset Tests', () => {
   before(async () => {
     await initDb();
+  });
+
+  after(async () => {
+    await closeDb();
   });
 
   test('generatePasswordResetEmailHtml deve gerar template elegante com o nome e aviso de segurança', () => {
@@ -66,8 +70,8 @@ describe('User Password Reset Tests', () => {
     assert.ok(userRes.rows.length > 0, 'Usuário de teste deve ser criado');
     const userId = userRes.rows[0].id;
 
-    // Confirma que a senha inicial valida
-    const validInitial = await verifyPassword(initialPassword, userRes.rows[0].password);
+    // Confirma que a senha inicial valida (storedHash primeiro, rawPassword segundo)
+    const validInitial = await verifyPassword(userRes.rows[0].password, initialPassword);
     assert.equal(validInitial.valid, true, 'Senha inicial deve validar');
 
     // Executa a redefinição de senha
@@ -79,11 +83,11 @@ describe('User Password Reset Tests', () => {
     assert.notEqual(updatedRes.rows[0].password, initialHash, 'O hash salvo deve ser diferente do anterior');
 
     // A senha antiga NÃO deve mais funcionar
-    const testOld = await verifyPassword(initialPassword, updatedRes.rows[0].password);
+    const testOld = await verifyPassword(updatedRes.rows[0].password, initialPassword);
     assert.equal(testOld.valid, false, 'Senha antiga não deve validar após redefinição');
 
     // A nova senha DEVE funcionar
-    const testNew = await verifyPassword(newPassword, updatedRes.rows[0].password);
+    const testNew = await verifyPassword(updatedRes.rows[0].password, newPassword);
     assert.equal(testNew.valid, true, 'Nova senha deve validar com sucesso');
 
     // Limpa usuário de teste
