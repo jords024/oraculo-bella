@@ -3,107 +3,51 @@ version: "3.7"
 services:
   # ── Backend (Node.js + Python + Pillow) ──────────────────────────────────────
   backend:
-    # Imagem oficial do backend
     image: aryalvesfernandes/oraculo-bella:backend-1.0.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
     hostname: "{{.Service.Name}}.{{.Task.Slot}}"
     networks:
       - network_swarm_public
-    environment:
-      # Porta HTTP interna que o backend escutará
-      - PORT=3131
-      # Modo de ambiente da aplicação (ex: production, development)
-      - NODE_ENV=production
-      
-      # ── Banco de Dados Externo ──────────────────────────────────────────────────
-      # Endereço (host) do banco de dados PostgreSQL externo
-      - DB_HOST=postgres
-      # Porta de conexão do banco de dados PostgreSQL externo
-      - DB_PORT=5432
-      # Usuário do banco de dados PostgreSQL
-      - DB_USER=postgres
-      # Senha de conexão do banco de dados PostgreSQL
-      - DB_PASSWORD=5R9uHDo34Qep74l1IY_32JEL1jvq-bhfLZu6a_Iug4E
-      # Nome do banco de dados do Oráculo
-      - DB_NAME=oraculo
-      
-      # ── MinIO/S3 Externo ────────────────────────────────────────────────────────
-      # Endpoint S3 de conexão (ex: MinIO local ou AWS S3 / Cloudflare R2)
-      - MINIO_ENDPOINT=http://s3bella.aryaraj.shop
-      # Usuário root do MinIO/S3
-      - MINIO_ROOT_USER=a39wknw
-      # Senha root do MinIO/S3
-      - MINIO_ROOT_PASSWORD=2%BpMWSe%fO%euR3oCkMn
-      # Nome do bucket para armazenar os arquivos e assets do projeto
-      - MINIO_BUCKET=oraculo
-      
-      # ── RabbitMQ Externo ──────────────────────────────────────────────────────
-      # Host de conexão do Broker de Mensageria (RabbitMQ)
-      - RABBITMQ_HOST=rabbitmq
-      # Porta de conexão do RabbitMQ
-      - RABBITMQ_PORT=5672
-      # Usuário do RabbitMQ
-      - RABBITMQ_USER=gyogmkqjms
-      # Senha do RabbitMQ
-      - RABBITMQ_PASS=2dda4c63166b3ed8dbac5b92b95e5bfd
-
-      # ── Provedores e Modelos de IA ─────────────────────────────────────────────
-      # Token de Acesso da OpenAI API para geração de imagens e inteligência
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      # Token de Acesso da Anthropic Claude API
-      - ANTHROPIC_API_KEY=
-      # Token de Acesso do Google Gemini AI
-      - GEMINI_API_KEY=
-      # Chave de API do Fal.ai para modelos alternativos de geração visual
-      - FAL_KEY=
-      # Chave de API do ElevenLabs para clonagem e síntese de áudio
-      - ELEVENLABS_API_KEY=
-
-      # ── Redes Sociais (Meta & Instagram) ────────────────────────────────────────
-      # Token de Acesso para integração da Graph API do Meta (Instagram/Facebook)
-      - META_ACCESS_TOKEN=
-      # ID da conta comercial do Instagram vinculada ao Facebook Page
-      - INSTAGRAM_ACCOUNT_ID=
-      # ID da Página do Facebook vinculada ao Instagram
-      - FACEBOOK_PAGE_ID=
-      # Usuário do Instagram para login direto ou automações secundárias
-      - INSTAGRAM_USERNAME=
-      # Senha do Instagram correspondente
-      - INSTAGRAM_PASSWORD=
-
-      # ── Armazenamento Externo & Imagens ───────────────────────────────────────
-      # Key ID de API do serviço de storage em nuvem Backblaze B2
-      - B2_KEY_ID=0047daba280ace40000000019
-      # Application Key correspondente do Backblaze B2
-      - B2_APPLICATION_KEY=K004O4dV6WcJMazD2DwrUwAEE/OWiaY
-      # Nome do bucket de arquivos configurado no Backblaze B2
-      - B2_BUCKET_NAME=zap-voice
-      # Endpoint S3 compatível do Backblaze B2
-      - B2_ENDPOINT=https://s3.us-west-004.backblazeb2.com
-
-      # ── Outras Integrações ─────────────────────────────────────────────────────
-      # Chave de API do Apify para monitoramento/radar de descobertas do Google
-      - APIFY_API_KEY=
-      # Token de integração interna da API do Notion
-      - NOTION_TOKEN=
-
-      # ── Autenticação & Configurações de Acesso ─────────────────────────────────
-      # Nome de usuário do Super Admin do Painel
-      - DASHBOARD_USER=aryarajmarketing@gmail.com
-      # Exibição visual do nome do Super Admin no Dashboard
-      - DASHBOARD_USER_NAME=Aryaraj
-      # Senha master de acesso do Super Admin
-      - DASHBOARD_PASS=h_uXASgFJ_R5F0-x
-      # Chave de assinatura e criptografia dos tokens JWT
-      - JWT_SECRET=ef050b8661ce44403b300615dae1dcead2c45bf76ebaf8f5d750012242030d5c
-      # Tempo de expiração do Token JWT gerado (ex: 24h, 72h)
-      - JWT_EXPIRES_IN=24h
-      # Origens de CORS aceitas no backend
-      - CORS_ALLOWED_ORIGINS=https://oraculobella.aryaraj.shop,https://appbellanazar.aryaraj.shop
-
-      - PASSWORD_PEPPER=f834fc0d-0986-46d1-ab25-fd7273b60d3a
-
     volumes:
-      - oraculo_data:/app/backend/data
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+    environment:
+      NODE_ENV: production
+      PORT: 3131
+      # Conexão com o PostgreSQL existente no servidor
+      DB_HOST: ${DB_HOST:-postgres}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-oracle_manager}
+      JWT_SECRET: ${JWT_SECRET}
+      PASSWORD_PEPPER: ${PASSWORD_PEPPER}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://oraculobella.aryaraj.shop,https://appbellanazar.aryaraj.shop}
+      DASHBOARD_USER: ${DASHBOARD_USER}
+      DASHBOARD_PASS: ${DASHBOARD_PASS}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      FAL_KEY: ${FAL_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
+      CONTENT_WORKSPACE: ${CONTENT_WORKSPACE:-bella}
+      # Conexão com o MinIO existente no servidor
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_URL: https://${MINIO_S3_DOMAIN:-s3bellanazar.aryaraj.shop}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-explain}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BUCKET: ${MINIO_BUCKET:-oraculo-bucket}
+      B2_KEY_ID: ${B2_KEY_ID:-}
+      B2_APPLICATION_KEY: ${B2_APPLICATION_KEY:-}
+      B2_BUCKET_NAME: ${B2_BUCKET_NAME:-}
+      B2_ENDPOINT: ${B2_ENDPOINT:-}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-}
+      RABBITMQ_PASS: ${RABBITMQ_PASS:-}
     deploy:
       mode: replicated
       replicas: 1
@@ -112,34 +56,30 @@ services:
           - node.role == manager
       resources:
         limits:
-          cpus: "1"
-          memory: 1024M
+          cpus: "2"
+          memory: 3072M
       labels:
         - traefik.enable=true
-        - traefik.http.routers.oraculo_backend.rule=Host(`api-oraculobella.aryaraj.shop`)
+        - traefik.http.routers.oraculo_backend.rule=Host(`${BACKEND_DOMAIN:-api-oraculobella.aryaraj.shop}`)
         - traefik.http.routers.oraculo_backend.entrypoints=websecure
         - traefik.http.routers.oraculo_backend.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.oraculo_backend.service=oraculo_backend
         - traefik.http.services.oraculo_backend.loadbalancer.server.port=3131
         - traefik.http.services.oraculo_backend.loadbalancer.passHostHeader=true
+        - traefik.http.routers.oraculo_backend.service=oraculo_backend
         - traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https
         - traefik.http.routers.oraculo_backend.middlewares=sslheader@docker
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
-        failure_action: rollback
 
   # ── Frontend (Vite + React) ──────────────────────────────────────────────────
   frontend:
-    # Imagem oficial do frontend
     image: aryalvesfernandes/oraculo-bella:frontend-1.0.0
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
     hostname: "{{.Service.Name}}.{{.Task.Slot}}"
     networks:
       - network_swarm_public
     environment:
-      # Aponta as chamadas de API do frontend para a URL pública do backend
-      - VITE_BACKEND_URL=https://api-oraculobella.aryaraj.shop
+      VITE_BACKEND_URL: https://${BACKEND_DOMAIN:-api-oraculobella.aryaraj.shop}
     deploy:
       mode: replicated
       replicas: 1
@@ -152,25 +92,26 @@ services:
           memory: 1024M
       labels:
         - traefik.enable=true
-        - traefik.http.routers.oraculo_frontend.rule=Host(`oraculobella.aryaraj.shop`)
+        - traefik.http.routers.oraculo_frontend.rule=Host(`${FRONTEND_DOMAIN:-oraculobella.aryaraj.shop}`)
         - traefik.http.routers.oraculo_frontend.entrypoints=websecure
         - traefik.http.routers.oraculo_frontend.tls.certresolver=letsencryptresolver
-        - traefik.http.routers.oraculo_frontend.service=oraculo_frontend
         - traefik.http.services.oraculo_frontend.loadbalancer.server.port=5176
         - traefik.http.services.oraculo_frontend.loadbalancer.passHostHeader=true
+        - traefik.http.routers.oraculo_frontend.service=oraculo_frontend
         - traefik.http.middlewares.sslheader.headers.customrequestheaders.X-Forwarded-Proto=https
         - traefik.http.routers.oraculo_frontend.middlewares=sslheader@docker
-      update_config:
-        parallelism: 1
-        delay: 10s
-        order: start-first
-        failure_action: rollback
 
+# Definição dos Volumes do Stack
+volumes:
+  backend_storage:
+    external: true
+    name: oraculo_backend_storage
+  backend_logs:
+    external: true
+    name: oraculo_backend_logs
+
+# Definição dos Network do Stack
 networks:
   network_swarm_public:
-    name: network_swarm_public
     external: true
-
-volumes:
-  oraculo_data:
-    driver: local
+    name: network_swarm_public
