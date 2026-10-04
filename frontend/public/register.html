@@ -327,6 +327,39 @@
     <button type="submit" class="btn-submit" id="submitBtn">Concluir Registro</button>
   </form>
 
+  <!-- Estado: Modal de Verificação de Código de E-mail -->
+  <div id="verifyCodeModal" class="hidden" style="margin-top: 10px;">
+    <div style="background: rgba(201,168,76,0.06); border: 1px solid rgba(201,168,76,0.25); border-radius: 6px; padding: 20px 16px; margin-bottom: 18px;">
+      <div style="font-size: 13px; color: var(--gold); font-weight: 500; margin-bottom: 6px; letter-spacing: 0.1em; text-transform: uppercase;">
+        Confirmação de E-mail
+      </div>
+      <p style="font-size: 12px; color: var(--text-dim); line-height: 1.5; margin-bottom: 14px;">
+        Enviamos um código de segurança de 6 dígitos para o e-mail:<br>
+        <strong id="sentEmailTarget" style="color: var(--text); word-break: break-all;"></strong>
+      </p>
+
+      <div class="field" style="margin-bottom: 10px;">
+        <label style="text-align: center; display: block;">Digite o Código Recebido</label>
+        <input type="text" id="verificationCodeInput" maxlength="6" placeholder="123456" 
+          style="text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 0.3em; font-family: monospace; color: var(--gold); padding: 10px;" 
+          autocomplete="one-time-code" />
+      </div>
+
+      <div id="verifyError" class="msg msg-error hidden" style="font-size: 12px; margin-bottom: 12px;"></div>
+
+      <button type="button" class="btn-submit" id="confirmCodeBtn" style="width: 100%;">Validar e Criar Conta</button>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 14px; font-size: 11px;">
+        <button type="button" id="backToFormBtn" style="background: none; border: none; color: var(--text-dim); cursor: pointer; text-decoration: underline;">
+          Corrigir dados
+        </button>
+        <button type="button" id="resendCodeBtn" style="background: none; border: none; color: var(--gold); cursor: pointer; text-decoration: underline;">
+          Reenviar código
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="footerText" style="margin-top: 16px; font-size: 10px; color: var(--text-dim); letter-spacing: 0.1em; opacity: 0.5;">
     @afonteoculta · Cadastro de Estúdio
   </div>
@@ -334,13 +367,14 @@
 
 <script>
   let inviteId = '';
+  let pendingRegistrationData = null;
 
   // 1. Carrega dinamicamente a identidade visual (nome da empresa)
   fetch('/api/settings/branding')
     .then(res => res.json())
     .then(data => {
       document.title = "Oraculo";
-      
+      const companyName = data?.company_name || 'Fonte Oculta';
       const brandEl = document.querySelector('.brand');
       if (brandEl) {
         const words = companyName.trim().split(/\s+/);
@@ -413,7 +447,7 @@
     document.getElementById('reqSpecial').classList.toggle('valid', /[^a-zA-Z0-9]/.test(v));
   });
 
-  // 3. Submissão do formulário
+  // 3. Submissão do formulário: Dispara código para o e-mail via Brevo
   const form = document.getElementById('registerForm');
   const formError = document.getElementById('formError');
   const submitBtn = document.getElementById('submitBtn');
@@ -452,35 +486,141 @@
       return;
     }
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Registrando...';
+    pendingRegistrationData = { inviteId, name, email, password };
 
-    fetch('/api/users/register', {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando código por e-mail...';
+
+    // Dispara o envio do código via API Brevo
+    fetch('/api/users/register/send-code', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ inviteId, name, email, password })
+      body: JSON.stringify({ inviteId, name, email })
     })
     .then(async res => {
       const data = await res.json();
       if (res.ok && data.ok) {
+        // Exibe o modal para digitar o código de 6 dígitos
         document.getElementById('registerForm').classList.add('hidden');
-        document.getElementById('successState').classList.remove('hidden');
+        document.getElementById('verifyCodeModal').classList.remove('hidden');
+        document.getElementById('sentEmailTarget').textContent = email;
+        document.getElementById('verificationCodeInput').value = '';
+        document.getElementById('verificationCodeInput').focus();
+        showVerifyError('');
       } else {
-        showFormError(data.error || 'Erro ao registrar conta.');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Concluir Registro';
+        showFormError(data.error || 'Erro ao enviar código de verificação para o e-mail.');
       }
     })
     .catch(err => {
-      showFormError('Erro de rede ao processar o registro.');
+      showFormError('Erro de rede ao solicitar código de verificação.');
+    })
+    .finally(() => {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Concluir Registro';
     });
   });
 
+  // 4. Confirmação do código de verificação e criação da conta
+  const confirmCodeBtn = document.getElementById('confirmCodeBtn');
+  const verificationCodeInput = document.getElementById('verificationCodeInput');
+  const verifyError = document.getElementById('verifyError');
+
+  confirmCodeBtn.addEventListener('click', function () {
+    const code = verificationCodeInput.value.trim();
+    if (!code || code.length < 6) {
+      showVerifyError('Por favor, informe o código de 6 dígitos.');
+      return;
+    }
+
+    if (!pendingRegistrationData) {
+      showVerifyError('Sessão expirada. Volte e preencha o formulário novamente.');
+      return;
+    }
+
+    confirmCodeBtn.disabled = true;
+    confirmCodeBtn.textContent = 'Validando...';
+    showVerifyError('');
+
+    fetch('/api/users/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ...pendingRegistrationData,
+        verificationCode: code
+      })
+    })
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        document.getElementById('verifyCodeModal').classList.add('hidden');
+        document.getElementById('successState').classList.remove('hidden');
+      } else {
+        showVerifyError(data.error || 'Código de verificação incorreto ou expirado.');
+      }
+    })
+    .catch(err => {
+      showVerifyError('Erro de rede ao validar o código.');
+    })
+    .finally(() => {
+      confirmCodeBtn.disabled = false;
+      confirmCodeBtn.textContent = 'Validar e Criar Conta';
+    });
+  });
+
+  // Reenviar código
+  document.getElementById('resendCodeBtn').addEventListener('click', function () {
+    if (!pendingRegistrationData) return;
+    const btn = this;
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    fetch('/api/users/register/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        inviteId: pendingRegistrationData.inviteId,
+        name: pendingRegistrationData.name,
+        email: pendingRegistrationData.email
+      })
+    })
+    .then(async res => {
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        showVerifyError('Novo código enviado para o seu e-mail!');
+        verifyError.className = 'msg msg-success';
+        verifyError.classList.remove('hidden');
+      } else {
+        showVerifyError(data.error || 'Erro ao reenviar código.');
+      }
+    })
+    .catch(() => showVerifyError('Erro de rede ao reenviar código.'))
+    .finally(() => {
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = 'Reenviar código';
+      }, 5000);
+    });
+  });
+
+  // Voltar ao formulário para corrigir dados
+  document.getElementById('backToFormBtn').addEventListener('click', function () {
+    document.getElementById('verifyCodeModal').classList.add('hidden');
+    document.getElementById('registerForm').classList.remove('hidden');
+  });
+
   function showFormError(msg) {
     formError.textContent = msg;
     formError.classList.remove('hidden');
+  }
+
+  function showVerifyError(msg) {
+    if (!msg) {
+      verifyError.classList.add('hidden');
+      return;
+    }
+    verifyError.className = 'msg msg-error';
+    verifyError.textContent = msg;
+    verifyError.classList.remove('hidden');
   }
 
   function togglePasswordVisibility(inputId, btn) {

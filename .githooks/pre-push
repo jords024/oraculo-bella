@@ -1,0 +1,20 @@
+#!/bin/sh
+# Git Pre-Push Hook — Automação de Verificação de Vulnerabilidades
+# Impede o push para o GitHub se houver vulnerabilidades no Backend/Frontend ou segredos expostos.
+
+echo ""
+echo "🔒 [GIT PRE-PUSH] Iniciando checagem de vulnerabilidades e segurança..."
+
+node backend/scripts/security_check.mjs
+STATUS=$?
+
+if [ $STATUS -ne 0 ]; then
+  echo ""
+  echo "❌ [GIT PRE-PUSH] O envio (git push) foi ABORTADO para proteger o repositório!"
+  echo "👉 Resolva as vulnerabilidades indicadas acima antes de reenviar ao GitHub."
+  echo ""
+  exit 1
+fi
+
+echo "✅ [GIT PRE-PUSH] Verificação concluída com sucesso! Prosseguindo com o envio..."
+exit 0

@@ -1,0 +1,18 @@
+# Dockerfile para Frontend (Vite + React)
+FROM node:22-alpine
+
+WORKDIR /app
+
+# Copia manifests de pacotes
+COPY frontend/package*.json ./
+
+# Instala dependências
+RUN npm ci
+
+# Copia código-fonte do frontend
+COPY frontend/ ./
+
+EXPOSE 5176
+
+# Executa o Vite dev server acessível na rede do Docker
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5176"]

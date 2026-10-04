@@ -8,10 +8,10 @@ import { Readable } from "stream";
 import { logger } from "./logger.js";
 
 // ── Config ──────────────────────────────────────────────────────────────────
-const BUCKET      = process.env.MINIO_BUCKET      || process.env.B2_BUCKET || "oraculo-bucket";
-const RAW_ENDPOINT = process.env.MINIO_ENDPOINT    || process.env.B2_ENDPOINT || "http://localhost:9000";
-const KEY_ID      = process.env.MINIO_ROOT_USER   || process.env.B2_KEY_ID || process.env.B2_APPLICATION_KEY_ID || "oraculo_admin";
-const APP_KEY     = process.env.MINIO_ROOT_PASSWORD || process.env.B2_APP_KEY || process.env.B2_APPLICATION_KEY || "oraculo_secret_123";
+const BUCKET      = process.env.B2_BUCKET_NAME    || process.env.B2_BUCKET || process.env.MINIO_BUCKET || "oraculo-bucket";
+const RAW_ENDPOINT = process.env.B2_ENDPOINT      || process.env.MINIO_ENDPOINT || "http://localhost:9000";
+const KEY_ID      = process.env.B2_KEY_ID         || process.env.B2_APPLICATION_KEY_ID || process.env.MINIO_ROOT_USER || "oraculo_admin";
+const APP_KEY     = process.env.B2_APPLICATION_KEY || process.env.B2_APP_KEY || process.env.MINIO_ROOT_PASSWORD || "oraculo_secret_123";
 const PREFIX      = "carousels";  // pasta raiz no bucket
 
 export function normalizeEndpoint(raw) {

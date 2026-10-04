@@ -10,6 +10,11 @@ import {
   validatePasswordComplexity
 } from "../state.js";
 import { logger } from '../logger.js';
+import { 
+  sendBrevoEmail, 
+  generateVerificationEmailHtml,
+  generatePasswordResetEmailHtml
+} from '../services/emailService.js';
 
 const router = express.Router();
 
@@ -89,6 +94,68 @@ router.put('/api/users/:id', requireAdminOrSuperAdmin, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: 'Erro ao editar usuário: ' + err.message });
+  }
+});
+
+// Redefinir senha de um usuário (Admin e Super Admin)
+router.post('/api/users/:id/reset-password', requireAdminOrSuperAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { newPassword, notifyEmail } = req.body;
+
+  if (id === 'super-admin') {
+    return res.status(400).json({ error: 'A senha do Super Admin deve ser alterada nas variáveis de ambiente do servidor.' });
+  }
+
+  if (!newPassword) {
+    return res.status(400).json({ error: 'Informe a nova senha do usuário.' });
+  }
+
+  // Validação de complexidade da senha (mínimo 10 caracteres, letra, número, caractere especial)
+  const passwordValidation = validatePasswordComplexity(newPassword);
+  if (!passwordValidation.valid) {
+    return res.status(400).json({ error: passwordValidation.error });
+  }
+
+  try {
+    const userRes = await query("SELECT * FROM dashboard_users WHERE id = $1", [id]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Usuário não encontrado.' });
+    }
+
+    const targetUser = userRes.rows[0];
+
+    // Impede que um admin comum redefina a senha de um super admin
+    if (isUserSuperAdmin(targetUser.email) && !isUserSuperAdmin(req.user?.email)) {
+      return res.status(403).json({ error: 'Você não tem permissão para alterar a senha do Super Admin.' });
+    }
+
+    // Gera o novo hash seguro com Argon2id + Pepper
+    const hashedPassword = await hashPassword(newPassword);
+
+    await query("UPDATE dashboard_users SET password = $1 WHERE id = $2", [hashedPassword, id]);
+    logger.info('[Users]', `🔑 Senha do usuário "${targetUser.email}" (ID: ${id}) redefinida com sucesso por ${req.user?.email || 'admin'}.`);
+
+    // Notificação opcional por e-mail via Brevo (se notifyEmail for true)
+    let emailSent = false;
+    if (notifyEmail) {
+      const emailHtml = generatePasswordResetEmailHtml(targetUser.name, newPassword);
+      const emailRes = await sendBrevoEmail({
+        toEmail: targetUser.email,
+        toName: targetUser.name,
+        subject: 'Sua senha foi redefinida no estúdio',
+        htmlContent: emailHtml
+      });
+      emailSent = emailRes.ok;
+    }
+
+    res.json({ 
+      ok: true, 
+      message: 'Senha redefinida com sucesso.',
+      emailNotified: emailSent
+    });
+  } catch (err) {
+    logger.error('[Users]', 'Erro ao redefinir senha do usuário:', err);
+    res.status(500).json({ error: 'Erro ao redefinir senha: ' + err.message });
   }
 });
 
@@ -222,11 +289,75 @@ router.get('/api/users/invitations/:id/verify', async (req, res) => {
   }
 });
 
-// Registrar usuário usando um convite (PÚBLICO)
+// Enviar código de verificação por e-mail via Brevo (PÚBLICO)
+router.post('/api/users/register/send-code', async (req, res) => {
+  const { inviteId, name, email } = req.body;
+  if (!inviteId || !email) {
+    return res.status(400).json({ error: 'Convite e e-mail são obrigatórios.' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
+  try {
+    // 1. Valida o convite
+    const inviteRes = await query("SELECT * FROM invitations WHERE id = $1", [inviteId]);
+    if (inviteRes.rows.length === 0) {
+      return res.status(404).json({ error: 'Convite não encontrado.' });
+    }
+
+    const invite = inviteRes.rows[0];
+    if (invite.status !== 'pending' || new Date(invite.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'Este convite expirou ou já foi utilizado.' });
+    }
+
+    // 2. Verifica se o e-mail já existe
+    const checkEmail = await query("SELECT id FROM dashboard_users WHERE LOWER(email) = $1", [cleanEmail]);
+    if (checkEmail.rows.length > 0 || cleanEmail === getSuperAdminEmail().toLowerCase()) {
+      return res.status(400).json({ error: 'Este e-mail já está cadastrado no sistema.' });
+    }
+
+    // 3. Gera código numérico aleatório seguro de 6 dígitos
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    // 4. Invalida códigos anteriores não verificados para esse e-mail e convite
+    await query(
+      "DELETE FROM email_verifications WHERE LOWER(email) = $1 AND invite_id = $2",
+      [cleanEmail, inviteId]
+    );
+
+    // 5. Salva novo código
+    await query(
+      "INSERT INTO email_verifications (email, invite_id, code, expires_at) VALUES ($1, $2, $3, $4)",
+      [cleanEmail, inviteId, code, expiresAt]
+    );
+
+    // 6. Envia e-mail pelo Brevo
+    const html = generateVerificationEmailHtml(code, name || 'Usuário');
+    const sendResult = await sendBrevoEmail({
+      toEmail: cleanEmail,
+      toName: name || cleanEmail,
+      subject: `Seu código de verificação: ${code}`,
+      htmlContent: html
+    });
+
+    if (!sendResult.ok) {
+      return res.status(502).json({ error: `Não foi possível enviar o e-mail: ${sendResult.error || 'Erro no provedor Brevo'}` });
+    }
+
+    logger.info('[Users]', `📩 Código de verificação enviado para ${cleanEmail} (Convite: ${inviteId})`);
+    res.json({ ok: true, message: 'Código enviado com sucesso para o seu e-mail.' });
+  } catch (err) {
+    logger.error('[Users]', 'Erro ao enviar código de verificação:', err);
+    res.status(500).json({ error: 'Erro ao gerar código de verificação: ' + err.message });
+  }
+});
+
+// Registrar usuário usando um convite com validação de código (PÚBLICO)
 router.post('/api/users/register', async (req, res) => {
-  const { inviteId, name, email, password } = req.body;
-  if (!inviteId || !name || !email || !password) {
-    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios.' });
+  const { inviteId, name, email, password, verificationCode } = req.body;
+  if (!inviteId || !name || !email || !password || !verificationCode) {
+    return res.status(400).json({ error: 'Preencha todos os campos obrigatórios, incluindo o código de verificação.' });
   }
 
   // Validação dos requisitos de senha (mínimo 10 caracteres, 1 letra, 1 número, 1 caractere especial)
@@ -253,19 +384,38 @@ router.post('/api/users/register', async (req, res) => {
     if (checkEmail.rows.length > 0 || cleanEmail === getSuperAdminEmail().toLowerCase()) {
       return res.status(400).json({ error: 'Este e-mail já está cadastrado no sistema.' });
     }
+
+    // 3. Valida código de verificação
+    const cleanCode = String(verificationCode).trim();
+    const verifRes = await query(
+      "SELECT * FROM email_verifications WHERE LOWER(email) = $1 AND invite_id = $2 AND code = $3 AND verified = FALSE ORDER BY id DESC LIMIT 1",
+      [cleanEmail, inviteId, cleanCode]
+    );
+
+    if (verifRes.rows.length === 0) {
+      return res.status(400).json({ error: 'Código de verificação incorreto ou não encontrado.' });
+    }
+
+    const verification = verifRes.rows[0];
+    if (new Date(verification.expires_at) < new Date()) {
+      return res.status(400).json({ error: 'O código de verificação expirou. Solicite um novo código.' });
+    }
     
-    // 3. Cadastra o novo usuário com Argon2id + Pepper
+    // 4. Cadastra o novo usuário com Argon2id + Pepper
     const hashedPassword = await hashPassword(password);
     await query(
       "INSERT INTO dashboard_users (name, email, password, role, permissions) VALUES ($1, $2, $3, $4, $5)",
       [name, cleanEmail, hashedPassword, invite.role, invite.permissions || {}]
     );
     
-    // 4. Marca convite como aceito
+    // 5. Marca código como verificado e convite como aceito
+    await query("UPDATE email_verifications SET verified = TRUE WHERE id = $1", [verification.id]);
     await query("UPDATE invitations SET status = 'accepted' WHERE id = $1", [inviteId]);
     
+    logger.info('[Users]', `✅ Usuário ${cleanEmail} cadastrado e verificado com sucesso via convite ${inviteId}.`);
     res.json({ ok: true });
   } catch (err) {
+    logger.error('[Users]', 'Erro ao registrar usuário com verificação:', err);
     res.status(500).json({ error: 'Erro ao registrar usuário: ' + err.message });
   }
 });
