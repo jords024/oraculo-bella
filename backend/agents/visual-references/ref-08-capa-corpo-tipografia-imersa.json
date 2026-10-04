@@ -1,0 +1,38 @@
+{
+  "ref_id": "ref-08-capa-corpo-tipografia-imersa",
+  "fonte": "Referência enviada pelo usuário: capa 'Querida autoexigência'",
+  "papel_no_carrossel": "capa / personificação do conflito / convite íntimo",
+  "layout_arquetipo": "capa_fotografica_com_tipografia_imersa",
+  "resumo": "Fotografia ambiental de uma mulher em movimento expressivo ocupa o campo inferior, enquanto a tipografia monumental atravessa céu, horizonte e corpo. O conflito psicológico é personificado e tratado como interlocutor íntimo, não como diagnóstico.",
+  "sensibilidade": {
+    "tom": "carta íntima, firme e compassiva",
+    "gesto": "o corpo abre, respira e cede peso; não posa para a câmera",
+    "relacao_texto_imagem": "a palavra maior toca o corpo e transforma a figura em parte da frase",
+    "efeito": "reconhecimento imediato sem vitimização"
+  },
+  "composicao": {
+    "proporcao": "4:5 vertical",
+    "imagem": "full bleed com horizonte baixo e céu silencioso",
+    "figura": "meio corpo ou três quartos, gesto amplo, eixo diagonal e presença fora do centro",
+    "titulo": "três registros tipográficos sobrepostos em grande escala",
+    "microtexto": "blocos laterais pequenos como textura editorial, nunca conteúdo essencial",
+    "rodape": "assinatura e categoria nos cantos opostos"
+  },
+  "tipografia": {
+    "voz_intima": "caligrafia ou serif itálica fluida",
+    "conflito": "serifa display de altíssimo contraste e escala dominante",
+    "acento": "uma única palavra em caixa retangular de cor",
+    "convite": "sans leve, grande e direta na zona inferior",
+    "principio": "a hierarquia vem da mudança de voz, escala e sobreposição; não de cards acumulados"
+  },
+  "paleta": ["cinza céu", "verde campo", "marfim", "tinta", "laranja queimado"],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "personificar um padrão emocional como interlocutor",
+    "usar gesto corporal autêntico em paisagem real ou ilustrada",
+    "fazer a palavra dominante interagir com a silhueta",
+    "usar apenas um acento cromático curto",
+    "preservar rodapé constante como costura de sequência"
+  ],
+  "nao_copiar_literalmente": "Não repetir mulher inclinada para trás em campo aberto. Reutilizar o princípio de gesto expressivo + mundo amplo + palavra que participa da imagem.",
+  "antipadrao": "Retrato frontal imóvel, texto inteiro dentro de uma caixa, blur preto e título sem relação espacial com a figura."
+}

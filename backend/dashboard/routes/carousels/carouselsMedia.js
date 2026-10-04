@@ -146,7 +146,7 @@ router.put("/api/carousels/:id/slide/:filename/design", async (req, res) => {
       elements: design.elements.map(element => ({
         ...element,
         id: String(element.id || "").slice(0, 100),
-        type: ["text", "image", "shape"].includes(element.type) ? element.type : "shape",
+        type: ["text", "image", "shape", "texture", "symbol"].includes(element.type) ? element.type : "shape",
         name: String(element.name || "Elemento").slice(0, 120),
         content: element.content === undefined ? undefined : String(element.content).slice(0, 10000),
         src: cleanAssetSrc(element.src)

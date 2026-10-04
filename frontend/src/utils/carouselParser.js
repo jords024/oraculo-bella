@@ -61,7 +61,7 @@ export function parseCarouselText(text, fallbackData = null) {
       let layout = (hm[3] || inlineLayout || fallbackData?.preset || 'fullbleed').trim().toLowerCase();
       // Remove acentos para compatibilidade com o backend (ex: "dramático" -> "dramatico")
       layout = layout.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      const validLayouts = ['fullbleed', 'dramatico', 'etereo', 'card', 'text_only', 'brands_cover', 'brands_split', 'brands_editorial', 'brands_outro', 'bella_editorial_cover', 'bella_editorial_paper', 'bella_editorial_card', 'bella_editorial_sunlight', 'bella_editorial_dark', ...Array.from({ length: 10 }, (_, i) => `bella_sequence_${String(i + 1).padStart(2, '0')}`)];
+      const validLayouts = ['fullbleed', 'dramatico', 'etereo', 'card', 'text_only', 'brands_cover', 'brands_split', 'brands_editorial', 'brands_outro', 'bella_editorial_cover', 'bella_editorial_paper', 'bella_editorial_card', 'bella_editorial_sunlight', 'bella_editorial_dark', 'bella_type_cover', 'bella_type_fragments', 'bella_type_escalation', 'bella_type_pause', 'bella_type_close', ...Array.from({ length: 10 }, (_, i) => `bella_sequence_${String(i + 1).padStart(2, '0')}`)];
       if (!validLayouts.includes(layout)) {
         layout = 'fullbleed';
       }

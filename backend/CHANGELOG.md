@@ -1,7 +1,29 @@
 # 🔖 Registro de Evolução: Projeto Fonte Oculta
-**Data de Atualização:** 16 de Setembro de 2026
+**Data de Atualização:** 29 de Setembro de 2026
 
 Este arquivo serve como ponte de comunicação de estado do projeto.
+
+---
+
+## Sessão de 29/09/2026 — Estúdio (editor visual) abre direto da geração da IA
+
+Usuário pediu autonomia "tipo Canva": editar a arte gerada arrastando texto/imagem, em vez de só poder pedir de novo no chat. Investigação (plano aprovado em `~/.claude/plans/declarative-moseying-metcalfe.md`) achou que o editor **já existia** — `frontend/src/components/EditSlideModal/SlideStudio.jsx` + `slideDocument.js`, completo (camadas, arrastar/redimensionar, desfazer, biblioteca, geração de imagem sem texto) — só que só entrava depois de pronto, como retoque, e mesmo assim abria como uma imagem achatada (`legacyFlattened`) porque o `.meta.json` nunca guardava posição/tamanho/cor do texto que o Python decidiu.
+
+**O que foi construído — a ponte de dados que faltava:**
+1. **`core/util/composer/{engine,bella_essential_engine,bella_sequence_engine}.py`**: as ~20 funções de composição (fullbleed/dramatico/etereo/card/text_only + bella_essential_01-05 + bella_sequence_01-10, todos os presets/estilos da Bella) ganharam um parâmetro opcional `report=None` — quando presente, cada uma anexa um dicionário por bloco de texto que ela já desenha (título/corpo/assinatura: x, y, largura, altura, tamanho de fonte, família, cor, alinhamento, conteúdo), usando as variáveis que já calculava, sem duplicar lógica de layout. `rgba_to_hex()` novo em `art_director.py`. Lâminas de fundo sólido (`_pause`/bella_essential_04) relatam `canvas_background` em vez de imagem, para o editor não colocar uma foto irrelevante como fundo.
+2. **`core/criador_pipeline.py`**: `build_editable_design()` converte esse relatório no mesmo formato de documento em camadas que `slideDocument.js` já lê (`meta.design`, `version:1`), gravado no `.meta.json` de cada lâmina junto com os campos que já existiam. Fontes mapeadas para os nomes reais que o Pillow usa (`core/util/fonts.py`): serif→Playfair Display, sans/condensed→Inter/Oswald.
+3. **Fidelidade de fonte no Estúdio:** `frontend/index.html` importa Inter/Oswald/Playfair Display do Google Fonts (as mesmas 3 famílias que o Pillow já desenha); `SlideStudio.jsx` e o padrão de `slideDocument.js` (conversão de arte antiga) passam a oferecer/usar essas fontes em vez das 3 genéricas anteriores.
+4. **Abertura automática:** `useCarouselsData.js` agora guarda o status anterior de cada carrossel (`previousStatusesRef`) e, quando um que estava `queued`/`generating` vira `pronto`/`done`, chama `onGenerationComplete(id)` — em `App.jsx`, isso abre o Estúdio sozinho (`setEditCarouselId` + `setEditModalOpen`), sem tocar a entrada manual existente (`AppModals.jsx`/`AppTabRouter.jsx`).
+
+**Simplificações conscientes (documentadas no plano):** o negrito automático da "frase de virada" do Bella Essencial vira um único bloco de texto no editor (perde o negrito automático, editável manualmente); traços/degradês puramente decorativos continuam embutidos na imagem de fundo, não viram elementos.
+
+**Validado:** teste automatizado cobrindo os 20 layouts + 5 estilos de capa do `bella_sequence_01` (25 combinações, todas com título/corpo presentes, posições dentro do canvas, cores em hex válido); teste de integração de `build_editable_design` contra a saída real de `compose()` (inclui o caso `canvas_background`); geração real de 2 lâminas via `criador_pipeline.py` (CLI, com `-X utf8` — ver nota abaixo) registrada no dashboard e aberta no navegador: o Estúdio abriu direto como camadas (sem o aviso de "arte antiga"), título e corpo apareceram como texto separado sobre a foto real, nas posições certas. `npm run build` do frontend sem erros.
+
+**Achado à parte, não é bug (evitar susto em teste manual futuro):** rodar `criador_pipeline.py --data-stdin` manualmente no Windows sem a flag `-X utf8` corrompe acentuação (double-encoding: "Você" vira "VocÃª") porque o Python decodifica stdin pela codepage do sistema em vez de UTF-8. A produção já é imune — `carouselQueueWorker.js:162` chama `spawn(PYTHON, ['-X', 'utf8', ...])`. Para testar manualmente: `python -X utf8 core/criador_pipeline.py --data-stdin < payload.json`.
+
+**Não testado interativamente (ficou para o usuário confirmar no uso real):** o gatilho automático via a tela do Criador de ponta a ponta (ideação → escrita → geração → Estúdio abrindo sozinho) — a lógica foi conferida no código, mas não observada ao vivo no navegador, porque a rota `/api/criador/generate` (fila) retornou `rascunho` numa tentativa de teste nesta sessão sem nunca chegar a gerar (RabbitMQ indisponível, cai para fila em memória — meu teste real usou o CLI diretamente, contornando a fila). **Se isso acontecer de novo com o usuário**, vale investigar a fila em memória do `carouselQueueWorker.js` separadamente — não é algo que esta sessão mudou.
+
+**Fora de escopo desta sessão (registrado no plano):** modo "canvas em branco" sem IA (a base já existe, só falta um ponto de entrada sem carrossel prévio); paridade pixel-perfeita de fonte entre Pillow e Canvas 2D do navegador.
 
 ---
 

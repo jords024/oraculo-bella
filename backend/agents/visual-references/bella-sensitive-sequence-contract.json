@@ -1,0 +1,65 @@
+{
+  "schema": "bella-sensitive-sequence-contract-v5",
+  "origem": "Sequências editoriais sensíveis enviadas pelo usuário em 30/09/2026 e 01/10/2026",
+  "objetivo": "Ensinar o Oráculo a construir sensibilidade por progressão visual e mudança de voz, sem copiar personagens, frases, objetos ou layouts literais.",
+  "arco": [
+    { "beat": 1, "funcao": "abrir_o_campo", "energia": "expansiva e corporal", "linguagem": "imagem ambiental + tipografia imersa", "pergunta": "qual padrão está sendo chamado para conversar?" },
+    { "beat": 2, "funcao": "reconhecer_a_protecao", "energia": "clara e frontal", "linguagem": "manifesto tipográfico", "pergunta": "o que essa parte tentou fazer por mim?" },
+    { "beat": 3, "funcao": "ouvir_o_custo", "energia": "densa e interior", "linguagem": "colagem monocromática + fragmentos de voz", "pergunta": "do que essa parte está cansada?" },
+    { "beat": 4, "funcao": "devolver_escolha", "energia": "luminosa e adulta", "linguagem": "tese serifada + forma orgânica", "pergunta": "quem conduz agora?" }
+  ],
+  "arco_cinco_laminas": [
+    { "beat": 1, "funcao": "interromper_com_movimento", "energia": "expansiva e cinética", "linguagem": "mundo ambiental + tipografia integrada ao gesto", "pergunta": "qual ação torna a tese visível antes de explicá-la?" },
+    { "beat": 2, "funcao": "nomear_o_mecanismo", "energia": "clara e analítica", "linguagem": "manifesto marfim + objeto de medida + vozes periféricas", "pergunta": "qual instrumento invisível organiza esse padrão?" },
+    { "beat": 3, "funcao": "materializar_a_armadilha", "energia": "densa e confrontadora", "linguagem": "colagem escura + palavra-cenário + objeto transformado", "pergunta": "como o custo se torna matéria inesquecível?" },
+    { "beat": 4, "funcao": "especificar_o_custo", "energia": "precisa e crescente", "linguagem": "faixas de raciocínio + conclusão tipográfica monumental", "pergunta": "qual frase transforma reconhecimento em lucidez?" },
+    { "beat": 5, "funcao": "devolver_direcao", "energia": "aérea e adulta", "linguagem": "campo claro + palavra gestual + sinal vivo de movimento", "pergunta": "qual escolha devolve o caminho sem prometer solução fácil?" }
+  ],
+  "arco_cinco_laminas_relacional": [
+    { "beat": 1, "funcao": "declarar_com_movimento", "energia": "sensorial e solene", "linguagem": "fotografia cinética + palavra-eco em dois planos", "pergunta": "qual conceito antigo está sendo atravessado?" },
+    { "beat": 2, "funcao": "aproximar_a_escolha", "energia": "íntima e material", "linguagem": "mensagem física encontrada dentro de um ambiente vivo", "pergunta": "qual frase precisa ser encontrada, não anunciada?" },
+    { "beat": 3, "funcao": "humanizar_e_traduzir", "energia": "afetiva e clara", "linguagem": "díptico humano + papel editorial + camada-ponte", "pergunta": "como essa tese se torna gesto e tratamento concreto?" },
+    { "beat": 4, "funcao": "cristalizar_a_virada", "energia": "terrosa e silenciosa", "linguagem": "pausa monocromática exclusivamente tipográfica", "pergunta": "qual verdade precisa de silêncio para assentar?" },
+    { "beat": 5, "funcao": "abrir_continuidade", "energia": "expansiva e sustentada", "linguagem": "paisagem com horizonte + presença fragmentada + CTA narrativo", "pergunta": "qual caminho continua depois do carrossel?" }
+  ],
+  "costura": {
+    "constantes": ["marfim", "verde profundo", "laranja queimado", "assinatura nos cantos", "textura analógica", "alternância serif/sans"],
+    "variaveis": ["presença de fotografia", "densidade", "escala tipográfica", "posição do eixo", "forma do acento", "grau de sombra"],
+    "regra": "repetir identidade, não layout"
+  },
+  "gramatica_emocional": {
+    "personificacao": "falar com o padrão como uma parte que tentou proteger, sem tratá-lo como inimigo",
+    "compaixao_com_limite": "reconhecer a intenção e nomear o custo na mesma sequência",
+    "desidentificacao": "separar a mulher do padrão para devolver escolha",
+    "linguagem": "íntima, específica, adulta e sem tom de palestra"
+  },
+  "gramatica_visual": {
+    "acabamento_autoral": "Nenhuma lâmina usa ícone de CSS, seta, estrela, régua digital, halo vetorial ou geometria perfeita para simular direção de arte. Quando houver sinal gráfico, ele precisa possuir matéria, imperfeição e função semântica.",
+    "arquitetura_editavel": "A fotografia ou ilustração principal nasce sem texto. Título, corpo, recortes adicionais, textura, faixas e matéria cromática permanecem como camadas nativas independentes e reordenáveis.",
+    "lei_da_primeira_capa": "Toda primeira capa deve funcionar como uma visão emocional da headline: sensível no afeto, expressiva no gesto, sacerdotal na presença e psicodélica na transformação da realidade. A promessa ou ganho precisa ser percebido na passagem entre dois estados, nunca representado por um objeto sozinho.",
+    "presenca_viva_na_capa": "Preferir mulher ou relação humana em gesto verdadeiro. Quando não houver pessoa, natureza, luz ou matéria devem se comportar como presença viva e carregar emoção inequívoca.",
+    "tipografia_como_personagem": "caligrafia aproxima, serifa monumental revela, sans pesada pressiona e sans leve devolve ar",
+    "imagem_como_argumento": "gesto e ambiente precisam acrescentar uma camada que o texto não diz",
+    "acento_unico": "uma cor forte sinaliza mudança de voz ou virada; nunca colore tudo",
+    "imperfeicao_controlada": "papel, grão, recorte, inclinação e borda física retiram a aparência de template digital",
+    "alternancia": "escolher uma progressão coerente com o tema: mundo expansivo → manifesto claro → colagem escura → escalada tipográfica → liberação aérea; ou movimento → mensagem física → díptico humano → pausa monocromática → horizonte"
+  },
+  "adaptacao_bella": {
+    "elementos_tafa": "a força elemental dominante define matéria e movimento sem virar decoração",
+    "sacerdotal": "a conversa interna tem solenidade, presença e passagem; nunca fantasia",
+    "mulheres": "gesto verdadeiro, agência e relação com o mundo; não modelo posando",
+    "uniao": "quando o tema pedir vínculo, substituir isolamento por reciprocidade, dupla, círculo ou gesto compartilhado",
+    "ilustracao": "a mesma sequência pode ser reconstruída com pintura editorial, colagem ou surrealismo natural, sem depender de fotografia"
+  },
+  "auditoria": [
+    "A primeira capa faz sentir a headline e o ganho antes da leitura?",
+    "Existe expressão viva e transformação visual, em vez de objeto isolado ou decoração espiritual?",
+    "Cada slide tem uma função emocional diferente?",
+    "A alternância de claro e escuro acompanha o arco?",
+    "As mudanças de fonte representam vozes ou apenas decoração?",
+    "Existe somente um acento cromático dominante por slide?",
+    "A imagem acrescenta significado além da copy?",
+    "O fechamento devolve escolha concreta sem positividade vazia?",
+    "A sequência parece uma conversa que amadurece, não quatro posts independentes?"
+  ]
+}

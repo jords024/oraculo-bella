@@ -1,0 +1,65 @@
+{
+  "ref_id": "ref-18-bilhete-botanico-presenca",
+  "schema": "bella-visual-reference-detail-v1",
+  "fonte": "Referência enviada pelo usuário: bilhete preso entre plantas",
+  "papel_no_carrossel": "pausa íntima / conselho essencial / aproximação",
+  "layout_arquetipo": "bilhete_fisico_em_cenario_botanico",
+  "papel_no_fluxo": "Reduzir a escala depois da capa e transformar a frase numa descoberta física dentro do ambiente.",
+  "proporcao_original": { "pixels": "736x920", "aspect_ratio": "4:5", "destino_bella": "1080x1350" },
+  "resumo": "Plantas altas e galhos ocupam toda a fotografia sépia. No centro, uma folha arrancada de caderno funciona como objeto real, presa por clipe metálico e projetando sombra curta. A frase nasce do próprio papel, não de um card digital.",
+  "imagem_de_fundo": {
+    "tipo": "natureza-morta botânica fotografada",
+    "cenario": "folhagens verticais, galhos sinuosos e parede bege em luz baixa",
+    "profundidade": "folhas atravessam primeiro plano e fundo, criando moldura irregular",
+    "tratamento": "sépia oliva, luz quente fraca, contraste médio e grão grosso",
+    "destaque": "as linhas orgânicas das plantas apontam para o bilhete central",
+    "espaco_negativo": "não há vazio puro; a legibilidade vem do papel físico"
+  },
+  "textura": {
+    "grao": "granulação intensa de filme",
+    "papel": "fibra cinza-clara, borda serrilhada de espiral e leve enrugamento",
+    "materiais": ["clipe de metal", "papel arrancado", "folha seca", "parede fosca"],
+    "sombra": "sombra real curta e difusa sob o papel, sem blur preto artificial"
+  },
+  "paleta": {
+    "dominantes_extraidas": ["#675131", "#a8a09c", "#1d1308", "#4b351c", "#6e5d50", "#a18c6d", "#89755a"],
+    "tinta": "vinho-cacau",
+    "papel": "cinza-lilás mineral",
+    "ambiente": "sépia, oliva escuro e bege queimado"
+  },
+  "hierarquia": [
+    { "nivel": 1, "conteudo": "frase completa", "tratamento": "sans arredondada vinho, centralizada no papel" },
+    { "nivel": 2, "conteudo": "verbo de virada", "tratamento": "serifa itálica mais escura e maior na última linha" },
+    { "nivel": 3, "conteudo": "assinaturas", "tratamento": "sans mínima na periferia" }
+  ],
+  "camadas": [
+    { "ordem": 1, "tipo": "fotografia-botanica", "cobertura": "100%" },
+    { "ordem": 2, "tipo": "sombra-fisica", "cobertura": "sob o bilhete" },
+    { "ordem": 3, "tipo": "papel-recortado", "cobertura": "56-70% da largura no centro" },
+    { "ordem": 4, "tipo": "clipe", "cobertura": "canto superior direito do papel" },
+    { "ordem": 5, "tipo": "tipografia", "cobertura": "área interna do bilhete" },
+    { "ordem": 6, "tipo": "assinaturas-e-seta", "cobertura": "bordas e centro inferior" }
+  ],
+  "composicao": {
+    "bilhete": "levemente inclinado, central, aproximadamente y=335-680 no original",
+    "plantas": "linhas verticais e diagonais cercam o papel sem criar simetria",
+    "margens_do_papel": "generosas; texto não encosta na borda irregular",
+    "ritmo": "ambiente complexo → ilha de papel silenciosa → palavra itálica"
+  },
+  "tipografia": {
+    "principal": "sans humanista de peso regular",
+    "virada": "serifa display itálica",
+    "cor": "vinho terroso",
+    "regra": "a mudança de fonte acontece somente na palavra que devolve escolha"
+  },
+  "energia_bella": "Terra — escolha cultivada, intimidade e contato com matéria viva",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "transformar uma frase essencial em objeto encontrado",
+    "usar cenário orgânico como moldura irregular",
+    "preservar sinais de uso do papel",
+    "usar fixação física coerente: clipe, dobra, costura ou apoio"
+  ],
+  "adaptacao_bella": "O bilhete pode surgir entre argila, água, tecido, sementes ou objetos da cena-mãe. Ele funciona em lâminas de pausa, nunca como solução para todas as páginas.",
+  "nao_copiar_literalmente": "Não repetir folha de caderno com clipe entre plantas. Reutilizar a ideia de mensagem física integrada a um ambiente sensível.",
+  "antipadrao": "Retângulo branco digital com drop shadow, mockup corporativo de post-it e planta usada apenas para preencher cantos."
+}

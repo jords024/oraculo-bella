@@ -1,0 +1,59 @@
+{
+  "ref_id": "ref-06-paisagem-simbolica-elemental",
+  "fonte": "Referência enviada pelo usuário: capa com céu, colina orgânica e cadeira isolada",
+  "papel_no_carrossel": "capa / abertura de mundo / estranhamento",
+  "layout_arquetipo": "paisagem_simbolica_editorial_com_horizonte",
+  "resumo": "A capa organiza imagem e tipografia como uma única paisagem psicológica. A metade superior é silenciosa e atmosférica; o horizonte orgânico ancora o símbolo; o título atravessa dois planos de contraste sem depender de caixa, blur ou card.",
+  "energia_bella": {
+    "elemental": "uma força elemental dominante por peça; nesta referência, Terra sustenta e Ar cria silêncio",
+    "sacerdotal": "presença ritual sugerida por centralidade, pausa, simetria imperfeita e relação reverente com a matéria — nunca por fantasia, coroa ou figurino clichê",
+    "relacional": "ausência e pertencimento são expressos pela distância entre símbolo, paisagem e espaço vazio",
+    "emocao": "solidão lúcida, dignidade e possibilidade de retorno"
+  },
+  "composicao": {
+    "proporcao": "4:5 vertical",
+    "zonas": [
+      { "nome": "ceu_silencioso", "altura_aproximada": "0-45%", "funcao": "respiro e título principal" },
+      { "nome": "limiar", "altura_aproximada": "40-62%", "funcao": "símbolo humano ou relacional" },
+      { "nome": "materia_viva", "altura_aproximada": "55-100%", "funcao": "aterramento e frase de revelação" }
+    ],
+    "eixo": "centralidade levemente imperfeita",
+    "profundidade": "horizonte baixo, névoa e escala monumental da paisagem",
+    "espaco_negativo": "real e produzido pela cena, nunca por overlay corretivo"
+  },
+  "tipografia": {
+    "display": "serifa editorial de alto contraste, condensação moderada, entrelinha muito fechada",
+    "acento": "serifa caligráfica ou itálica em escala monumental",
+    "assinatura": "sans estreita ou serif itálica mínima",
+    "hierarquia": "assinatura pequena → tese monumental → imagem-símbolo → complemento monumental",
+    "regra": "o texto pode cruzar visualmente o horizonte, mas nunca cobrir o ponto emocional principal"
+  },
+  "paleta": {
+    "ceu_nevoa": "#DDE2E3",
+    "marfim": "#F1ECE2",
+    "tinta": "#1E1D1A",
+    "verde_floresta": "#263F2B",
+    "oliva": "#72804B"
+  },
+  "linguagem_de_imagem": [
+    "ilustração editorial pictórica",
+    "surrealismo natural silencioso",
+    "colagem analógica refinada",
+    "paisagem escultórica com matéria real"
+  ],
+  "simbolos_compativeis": [
+    "círculo incompleto como campo de união",
+    "mulher ou grupo em pequena escala dentro da paisagem",
+    "duas figuras realizando um gesto compartilhado",
+    "raízes, água, fogo baixo, vento visível em tecido ou vegetação",
+    "clareira, colina, portal orgânico, círculo de pedras ou sementes"
+  ],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "trocar cadeira por presença feminina, duas mulheres, mãos, altar de matéria ou símbolo relacional conforme a copy",
+    "alternar o elemento dominante — Terra, Água, Fogo, Ar ou Éter — sem misturar todos por obrigação",
+    "usar círculo como arquitetura, órbita ou encontro; nunca como mandala decorativa automática",
+    "preservar o ritmo céu/limiar/matéria mesmo quando a cena não tiver horizonte literal"
+  ],
+  "nao_copiar_literalmente": "Não repetir colina, cadeira e céu em todas as capas. O princípio é construir uma paisagem psicológica em três zonas com um símbolo humano preciso e tipografia integrada ao mundo.",
+  "antipadro": "Retrato feminino genérico ocupando toda a capa, fundo escurecido, frase branca centralizada e elemento místico decorativo sem relação com a tese."
+}

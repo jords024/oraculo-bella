@@ -1,0 +1,35 @@
+{
+  "ref_id": "ref-09-manifesto-tipografico-confronto",
+  "fonte": "Referência enviada pelo usuário: slide 'Você faz parte de mim'",
+  "papel_no_carrossel": "reconhecimento / diálogo interno / primeira virada",
+  "layout_arquetipo": "manifesto_tipografico_de_confronto",
+  "resumo": "Página integralmente tipográfica em papel marfim. A frase principal muda radicalmente de escala e personalidade; a confissão entra como faixa laranja e o peso emocional é sublinhado por variações de peso dentro da própria frase.",
+  "sensibilidade": {
+    "tom": "reconhece a função protetiva do padrão antes de confrontar seu custo",
+    "movimento": "acolhimento → confissão → limite",
+    "efeito": "firmeza sem expulsar nenhuma parte de si"
+  },
+  "composicao": {
+    "fundo": "papel marfim com vincos e textura física discreta",
+    "bloco_principal": "ocupa cerca de 48% da página com quebras expressivas",
+    "bloco_confissao": "faixa curta de acento seguida por texto sublinhado",
+    "espaco_negativo": "base ampla e silenciosa",
+    "rodape": "assinatura constante nos cantos"
+  },
+  "tipografia": {
+    "estrutura": "sans condensada ou grotesca + serif itálica em diálogo",
+    "escala": "uma ou duas palavras podem ocupar quase toda a largura",
+    "enfase": "negrito e sublinhado aplicados somente à ferida específica",
+    "acento": "faixa laranja curta para a mudança de voz",
+    "regra": "cada estilo tipográfico representa uma voz; não variar fonte apenas por decoração"
+  },
+  "paleta": ["marfim", "verde profundo", "laranja queimado"],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar tipografia como diálogo entre parte protetiva e consciência adulta",
+    "manter um único bloco cromático de confissão",
+    "transformar peso tipográfico em carga emocional",
+    "preservar grande área vazia depois da frase difícil"
+  ],
+  "nao_copiar_literalmente": "Não repetir a frase em quatro linhas com a mesma palavra gigante. Adaptar a escala e as vozes à tensão específica do slide.",
+  "antipadrao": "Centralização burocrática, cinco cores, ícones terapêuticos, caixas simétricas e frase inteira em negrito."
+}

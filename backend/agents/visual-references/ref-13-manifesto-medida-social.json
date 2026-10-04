@@ -1,0 +1,32 @@
+{
+  "ref_id": "ref-13-manifesto-medida-social",
+  "fonte": "Referência enviada pelo usuário: página marfim 'A régua invisível que sufoca'",
+  "papel_no_carrossel": "nomeação do mecanismo / contextualização",
+  "layout_arquetipo": "manifesto_tipografico_com_objeto_de_medida",
+  "papel_no_fluxo": "Dar nome ao mecanismo psicológico e materializá-lo sem depender de fotografia.",
+  "resumo": "Papel marfim com título serifado central, fragmentos de régua invadindo cantos e pequenas vozes sociais orbitando a tese. Uma linha vertical laranja separa comparação e consequência.",
+  "composicao": {
+    "fundo": "papel quente com grão e pequenas irregularidades",
+    "tese": "bloco serifado central ocupando aproximadamente 42% da altura",
+    "vozes_perifericas": "três frases curtas em posições assimétricas, com leve desfoque de impressão",
+    "objeto": "fragmentos ampliados do símbolo material entram parcialmente pelos limites da página",
+    "acento": "linha vertical curta que funciona como eixo causal"
+  },
+  "tipografia": {
+    "tese": "serifa editorial de alto contraste",
+    "vozes": "sans compacta com aparência de recorte impresso",
+    "consequencia": "sans humanista, com uma frase final em peso forte",
+    "regra": "o objeto e as vozes explicam a pressão; a tese permanece limpa e soberana"
+  },
+  "paleta": ["marfim", "verde petróleo", "laranja queimado"],
+  "linguagem_de_imagem": "pôster editorial tátil, objeto semitransparente, impressão analógica e assimetria controlada",
+  "energia_bella": "Éter — tornar visível um campo de pressão que antes parecia abstrato",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "escolher um instrumento concreto que represente o mecanismo da copy",
+    "posicionar vozes externas como ruído periférico, nunca como texto principal",
+    "usar um único eixo cromático para ligar causa e efeito",
+    "manter o centro legível e os objetos parcialmente cortados pelas bordas"
+  ],
+  "nao_copiar_literalmente": "Não usar régua sempre. Trocar por escala, etiqueta, mapa, moldura, relógio, molde ou outro instrumento coerente com o mecanismo.",
+  "antipadrao": "Ícones terapêuticos alinhados, infográfico corporativo, objeto decorativo sem relação causal e quatro cards com exemplos."
+}

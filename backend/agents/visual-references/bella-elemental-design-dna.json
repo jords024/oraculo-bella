@@ -1,0 +1,71 @@
+{
+  "schema": "bella-elemental-design-dna-v3",
+  "intencao": "Transformar o universo T.A.F.A em direção editorial ilustrativa, elemental, sacerdotal e relacional sem cair em misticismo decorativo ou repetição de mulheres genéricas.",
+  "leis": {
+    "conceito_antes_da_estetica": "A força visual nasce da tensão psicológica da copy. Elementos e símbolos só entram quando mudam o significado.",
+    "um_elemento_dominante": "Cada carrossel escolhe uma força dominante entre Terra, Água, Fogo, Ar e Éter. Elementos secundários podem aparecer, mas não competem.",
+    "sacerdotal_sem_fantasia": "Sacerdotal significa presença, gesto consciente, círculo, silêncio, cuidado da matéria e passagem ritual; não significa coroa, túnica, altar genérico ou personagem de fantasia.",
+    "mulher_com_agencia": "A mulher age, escolhe, sustenta, encontra, entrega, recebe ou atravessa. Nunca serve apenas como rosto triste ou decoração aspiracional.",
+    "uniao_sem_cliche": "Amor e união aparecem como gesto compartilhado, distância que diminui, postura espelhada, círculo humano, mãos em ação ou ecossistema interdependente — nunca coração literal.",
+    "circulo_com_funcao": "Círculos indicam campo, ciclo, inteireza, comunidade, foco ou passagem. Devem organizar a composição, não decorar cantos.",
+    "ilustracao_com_materia": "Priorizar ilustração editorial pictórica, surrealismo natural, colagem analógica e ambientes escultóricos. Fotografia é exceção consciente, não padrão automático.",
+    "tipografia_como_cena": "Serifa de alto contraste cria a tese; sans humanista sustenta a leitura; itálico orgânico marca somente uma virada.",
+    "variacao_com_coerencia": "A unidade vem do elemento dominante, paleta, motivo em transformação e tipografia. Escala, enquadramento, presença humana e densidade devem variar entre slides.",
+    "objeto_como_argumento": "Régua, espelho, tecido, mapa, vaso, porta, escala ou outro objeto só entra quando materializa o mecanismo psicológico e sofre uma ação ou transformação.",
+    "ruptura_com_costura": "A sequência muda radicalmente de linguagem entre fotografia, manifesto, colagem e tipografia, mas preserva paleta, grão, assinatura e um acento cromático recorrente.",
+    "texto_em_contato_com_o_mundo": "Tipografia toca, atravessa ou é interrompida pela matéria da cena. Evitar a separação automática entre imagem em cima e bloco de texto embaixo."
+    ,"capa_como_revelacao": "A primeira capa deve traduzir a headline e o ganho emocional em uma cena sensível, expressiva, sacerdotal e psicodélica. Ela não ilustra o substantivo da frase: revela a experiência interna por meio de presença viva, gesto, atmosfera, escala e transformação simbólica."
+    ,"psicodelia_com_sentido": "Psicodelia Bella é alteração poética da realidade — dupla exposição orgânica, matéria que se transforma, campo luminoso, repetição, órbita, distorção delicada ou passagem entre estados. Nunca é neon aleatório, caleidoscópio decorativo, fumaça colorida ou excesso de símbolos esotéricos."
+    ,"acabamento_material_nao_css": "Elementos gráficos devem parecer matéria fotografada, impressa, rasgada, pintada ou desgastada. Setas, estrelas, réguas digitais, halos vetoriais, pictogramas e geometria perfeita de CSS são atalhos proibidos."
+    ,"documento_desmontavel": "A cena principal é uma imagem sem texto. Tipografia, textura, recortes fotográficos adicionais, faixas e campos cromáticos permanecem como camadas nativas movíveis, redimensionáveis, recoloríveis, substituíveis e ordenáveis."
+  },
+  "elementos": {
+    "terra": { "verbo": "sustentar", "materias": ["solo", "raízes", "argila", "sementes", "pedra"], "cores": ["verde floresta", "oliva", "cacau", "marfim"] },
+    "agua": { "verbo": "integrar", "materias": ["espelho d'água", "névoa", "corrente", "chuva fina", "maré"], "cores": ["azul mineral", "cinza névoa", "marfim", "grafite"] },
+    "fogo": { "verbo": "transformar", "materias": ["brasa", "cera", "luz âmbar", "papel queimado", "calor"], "cores": ["âmbar", "terracota", "vinho", "carvão"] },
+    "ar": { "verbo": "deslocar", "materias": ["tecido", "vento", "grama", "poeira luminosa", "céu"], "cores": ["cinza azul", "marfim", "verde frio", "tinta"] },
+    "eter": { "verbo": "conectar", "materias": ["círculo", "órbita", "vazio luminoso", "reflexo", "campo"], "cores": ["marfim", "tinta", "oliva", "azul profundo"] }
+  },
+  "ritmo_recomendado": [
+    "S1 mundo ilustrativo de alto impacto com tese integrada",
+    "S2 página tipográfica de reconhecimento",
+    "S3 cena relacional ou gesto feminino em escala média",
+    "S4 símbolo/círculo como virada conceitual",
+    "S5 pausa de baixa densidade",
+    "S6-S8 progressão entre matéria, relação e revelação",
+    "penúltimo slide abre espaço e possibilidade",
+    "último slide fecha o círculo visual sem CTA agressivo"
+  ],
+  "proibicoes": [
+    "capa construída em torno de objeto isolado sem expressão humana, natural ou relacional",
+    "ícones genéricos, setas, estrelas, réguas digitais, halos vetoriais ou círculos perfeitos usados como decoração",
+    "símbolo importante fundido ao JPEG quando deveria permanecer editável",
+    "imagem bonita ou espiritual que não traduza a headline e o ganho emocional",
+    "psicodelia decorativa sem função psicológica",
+    "mulher sozinha em pose genérica como capa padrão",
+    "repetir o mesmo rosto ou a mesma composição em conteúdos diferentes",
+    "mandala, lua, cristal, fogo ou planta usados apenas para parecer espiritual",
+    "todos os cinco elementos acumulados na mesma imagem",
+    "card escuro ou blur preto atrás do texto como correção de contraste",
+    "corredor ornamentado com mulher presa por fios, cordas ou fitas",
+    "fotografia 35mm como resposta automática",
+    "texto dentro da imagem gerada"
+    ,"sequência inteira com foto de fundo e texto branco na mesma posição",
+    "imagem em cima e texto embaixo como estrutura automática de todos os slides",
+    "objeto simbólico sem relação com o mecanismo emocional da copy"
+  ],
+  "auditoria": [
+    "Na capa, consigo sentir a headline antes de lê-la?",
+    "A capa possui presença viva, emoção reconhecível e uma transformação simbólica ligada ao ganho?",
+    "A camada psicodélica aprofunda a experiência ou apenas decora?",
+    "A composição parece direção de arte material ou uma coleção de formas CSS?",
+    "Cada parte que o usuário pode querer alterar foi preservada como camada nativa?",
+    "A imagem revela algo que a copy não diz literalmente?",
+    "O elemento dominante tem função psicológica clara?",
+    "A presença feminina possui agência ou relação real?",
+    "O círculo, se existir, organiza a ideia?",
+    "O slide tem espaço negativo verdadeiro?",
+    "A sequência alterna ilustração, tipografia, escala e densidade?",
+    "Esta arte ainda pareceria Bella sem o nome ou logo?"
+  ]
+}

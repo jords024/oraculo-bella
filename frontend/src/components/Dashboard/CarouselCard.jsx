@@ -1,4 +1,3 @@
-import React from 'react';
 import GeneratingBadge from './GeneratingBadge';
 
 export default function CarouselCard({
@@ -112,6 +111,20 @@ export default function CarouselCard({
             ) : (
               <span className={`badge badge-${c.status}`}>{c.status}</span>
             )}
+            {c.generationError && (!c.slides || c.slides.length === 0) && (
+              <span
+                className="badge"
+                title={c.generationError}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  color: '#f87171',
+                  border: '1px solid rgba(248, 113, 113, 0.4)',
+                  fontWeight: '700'
+                }}
+              >
+                ⚠ falha na geração
+              </span>
+            )}
             {(c.generationDuration || c.generationTimeSeconds) && c.status !== 'generating' && (
               <span className="badge" title="Tempo gasto para gerar o carrossel" style={{ background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', border: '1px solid rgba(96, 165, 250, 0.3)', fontWeight: '500' }}>
                 ⏱️ {c.generationDuration || (c.generationTimeSeconds >= 60 ? `${Math.floor(c.generationTimeSeconds / 60)}m ${c.generationTimeSeconds % 60}s` : `${c.generationTimeSeconds}s`)}
@@ -129,6 +142,29 @@ export default function CarouselCard({
 
       {isExpanded && (
         <>
+          {c.generationError && (!c.slides || c.slides.length === 0) && (
+            <div
+              role="alert"
+              style={{
+                margin: '12px 16px 0',
+                padding: '12px 14px',
+                borderRadius: '8px',
+                border: '1px solid rgba(248, 113, 113, 0.35)',
+                background: 'rgba(127, 29, 29, 0.18)',
+                color: '#fecaca',
+                fontSize: '12px',
+                lineHeight: '1.5'
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '3px' }}>
+                Nenhum slide foi concluído
+              </strong>
+              A criação foi preservada. Use <b>Recriar</b> para tentar novamente.
+              <span style={{ display: 'block', marginTop: '4px', color: 'rgba(254, 202, 202, 0.72)' }}>
+                Motivo técnico: {c.generationError}
+              </span>
+            </div>
+          )}
           <div className="slide-strip open">
             {Array.from({ length: c.status === 'generating' ? (c.totalSlides || 10) : (c.slides?.length || 0) }).map((_, idx) => {
               const slide = c.slides && c.slides[idx];

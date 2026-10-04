@@ -36,6 +36,18 @@ export default function App() {
     loadBranding
   } = useAppAuth();
 
+  // Modal do Estúdio (editor visual) — declarado antes de useCarouselsData porque a
+  // geração abre o Estúdio sozinha assim que uma arte fica pronta (ver onGenerationComplete).
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editCarouselId, setEditCarouselId] = useState('');
+  const [editFilename, setEditFilename] = useState('');
+
+  const handleGenerationComplete = useCallback((carouselId) => {
+    setEditCarouselId(carouselId);
+    setEditFilename('');
+    setEditModalOpen(true);
+  }, []);
+
   const {
     allCarousels,
     stats,
@@ -48,7 +60,7 @@ export default function App() {
     handleCreateCarousel,
     handleStartGeneration,
     handleStartMockGeneration
-  } = useCarouselsData({ showToast, setActiveTab });
+  } = useCarouselsData({ showToast, setActiveTab, onGenerationComplete: handleGenerationComplete });
 
   const { liveSession, setLiveSession, setupSSE } = useGlobalSSE({ loadCarousels, loadStats });
 
@@ -60,9 +72,6 @@ export default function App() {
   // Modais
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [newModalDefaults, setNewModalDefaults] = useState(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editCarouselId, setEditCarouselId] = useState('');
-  const [editFilename, setEditFilename] = useState('');
   const [historyModalOpen, setHistoryModalOpen] = useState(false);
   const [historyCarouselId, setHistoryCarouselId] = useState('');
 

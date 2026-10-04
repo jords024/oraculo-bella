@@ -4,12 +4,13 @@ Engine Principal de Composição: Executa Layouts (Fullbleed, Dramático, Etére
 
 from io import BytesIO
 from PIL import Image, ImageDraw
-from .art_director import crop_photo, clean_editorial_copy
+from .art_director import crop_photo, clean_editorial_copy, rgba_to_hex
 
 from .presets import (
     W, H,
     MARGIN_L,
     MAX_TW_L,
+    MAX_TW_C,
     DEFAULT_PRESET,
     get_preset
 )
@@ -71,7 +72,38 @@ def _safe_body_y(body_y, rendered_title_y_end, gap, fallback_min):
     return max(fallback_min, min_safe_y)
 
 
-def compose_fullbleed(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None):
+def _report_block(report, role, x, y, width, height, font_size, font_family, color, align, content):
+    """Descreve um bloco de texto já desenhado, para o editor visual reconstruir como camada."""
+    if report is None:
+        return
+    weight = {"title": 600, "body": 400, "watermark": 500}.get(role, 400)
+    report.append({
+        "role": role, "x": int(x), "y": int(y), "width": int(width), "height": int(height),
+        "fontSize": int(font_size), "fontFamily": font_family or "default", "fontWeight": weight, "fontStyle": "normal",
+        "color": color, "align": align, "content": content,
+    })
+
+
+def _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text):
+    """Replica a lógica de posição padrão de `_watermarks` (effects.py) só para relatar,
+    já que o texto do selo é desenhado diretamente na imagem de fundo (sem camada própria)."""
+    if report is None or watermark_pos == "hidden":
+        return
+    default_x, default_y = MARGIN_L, 48
+    if watermark_pos == "top_right":
+        default_x, default_y = W - 84 - 180, 48
+    elif watermark_pos == "bottom_left":
+        default_x, default_y = MARGIN_L, H - 80
+    elif watermark_pos == "bottom_right":
+        default_x, default_y = W - 84 - 180, H - 80
+    final_x = int(watermark_x) if watermark_x is not None and str(watermark_x).strip() != "" else default_x
+    final_y = int(watermark_y) if watermark_y is not None and str(watermark_y).strip() != "" else default_y
+    mark = (watermark_text or "").strip() or "ISABELLA DALCIN"
+    _report_block(report, "watermark", final_x, final_y, 320, 36, 22, "sans",
+                  rgba_to_hex(p.get("watermark_color", (255, 255, 255, 220))), "left", mark)
+
+
+def compose_fullbleed(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None, report=None):
     """Layout fullbleed: imagem full + gradiente + texto centralizado embaixo."""
     p = preset
     bg = crop_photo(Image.open(BytesIO(img_bytes)), (W, H))
@@ -133,9 +165,12 @@ def compose_fullbleed(img_bytes, title, body, preset: dict, title_y=None, body_y
     final_body_y = _safe_body_y(body_y, rendered_title_y_end, gap, body_fallback)
     render_markup_block(draw, body, b_sz, MARGIN_L, final_body_y, p,
                         ls=1.55, align="center")
+    _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text)
+    _report_block(report, "title", MARGIN_L, y, MAX_TW_C, th, t_sz, p.get("font_family"), rgba_to_hex(p["title_color"]), "center", title)
+    _report_block(report, "body", MARGIN_L, final_body_y, MAX_TW_C, bh, b_sz, p.get("font_family"), rgba_to_hex(p["body_color"]), "center", body)
     return bg.convert("RGB")
 
-def compose_dramatico(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None):
+def compose_dramatico(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None, report=None):
     """
     Layout DRAMÁTICO:
     Imagem full + grain + gradiente extra-longo + texto ESQUERDA + fontes grandes.
@@ -197,9 +232,12 @@ def compose_dramatico(img_bytes, title, body, preset: dict, title_y=None, body_y
     final_body_y = _safe_body_y(body_y, rendered_title_y_end, gap, body_fallback)
     render_markup_block(draw, body, b_sz, MARGIN_L, final_body_y, p,
                         ls=1.58, align="left")
+    _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text)
+    _report_block(report, "title", MARGIN_L, y, MAX_TW_L, th, t_sz, p.get("font_family"), rgba_to_hex(p["title_color"]), "left", title)
+    _report_block(report, "body", MARGIN_L, final_body_y, MAX_TW_L, bh, b_sz, p.get("font_family"), rgba_to_hex(p["body_color"]), "left", body)
     return bg.convert("RGB")
 
-def compose_etereo(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None):
+def compose_etereo(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, text_anchor=None, report=None):
     """
     Layout ETÉREO LUMINOSO:
     Imagem quente + gradiente suave + texto ESQUERDA + itálico no body.
@@ -241,9 +279,12 @@ def compose_etereo(img_bytes, title, body, preset: dict, title_y=None, body_y=No
     final_body_y = _safe_body_y(body_y, rendered_title_y_end, gap, body_fallback)
     render_markup_block(draw, body, b_sz, MARGIN_L, final_body_y, p,
                         ls=1.60, align="left")
+    _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text)
+    _report_block(report, "title", MARGIN_L, y, MAX_TW_L, th, t_sz, p.get("font_family"), rgba_to_hex(p["title_color"]), "left", title)
+    _report_block(report, "body", MARGIN_L, final_body_y, MAX_TW_L, bh, b_sz, p.get("font_family"), rgba_to_hex(p["body_color"]), "left", body)
     return bg.convert("RGB")
 
-def compose_text_only(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None):
+def compose_text_only(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, report=None):
     """
     Layout TEXTO PESADO — quando há muito texto, sem imagem real.
     """
@@ -269,14 +310,17 @@ def compose_text_only(img_bytes, title, body, preset: dict, title_y=None, body_y
     PAD_TOP = int(title_y) if title_y is not None and str(title_y).strip() != "" else int(H * 0.34)
     x0 = MARGIN_L
     y = float(PAD_TOP)
+    title_end_y = y
 
     if title.strip():
         y = render_title(draw, title, t_sz, x0, y, p["title_color"],
                          ls=1.18, align="left")
+        title_end_y = y
         y += line_px_height(draw, t_sz) * 0.9
 
     if body_y is not None and str(body_y).strip() != "":
         y = float(body_y)
+    body_start_y = y
 
     paragraphs = body.split("\n\n")
     for i, para in enumerate(paragraphs):
@@ -288,9 +332,12 @@ def compose_text_only(img_bytes, title, body, preset: dict, title_y=None, body_y
         if i < len(paragraphs) - 1:
             y += line_px_height(draw, b_sz) * 0.85
 
+    _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text)
+    _report_block(report, "title", x0, PAD_TOP, MAX_TW_L, max(1, title_end_y - PAD_TOP), t_sz, p.get("font_family"), rgba_to_hex(p["title_color"]), "left", title)
+    _report_block(report, "body", x0, body_start_y, MAX_TW_L, max(1, y - body_start_y), b_sz, p.get("font_family"), rgba_to_hex(p["body_color"]), "left", body)
     return bg.convert("RGB")
 
-def compose_card(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None):
+def compose_card(img_bytes, title, body, preset: dict, title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None, watermark_text=None, report=None):
     """Layout card: imagem arredondada no topo + texto embaixo."""
     p = preset
     canvas = Image.new("RGBA", (W, H), p["card_bg"])
@@ -336,6 +383,9 @@ def compose_card(img_bytes, title, body, preset: dict, title_y=None, body_y=None
     final_body_y = _safe_body_y(body_y, rendered_title_y_end, gap, rendered_title_y_end + gap)
     render_markup_block(draw, body, b_sz, MARGIN_L, final_body_y, p,
                         ls=1.55, align="center")
+    _report_watermark(report, p, watermark_pos, watermark_x, watermark_y, watermark_text)
+    _report_block(report, "title", MARGIN_L, y, MAX_TW_L, th, t_sz, p.get("font_family"), rgba_to_hex(p["title_color"]), "center", title)
+    _report_block(report, "body", MARGIN_L, final_body_y, MAX_TW_L, bh, b_sz, p.get("font_family"), rgba_to_hex(p["body_color"]), "center", body)
     return canvas.convert("RGB")
 
 def _get_header_mark(watermark_text, preset):
@@ -541,10 +591,21 @@ def compose_brands_outro(img_bytes, title, body, preset: dict, title_y=None, bod
 
 def compose(img_bytes, title, body, layout="fullbleed", preset_name=DEFAULT_PRESET,
             title_y=None, body_y=None, watermark_pos="top_left", watermark_x=None, watermark_y=None,
-            title_px=None, body_px=None, watermark_text=None, deck_direction=None, text_anchor=None):
+            title_px=None, body_px=None, watermark_text=None, deck_direction=None, text_anchor=None,
+            report=None, type_spec=None):
     """
     Ponto de entrada público do composer.
+
+    `report`, se for uma lista, recebe um dicionário por bloco de texto desenhado
+    (título, corpo, assinatura) com posição/tamanho/cor reais — usado para abrir o
+    resultado como camadas editáveis no Estúdio (frontend), em vez de pixel achatado.
     """
+    if layout.startswith("bella_type_"):
+        # A marcação de ênfase (**conceito**, *itálico*) precisa chegar intacta ao motor tipográfico.
+        from .bella_type_engine import render_bella_type
+        return render_bella_type(img_bytes, title, body, layout[len("bella_type_"):], preset_name,
+                                 report=report, spec=type_spec)
+
     title = clean_editorial_copy(title)
     body = clean_editorial_copy(body)
     p = get_preset(preset_name).copy()
@@ -563,7 +624,7 @@ def compose(img_bytes, title, body, layout="fullbleed", preset_name=DEFAULT_PRES
             slide_no = int(layout.rsplit("_", 1)[1])
         except (TypeError, ValueError):
             slide_no = 1
-        return render_editorial_sequence(img_bytes, title, body, slide_no, p)
+        return render_editorial_sequence(img_bytes, title, body, slide_no, p, report=report)
 
     if layout.startswith("bella_essential_"):
         from .bella_essential_engine import render_bella_essential
@@ -571,22 +632,22 @@ def compose(img_bytes, title, body, layout="fullbleed", preset_name=DEFAULT_PRES
             slide_no = int(layout.rsplit("_", 1)[1])
         except (TypeError, ValueError):
             slide_no = 1
-        return render_bella_essential(img_bytes, title, body, slide_no, p)
+        return render_bella_essential(img_bytes, title, body, slide_no, p, report=report)
 
     if layout in ("bella_editorial_cover", "bella_cover"):
-        return render_editorial_sequence(img_bytes, title, body, 1, p)
+        return render_editorial_sequence(img_bytes, title, body, 1, p, report=report)
 
     if layout in ("bella_editorial_paper", "bella_paper"):
-        return render_editorial_sequence(img_bytes, title, body, 2, p)
+        return render_editorial_sequence(img_bytes, title, body, 2, p, report=report)
 
     if layout in ("bella_editorial_card", "bella_card"):
-        return render_editorial_sequence(img_bytes, title, body, 3, p)
+        return render_editorial_sequence(img_bytes, title, body, 3, p, report=report)
 
     if layout in ("bella_editorial_sunlight", "bella_sunlight"):
-        return render_editorial_sequence(img_bytes, title, body, 5, p)
+        return render_editorial_sequence(img_bytes, title, body, 5, p, report=report)
 
     if layout in ("bella_editorial_dark", "bella_dark"):
-        return render_editorial_sequence(img_bytes, title, body, 8, p)
+        return render_editorial_sequence(img_bytes, title, body, 8, p, report=report)
 
     if layout == "brands_cover":
         return compose_brands_cover(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text)
@@ -598,12 +659,12 @@ def compose(img_bytes, title, body, layout="fullbleed", preset_name=DEFAULT_PRES
         return compose_brands_outro(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text)
 
     if layout == "dramatico":
-        return compose_dramatico(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor)
+        return compose_dramatico(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor, report=report)
     if layout == "etereo":
-        return compose_etereo(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor)
+        return compose_etereo(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor, report=report)
     if layout == "text_only":
-        return compose_text_only(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text)
+        return compose_text_only(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, report=report)
     if layout == "card":
-        return compose_card(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text)
+        return compose_card(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, report=report)
 
-    return compose_fullbleed(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor)
+    return compose_fullbleed(img_bytes, title, body, p, title_y, body_y, watermark_pos, watermark_x, watermark_y, watermark_text, text_anchor, report=report)

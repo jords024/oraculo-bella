@@ -1,0 +1,50 @@
+{
+  "ref_id": "ref-07-manifesto-organico-sacerdotal",
+  "fonte": "Referência enviada pelo usuário: página tipográfica marfim com revelação serifada e acento oliva",
+  "papel_no_carrossel": "nomeação / pausa / revelação interior",
+  "layout_arquetipo": "manifesto_tipografico_organico_assimetrico",
+  "resumo": "Página de baixa densidade visual em que o texto produz o movimento. Dois parágrafos sans constroem reconhecimento; uma conclusão serifada amplia a emoção; uma palavra itálica oliva funciona como gesto vivo.",
+  "energia_bella": {
+    "elemental": "Éter organiza o vazio e Terra aparece na textura do papel; a cor de acento pode assumir o elemento dominante do conteúdo",
+    "sacerdotal": "a página funciona como pausa de integração e não como anúncio; há solenidade sem ornamento religioso",
+    "relacional": "o texto aproxima a leitora em etapas, sem teatralizar a dor",
+    "emocao": "reconhecimento íntimo seguido de nomeação precisa"
+  },
+  "composicao": {
+    "proporcao": "4:5 vertical",
+    "coluna": "55-68% da largura, deslocada do centro",
+    "margens": "amplas e assimétricas",
+    "densidade": "máximo de dois parágrafos curtos antes da frase-clímax",
+    "movimento": "diagonal suave da esquerda superior para a direita inferior",
+    "espaco_negativo": "pelo menos 42% da página permanece silenciosa"
+  },
+  "tipografia": {
+    "corpo": "sans humanista leve, entrelinha aberta, alinhamento esquerdo",
+    "climax": "serifa display de alto contraste, entrelinha comprimida e escala 2.2-3 vezes maior",
+    "palavra_viva": "itálico orgânico em uma única cor elemental",
+    "assinatura": "microtipografia em duas linhas, alinhada à borda da frase-clímax",
+    "regra": "não transformar todo o título em destaque; somente a revelação recebe escala monumental"
+  },
+  "paleta": {
+    "papel": "#F2EADF",
+    "tinta": "#211F1B",
+    "oliva": "#78834B",
+    "argila": "#A36E55",
+    "azul_mineral": "#526D73"
+  },
+  "textura": "papel natural muito sutil, sem ruído digital pesado",
+  "motivos_opcionais": [
+    "círculo fino incompleto sangrando uma borda",
+    "marca de água orgânica quase invisível",
+    "pequena forma botânica ou mineral ligada ao significado",
+    "nenhum elemento — quando a tipografia já sustenta toda a emoção"
+  ],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "o acento pode ser uma palavra, uma linha ou um círculo; nunca os três simultaneamente",
+    "a frase-clímax pode mudar de posição conforme o fluxo do slide anterior",
+    "a página pode usar oliva, terracota, azul mineral ou âmbar, escolhendo apenas um acento",
+    "o vazio é uma decisão narrativa e não espaço que precisa ser preenchido"
+  ],
+  "nao_copiar_literalmente": "Não repetir a mesma quebra de frase ou sempre colorir a última palavra. Preserve a dramaturgia tipográfica: contexto, pausa, revelação e assinatura.",
+  "antipadro": "Texto inteiro centralizado, cinco pesos diferentes, card, sombra, gradiente, ícones terapêuticos e preenchimento decorativo do vazio."
+}

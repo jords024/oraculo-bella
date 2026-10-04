@@ -1,0 +1,35 @@
+{
+  "ref_id": "ref-11-liberacao-tipografica-botanica",
+  "fonte": "Referência enviada pelo usuário: slide 'Você é só um padrão'",
+  "papel_no_carrossel": "revelação / desidentificação / escolha adulta",
+  "layout_arquetipo": "liberacao_tipografica_com_selo_organico",
+  "resumo": "A sequência retorna à luz. A tese ocupa a metade superior em serifa monumental; apenas uma palavra recebe a cor de transformação. A nova escolha aparece em um selo laranja de bordas orgânicas acompanhado por um ramo ilustrado.",
+  "sensibilidade": {
+    "tom": "lucidez que devolve autonomia sem atacar a parte protetiva",
+    "movimento": "lembrança → desidentificação → escolha mais humana",
+    "efeito": "alívio ativo, não positividade vazia"
+  },
+  "composicao": {
+    "fundo": "papel marfim",
+    "tese": "serifa monumental assimétrica na metade superior",
+    "palavra_de_virada": "uma palavra em laranja dentro da tese",
+    "selo": "forma retangular imperfeita ou perfurada, levemente inclinada",
+    "botanica": "ramo ilustrado atravessa o selo e devolve organicidade",
+    "rodape": "assinatura constante"
+  },
+  "tipografia": {
+    "abertura": "sans em negrito e sublinhada, pequena",
+    "tese": "serifa display de alto contraste com uma palavra itálica",
+    "escolha": "sans branca de escala média dentro do selo",
+    "principio": "a revelação ganha escala; a orientação prática ganha uma superfície própria"
+  },
+  "paleta": ["marfim", "verde profundo", "laranja queimado", "verde folha"],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar uma palavra cromática como dobradiça semântica",
+    "dar à escolha futura uma forma física distinta",
+    "usar botânica somente quando crescimento, tempo ou cuidado fizerem parte da tese",
+    "permitir pequenas rotações e bordas imperfeitas para tirar a rigidez digital"
+  ],
+  "nao_copiar_literalmente": "Não repetir selo laranja com ramo em todo fechamento. A regra é diferenciar visualmente a nova escolha e adicionar um sinal orgânico coerente com ela.",
+  "antipadrao": "Frase motivacional genérica, folha decorativa sem função, CTA corporativo e destaque colorido em várias palavras."
+}

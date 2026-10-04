@@ -103,6 +103,147 @@ def slugify(text: str) -> str:
     return text[:48].strip("-")
 
 
+# Mesmas famílias que o Pillow já desenha (core/util/fonts.py), disponibilizadas no
+# navegador via Google Fonts (ver frontend/index.html) para o Estúdio ficar fiel.
+_FONT_FAMILY_CSS = {
+    "serif": "'Playfair Display', Georgia, serif",
+    "condensed": "'Oswald', Arial, sans-serif",
+    "sans": "'Inter', Arial, sans-serif",
+    "default": "'Inter', Arial, sans-serif",
+}
+
+_DESIGN_ELEMENT_NAMES = {
+    "title": "Título", "body": "Texto", "watermark": "Assinatura",
+    "shape": "Forma", "image": "Imagem", "texture": "Textura", "symbol": "Símbolo",
+}
+
+
+def build_editable_design(report: list, has_photo: bool, visual_plan: dict | None = None) -> dict:
+    """Converte o relatório de blocos de texto (engine.py `report=[]`) no mesmo formato
+    de documento em camadas que o Estúdio (frontend) já lê de `meta.design`
+    (ver frontend/src/components/EditSlideModal/slideDocument.js `createSlideDocument`).
+    Isso permite abrir o carrossel recém-gerado já como camadas editáveis, em vez de
+    uma única imagem achatada.
+    """
+    def bounded(value, fallback, minimum, maximum):
+        try:
+            return max(minimum, min(maximum, float(value)))
+        except (TypeError, ValueError):
+            return fallback
+
+    canvas_bg = next((item["color"] for item in report if item.get("role") == "canvas_background"), None)
+    elements = []
+    if canvas_bg:
+        background_color = canvas_bg
+    elif has_photo:
+        background_color = "#2d241f"
+        elements.append({
+            "id": "background", "type": "image", "name": "Imagem de fundo",
+            "x": 0, "y": 0, "width": 1080, "height": 1350,
+            "rotation": 0, "opacity": 1, "locked": True, "visible": True, "fit": "cover",
+        })
+    else:
+        background_color = "#2d241f"
+
+    # O diretor pode pedir recortes fotográficos, matéria e formas como camadas
+    # nativas. Nunca aceitamos "ícones" genéricos aqui: somente imagem crua,
+    # textura e matéria editorial simples que continuem desmontáveis no Estúdio.
+    native_layers = visual_plan.get("native_layers", []) if isinstance(visual_plan, dict) else []
+    if isinstance(native_layers, list):
+        for index, layer in enumerate(native_layers[:12]):
+            if not isinstance(layer, dict):
+                continue
+            layer_type = str(layer.get("type", "")).lower()
+            if layer_type not in {"image", "shape", "texture"}:
+                continue
+            common = {
+                "id": f"directed-{layer_type}-{index + 1}",
+                "type": layer_type,
+                "name": str(layer.get("name") or "Matéria editorial")[:80],
+                "x": bounded(layer.get("x"), 0, -1080, 2160),
+                "y": bounded(layer.get("y"), 0, -1350, 2700),
+                "width": bounded(layer.get("width"), 1080, 1, 2160),
+                "height": bounded(layer.get("height"), 1350, 1, 2700),
+                "rotation": bounded(layer.get("rotation"), 0, -180, 180),
+                "opacity": bounded(layer.get("opacity"), 1, 0, 1),
+                "locked": False, "visible": True,
+            }
+            if layer_type == "image" and has_photo:
+                elements.append({**common, "src": "", "sourceRole": "raw", "fit": "cover",
+                                 "focusX": bounded(layer.get("focusX"), 50, 0, 100),
+                                 "focusY": bounded(layer.get("focusY"), 50, 0, 100),
+                                 "radius": bounded(layer.get("radius"), 0, 0, 540),
+                                 "aspectLocked": True, "flipX": False, "flipY": False})
+            elif layer_type == "shape":
+                elements.append({**common, "fill": str(layer.get("fill", "#b85b31"))[:40],
+                                 "radius": bounded(layer.get("radius"), 0, 0, 999),
+                                 "blur": bounded(layer.get("blur"), 0, 0, 80),
+                                 "stroke": "", "strokeWidth": 0})
+            elif layer_type == "texture":
+                elements.append({**common, "textureKind": "paper-grain",
+                                 "color": str(layer.get("color", "#30261f"))[:40],
+                                 "intensity": bounded(layer.get("intensity"), .14, .02, .8),
+                                 "blendMode": str(layer.get("blendMode", "multiply"))[:20], "seed": 17})
+
+    seen = {}
+    for item in report:
+        role = item.get("role")
+        if role == "canvas_background":
+            continue
+        seen[role] = seen.get(role, 0) + 1
+        suffix = "" if seen[role] == 1 else f"-{seen[role]}"
+        element_id = item.get("id") or f"{role}{suffix}"
+        common = {
+            "id": element_id,
+            "name": item.get("name") or _DESIGN_ELEMENT_NAMES.get(role, role.capitalize() if role else "Elemento"),
+            "x": item.get("x", 0), "y": item.get("y", 0),
+            "width": item.get("width", 1), "height": item.get("height", 1),
+            "rotation": item.get("rotation", 0), "opacity": item.get("opacity", 1),
+            "locked": item.get("locked", False), "visible": item.get("visible", True),
+        }
+        if role == "shape":
+            elements.append({
+                **common, "type": "shape", "fill": item.get("fill", "transparent"),
+                "radius": item.get("radius", 0), "blur": item.get("blur", 0),
+                "stroke": item.get("stroke", ""), "strokeWidth": item.get("strokeWidth", 0),
+                "gradient": item.get("gradient"),
+            })
+            continue
+        if role == "image":
+            elements.append({
+                **common, "type": "image", "src": item.get("src", ""),
+                "sourceRole": item.get("sourceRole", "raw"), "fit": item.get("fit", "cover"),
+                "focusX": item.get("focusX", 50), "focusY": item.get("focusY", 50),
+                "radius": item.get("radius", 0), "aspectLocked": item.get("aspectLocked", True),
+                "flipX": False, "flipY": False,
+            })
+            continue
+        if role == "texture":
+            elements.append({
+                **common, "type": "texture", "textureKind": item.get("textureKind", "paper-grain"),
+                "color": item.get("color", "#30261f"), "intensity": item.get("intensity", 0.16),
+                "blendMode": item.get("blendMode", "multiply"), "seed": item.get("seed", 17),
+            })
+            continue
+        if role == "symbol":
+            elements.append({
+                **common, "type": "symbol", "symbolKind": item.get("symbolKind", "ruler"),
+                "color": item.get("color", "#f4efe5"), "strokeWidth": item.get("strokeWidth", 4),
+                "density": item.get("density", 9),
+            })
+            continue
+        elements.append({
+            **common, "type": "text",
+            "content": item["content"],
+            "fontFamily": _FONT_FAMILY_CSS.get(item.get("fontFamily"), _FONT_FAMILY_CSS["default"]),
+            "fontSize": item["fontSize"], "fontWeight": item["fontWeight"], "fontStyle": item["fontStyle"],
+            "lineHeight": item.get("lineHeight", 1.2), "letterSpacing": item.get("letterSpacing", 0),
+            "color": item["color"], "align": item["align"],
+        })
+
+    return {"version": 1, "width": 1080, "height": 1350, "background": background_color, "elements": elements}
+
+
 import threading
 
 _out_lock = threading.Lock()
@@ -123,6 +264,12 @@ def fetch_image_for_slide(args_tuple):
     layout = s.get("layout", "fullbleed")
     if not layout_uses_generated_image(layout):
         return idx, None, False
+
+    # 0. Imagem curada (Pinterest): usada no lugar da geração por IA
+    curated = s.get("curated_image_path")
+    if curated and Path(curated).exists():
+        out_safe({"type": "log", "msg": f"  S{idx:02d} usando imagem curada do Pinterest"})
+        return idx, Path(curated).read_bytes(), False
 
     # 1. Verificação de Checkpoint estrito (apenas raw-XX.jpg criado na mesma sessão de geração)
     raw_file = out_dir / f"raw-{num}.jpg"
@@ -200,7 +347,7 @@ def main():
         out({"type": "error", "msg": "Nenhum slide no payload"})
         sys.exit(1)
 
-    slides, deck_direction = direct_deck(slides, active_preset)
+    slides, deck_direction = direct_deck(slides, active_preset, int(payload.get("noImageSlidesCount") or 0))
     payload["slides"] = slides
     out({"type": "log", "msg": f"Direção-mestra: {deck_direction['theme']} · motivo: {deck_direction['motif']}"})
 
@@ -230,6 +377,13 @@ def main():
     total = len(slides)
     out({"type": "start", "total": total, "title": title, "out_dir": str(out_dir)})
 
+    if payload.get("imageSource") == "pinterest":
+        try:
+            from core.curadoria.curator import curate_images
+            curate_images(slides, out_dir, payload, lambda m: out({"type": "log", "msg": m}), layout_uses_generated_image)
+        except Exception as exc:
+            out({"type": "log", "msg": f"Curadoria Pinterest falhou ({str(exc)[:120]}); usando geração por IA."})
+
     quality = payload.get("imageQuality", None)
 
     # Anuncia todos como "gerando" imagem
@@ -254,7 +408,13 @@ def main():
         if not layout_uses_generated_image(slide.get("layout", "fullbleed")):
             raw_images[idx] = None
             continue
-        scene_key = slide.get("scene") or f"SLIDE-{idx}"
+        # Bella Essencial segue a "isolation rule": cada lâmina é um brief visual
+        # independente (ver prompt em deck_director.py), então nunca compartilha
+        # a foto-base entre cenas — mesmo quando o roteiro repete a letra de CENA.
+        if active_preset in ("bella_essencial", "bella_tipografico"):
+            scene_key = f"SLIDE-{idx}"
+        else:
+            scene_key = slide.get("scene") or f"SLIDE-{idx}"
         scene_members.setdefault(scene_key, []).append(idx)
         if len(scene_members[scene_key]) == 1:
             leaders.append((idx, slide))
@@ -307,11 +467,14 @@ def main():
             continue
 
         preset = s.get("preset") or payload.get("preset") or ("brands_decoded_principal" if "brands" in str(fmt).lower() else "bella_organico_terracota")
+        design_report = []
         try:
             final_img = compose(
                 img_bytes, s_title, body, mode, preset,
                 deck_direction=s.get("deck_direction") or deck_direction,
                 text_anchor=s.get("text_anchor"),
+                report=design_report,
+                type_spec=s.get("visual_plan") if isinstance(s.get("visual_plan"), dict) else None,
             )
         except Exception as e:
             out({"type": "slide", "num": idx, "total": total, "estado": estado,
@@ -333,9 +496,10 @@ def main():
             # Salvar metadados do slide para permitir edição posterior com textos e prompt preenchidos
             try:
                 meta_file = out_file.with_suffix(".meta.json")
+                is_type_layout = str(layout).startswith("bella_type_")
                 meta_data = {
-                    "title": s_title,
-                    "body": body,
+                    "title": re.sub(r"\*+|\[\[|\]\]", "", s_title) if is_type_layout else s_title,
+                    "body": re.sub(r"\*+|\[\[|\]\]", "", body) if is_type_layout else body,
                     "layout": layout,
                     "preset": preset,
                     "prompt": s.get("prompt", f"Cinematic dark esoteric illustration, dramatic volumetric light, deep emotional atmosphere. Abstract visual metaphor for: {s_title}")
@@ -343,7 +507,13 @@ def main():
                     ,"visual_role": s.get("visual_role")
                     ,"visual_plan": s.get("visual_plan")
                     ,"deck_direction": s.get("deck_direction")
+                    ,"design": build_editable_design(design_report, has_photo=bool(img_bytes), visual_plan=s.get("visual_plan"))
                 }
+                if s.get("image_source"):
+                    meta_data["image_source"] = s["image_source"]
+                if is_type_layout:
+                    meta_data["title_markup"] = s_title
+                    meta_data["body_markup"] = body
                 meta_file.write_text(json.dumps(meta_data, ensure_ascii=False, indent=2), encoding="utf-8")
             except Exception:
                 pass

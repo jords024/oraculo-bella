@@ -6,6 +6,9 @@ import CriadorTemplateBar from './Criador/CriadorTemplateBar';
 import CriadorHistorySidebar from './Criador/CriadorHistorySidebar';
 import CriadorChatList from './Criador/CriadorChatList';
 import ModelExperienceSelector, { CREATOR_MODELS, REASONING_LEVELS } from './Criador/ModelExperienceSelector';
+import NoImageSlidesSelector from './Criador/NoImageSlidesSelector';
+import ImageSourceSelector from './Criador/ImageSourceSelector';
+import OracleModeSelector from './Criador/OracleModeSelector';
 import SlideCountSelector from './Criador/SlideCountSelector';
 
 function buildRecentContentMemory(conversations, activeConversationId) {
@@ -45,7 +48,7 @@ function buildRecentContentMemory(conversations, activeConversationId) {
 export default function Criador({ onStartGeneration, showToast, initialMessages, isReadOnly, isMockFlow }) {
   const [input, setInput] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(() => {
-    try { return sessionStorage.getItem('criador_selected_template') || 'bella_essencial'; } catch { return 'bella_essencial'; }
+    try { return sessionStorage.getItem('criador_selected_template') || 'bella_editorial_luxo'; } catch { return 'bella_editorial_luxo'; }
   });
 
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -69,6 +72,21 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
     } catch { return 5; }
   });
 
+  const [noImageSlides, setNoImageSlides] = useState(() => {
+    try {
+      const saved = Number(sessionStorage.getItem('criador_no_image_slides'));
+      return Number.isInteger(saved) && saved >= 0 ? saved : 0;
+    } catch { return 0; }
+  });
+
+  const [imageSource, setImageSource] = useState(() => {
+    try { return sessionStorage.getItem('criador_image_source') === 'pinterest' ? 'pinterest' : 'ia'; } catch { return 'ia'; }
+  });
+
+  const [oracleMode, setOracleMode] = useState(() => {
+    try { return sessionStorage.getItem('criador_oracle_mode') === 'simples' ? 'simples' : 'atual'; } catch { return 'atual'; }
+  });
+
   const [conversations, setConversations] = useState(() => {
     try {
       const saved = localStorage.getItem('criador_conversations_v2');
@@ -87,10 +105,11 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
       id: 'conv-1',
       title: initialSavedMsgs.length > 0 ? (initialSavedMsgs[0]?.content?.slice(0, 32) || 'Conversa Inicial') : 'Oráculo — Bella Dalcin',
       messages: initialSavedMsgs,
-      templateId: 'bella_essencial',
+      templateId: 'bella_tipografico',
       model: 'gpt-5.6-terra',
       reasoningEffort: 'medium',
       totalSlides,
+      noImageSlides,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isPinned: false
@@ -140,6 +159,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           setSelectedModel(CREATOR_MODELS.some(item => item.id === next.model) ? next.model : 'gpt-5.6-terra');
           setReasoningEffort(REASONING_LEVELS.some(item => item.id === next.reasoningEffort) ? next.reasoningEffort : 'medium');
           setTotalSlides([3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5);
+          setNoImageSlides(Math.max(0, Math.min(Number(next.noImageSlides) || 0, [3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5)));
         }
         setConversationSync('saved');
       })
@@ -186,13 +206,14 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           model: selectedModel,
           reasoningEffort,
           totalSlides,
+          noImageSlides,
           updatedAt: new Date().toISOString()
         };
       }
       return c;
     }));
     try { sessionStorage.setItem('criador_chat_messages', JSON.stringify(messages)); } catch {}
-  }, [messages, activeConversationId, selectedTemplate, selectedModel, reasoningEffort, totalSlides]);
+  }, [messages, activeConversationId, selectedTemplate, selectedModel, reasoningEffort, totalSlides, noImageSlides]);
 
   const handleSelectTemplate = (templateId) => {
     setSelectedTemplate(templateId);
@@ -211,6 +232,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
       model: selectedModel,
       reasoningEffort,
       totalSlides,
+      noImageSlides,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       isPinned: false
@@ -240,6 +262,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
     setSelectedModel(conversationModel);
     setReasoningEffort(conversationEffort);
     setTotalSlides(conversationSlides);
+    setNoImageSlides(Math.max(0, Math.min(Number(conv.noImageSlides) || 0, conversationSlides)));
     try {
       sessionStorage.setItem('criador_active_conv_id', id);
       sessionStorage.setItem('criador_chat_messages', JSON.stringify(conv.messages || []));
@@ -261,10 +284,11 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
       if (next) {
         setActiveConversationId(next.id);
         setMessages(next.messages || []);
-        setSelectedTemplate(next.templateId || 'bella_essencial');
+        setSelectedTemplate(next.templateId || 'bella_tipografico');
         setSelectedModel(CREATOR_MODELS.some(item => item.id === next.model) ? next.model : 'gpt-5.6-terra');
         setReasoningEffort(REASONING_LEVELS.some(item => item.id === next.reasoningEffort) ? next.reasoningEffort : 'medium');
         setTotalSlides([3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5);
+          setNoImageSlides(Math.max(0, Math.min(Number(next.noImageSlides) || 0, [3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5)));
         try {
           sessionStorage.setItem('criador_active_conv_id', next.id);
           sessionStorage.setItem('criador_chat_messages', JSON.stringify(next.messages || []));
@@ -334,6 +358,8 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
         body: JSON.stringify({ 
           messages: [...chatHistory, { role: 'user', content: promptToSend }],
           totalSlides,
+          noImageSlidesCount: Math.min(noImageSlides, totalSlides),
+          modoOraculo: oracleMode,
           template: selectedTemplate,
           format: currentTpl.format,
           model: selectedModel,
@@ -437,7 +463,9 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           preset: selectedTemplate,
           template: selectedTemplate,
           format: currentTpl.format,
-          totalSlides
+          totalSlides,
+          noImageSlidesCount: Math.min(noImageSlides, totalSlides),
+          imageSource
         });
       } finally {
         setStartingCarousel(false);
@@ -496,7 +524,42 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
               onChange={(value) => {
                 setTotalSlides(value);
                 try { sessionStorage.setItem('criador_total_slides', String(value)); } catch {}
+                if (noImageSlides > value) {
+                  setNoImageSlides(value);
+                  try { sessionStorage.setItem('criador_no_image_slides', String(value)); } catch {}
+                }
                 showToast?.(`${value} lâminas selecionadas`);
+              }}
+            />
+
+            <OracleModeSelector
+              value={oracleMode}
+              disabled={generating}
+              onChange={(value) => {
+                setOracleMode(value);
+                try { sessionStorage.setItem('criador_oracle_mode', value); } catch {}
+                showToast?.(value === 'simples' ? 'Oráculo: versão simples (teste)' : 'Oráculo: versão completa');
+              }}
+            />
+
+            <ImageSourceSelector
+              value={imageSource}
+              disabled={generating}
+              onChange={(value) => {
+                setImageSource(value);
+                try { sessionStorage.setItem('criador_image_source', value); } catch {}
+                showToast?.(value === 'pinterest' ? 'Imagens: curadoria Pinterest (teste)' : 'Imagens: geradas por IA');
+              }}
+            />
+
+            <NoImageSlidesSelector
+              value={Math.min(noImageSlides, totalSlides)}
+              total={totalSlides}
+              disabled={generating}
+              onChange={(value) => {
+                setNoImageSlides(value);
+                try { sessionStorage.setItem('criador_no_image_slides', String(value)); } catch {}
+                showToast?.(value === 0 ? 'Todas as lâminas com imagem' : `${value} lâmina(s) só com fundo de cor · ${totalSlides - value} com imagem`);
               }}
             />
 

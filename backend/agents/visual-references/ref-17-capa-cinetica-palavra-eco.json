@@ -1,0 +1,67 @@
+{
+  "ref_id": "ref-17-capa-cinetica-palavra-eco",
+  "schema": "bella-visual-reference-detail-v1",
+  "fonte": "Referência enviada pelo usuário: capa 'Amor-próprio' com figura em movimento",
+  "papel_no_carrossel": "capa / declaração de tema / abertura sensorial",
+  "layout_arquetipo": "capa_fotografica_cinetica_com_palavra_eco",
+  "papel_no_fluxo": "Apresentar a tese com solenidade e movimento, fazendo a palavra principal existir em dois planos de profundidade.",
+  "proporcao_original": { "pixels": "736x920", "aspect_ratio": "4:5", "destino_bella": "1080x1350" },
+  "resumo": "Fotografia full bleed de campo com figura central desfocada por movimento. A palavra-conceito aparece em vinho no primeiro plano e retorna ampliada, translúcida e ocre como eco. O corpo atravessa as letras e cria profundidade sem caixa de texto.",
+  "imagem_de_fundo": {
+    "tipo": "fotografia ambiental analógica",
+    "cenario": "campo aberto, horizonte baixo, céu enevoado e figura caminhando ou girando",
+    "sujeito": "presença humana central em deslocamento, rosto não prioritário, contorno dissolvido pelo movimento",
+    "tratamento": "arrasto de obturador, foco suave, contraste baixo, luz difusa de fim de tarde, vinheta orgânica nas bordas",
+    "destaque": "o movimento corporal cria uma coluna clara central que atravessa a tipografia",
+    "espaco_negativo": "céu e atmosfera no terço superior; vegetação escura sustenta a base"
+  },
+  "textura": {
+    "grao": "grão fotográfico denso e uniforme",
+    "superficie": "aparência de filme vencido ou impressão fosca",
+    "imperfeicoes": ["leve vazamento de luz", "bordas suavizadas", "cores comprimidas", "fantasmas de movimento"],
+    "intensidade": "alta, mas sem destruir a leitura"
+  },
+  "paleta": {
+    "dominantes_extraidas": ["#241c02", "#a6a087", "#938e76", "#6c6e5e", "#675123", "#8d7650", "#4a340c"],
+    "tinta_principal": "vinho quase preto",
+    "eco_tipografico": "ocre desaturado translúcido",
+    "atmosfera": "oliva acinzentado e bege neblina"
+  },
+  "hierarquia": [
+    { "nivel": 1, "conteudo": "palavra-conceito", "tratamento": "serifa display itálica, vinho, escala muito grande, centro superior" },
+    { "nivel": 2, "conteudo": "eco da palavra", "tratamento": "mesma família ou serifa próxima, escala maior, ocre translúcido, parcialmente atrás do sujeito" },
+    { "nivel": 3, "conteudo": "frase de sustentação", "tratamento": "sans compacta, pequena, duplicada em dois pontos para equilibrar o eixo" },
+    { "nivel": 4, "conteudo": "assinaturas", "tratamento": "sans mínima nos cantos superiores e inferiores" }
+  ],
+  "camadas": [
+    { "ordem": 1, "tipo": "fotografia", "cobertura": "100%", "blend": "normal" },
+    { "ordem": 2, "tipo": "palavra-eco", "cobertura": "centro e metade inferior", "blend": "multiply ou opacidade 28-38%" },
+    { "ordem": 3, "tipo": "sujeito-em-movimento", "cobertura": "eixo central", "blend": "preservado pela fotografia" },
+    { "ordem": 4, "tipo": "titulo-principal", "cobertura": "centro superior", "blend": "normal" },
+    { "ordem": 5, "tipo": "microcopy-e-assinatura", "cobertura": "periferia segura", "blend": "normal" }
+  ],
+  "composicao": {
+    "eixo": "vertical central com tensão entre título e corpo em movimento",
+    "titulo": "aproximadamente x=160-570, y=120-470 no original",
+    "sujeito": "aproximadamente 35% da largura, atravessando o centro até a base",
+    "ritmo": "palavra nítida → palavra fantasma → corpo fantasma → rodapé",
+    "detalhe_interativo": "pequeno círculo com seta no centro inferior"
+  },
+  "tipografia": {
+    "display": "serifa editorial inclinada, alto contraste, terminais elegantes",
+    "apoio": "sans geométrica fina",
+    "relacao": "a repetição da palavra cria eco psicológico; o sujeito rompe a palavra fantasma",
+    "entrelinha": "negativa na palavra ampliada",
+    "alinhamento": "central assimétrico"
+  },
+  "energia_bella": "Ar — movimento, passagem e dissolução de uma identidade antiga",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "repetir a palavra-conceito em dois planos de opacidade",
+    "usar movimento real como transição entre camadas",
+    "permitir que o sujeito interrompa a tipografia",
+    "manter assinaturas discretas como moldura invisível"
+  ],
+  "adaptacao_bella": "A palavra-eco pode representar um padrão antigo, enquanto a presença em movimento encarna integração. A figura pode ser substituída por tecido, água, folhas ou dupla humana; o essencial é a travessia entre os dois planos da palavra.",
+  "nao_copiar_literalmente": "Não repetir mulher borrada em campo nem a palavra amor-próprio. Reutilizar eco tipográfico + movimento + profundidade.",
+  "antipadrao": "Aplicar motion blur artificial em retrato parado, duplicar texto sem hierarquia ou usar a palavra fantasma apenas como decoração."
+}

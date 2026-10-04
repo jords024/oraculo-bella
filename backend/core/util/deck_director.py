@@ -14,15 +14,15 @@ from copy import deepcopy
 
 ROLE_MAP = {
     1: ("cover_photo", "A"),
-    2: ("type_manifesto", None),
-    3: ("scene_reframe", "A"),
-    4: ("concept_poster", None),
+    2: ("mechanism_manifesto", None),
+    3: ("symbolic_collage", "A"),
+    4: ("typographic_climax", None),
     5: ("intimate_turn", "B"),
     6: ("editorial_split", "B"),
     7: ("photo_manifesto", "C"),
     8: ("truth_pause", None),
     9: ("possibility", "C"),
-    10: ("closing", "D"),
+    10: ("airy_release", "D"),
 }
 
 # Cada duração possui uma dramaturgia completa. Antes, carrosséis curtos
@@ -39,6 +39,20 @@ SEQUENCE_PLANS = {
 
 
 ART_DIRECTIONS = (
+    {
+        "id": "ilustracao_ritual_elemental",
+        "label": "ilustração ritual elemental",
+        "language": "high-end painterly editorial illustration where one elemental force organizes a psychologically precise scene; women have agency, nature behaves symbolically, circular geometry structures relation or passage, and tactile pigments keep the image human rather than fantasy-like",
+        "cover": "an expansive illustrated world with a low organic horizon, atmospheric negative space and one unforgettable relational or ritual gesture",
+        "cover_human_policy": "A woman, dyad or small circle may appear in expressive action and environmental scale; never use a generic portrait, priestess costume or decorative mysticism.",
+    },
+    {
+        "id": "surrealismo_natural_relacional",
+        "label": "surrealismo natural relacional",
+        "language": "natural surrealism and refined analog collage: landscape, bodies and living matter form one emotional ecosystem; circles, reflections and thresholds reveal love, union and return without literal hearts or ornamental symbols",
+        "cover": "a quiet impossible landscape in three visual zones — atmosphere, relational threshold and living matter — with editorial scale and deliberate silence",
+        "cover_human_policy": "Prefer a shared gesture, mirrored posture or small figures in relation to the landscape; a solitary woman is allowed only when solitude is the exact thesis.",
+    },
     {
         "id": "collage_poetico",
         "label": "colagem poética editorial",
@@ -92,6 +106,47 @@ def _pick(signature: str, pool: tuple[str, ...]) -> str:
     de uma mesma categoria temática."""
     digest = hashlib.sha256(signature.encode("utf-8")).digest()
     return pool[int.from_bytes(digest[:2], "big") % len(pool)]
+
+
+_ELEMENTAL_FORCES = {
+    "terra": {
+        "pattern": r"sustent|seguran[cç]|pertenc|raiz|casa|corpo|limite|dinheiro|prosper",
+        "language": "Earth — sustaining weight, soil, roots, clay, seed and grounded belonging",
+        "palette": "forest green, olive, cocoa, warm ivory and mineral black",
+    },
+    "agua": {
+        "pattern": r"sent|emo[cç]|acolh|receb|flux|choro|integra|rela[cç]|amor",
+        "language": "Water — integration, reflection, mist, current, shared vessel and emotional reciprocity",
+        "palette": "mineral blue, mist grey, deep green, warm ivory and graphite",
+    },
+    "fogo": {
+        "pattern": r"transform|raiva|desejo|coragem|ruptura|escolh|pot[eê]ncia|verdade",
+        "language": "Fire — transformation, ember, wax, amber light and the courage to change form",
+        "palette": "amber, terracotta, wine, charcoal and parchment",
+    },
+    "ar": {
+        "pattern": r"liberdade|movimento|voz|respir|leve|solt|mudan[cç]|partida",
+        "language": "Air — movement, fabric, visible wind, grass, sky and the release of a fixed shape",
+        "palette": "blue grey, cool ivory, muted green and ink black",
+    },
+    "eter": {
+        "pattern": r"espiritual|consci[eê]ncia|campo|uni[aã]o|conex|inteir|presen[cç]|sil[eê]ncio",
+        "language": "Ether — connection, circular field, luminous void, orbit, reflection and wholeness",
+        "palette": "ivory, ink, olive, deep mineral blue and restrained gold",
+    },
+}
+
+
+def _choose_elemental_force(slides: list[dict]) -> tuple[str, dict]:
+    source = " ".join(f"{slide.get('title', '')} {slide.get('body', '')}" for slide in slides).lower()
+    scored = [(name, force, len(re.findall(force["pattern"], source))) for name, force in _ELEMENTAL_FORCES.items()]
+    best_score = max(score for _, _, score in scored) if scored else 0
+    if best_score:
+        name, force, _ = next(item for item in scored if item[2] == best_score)
+        return name, force
+    signature = "::".join(slide.get("title", "") for slide in slides)
+    name = _pick(signature, tuple(_ELEMENTAL_FORCES.keys()))
+    return name, _ELEMENTAL_FORCES[name]
 
 
 _UNIVERSE_BUCKETS = (
@@ -225,11 +280,31 @@ def _creative_universe(slides: list[dict]) -> dict:
     }
 
 
-def direct_deck(slides: list[dict], preset_name: str) -> tuple[list[dict], dict]:
+TYPE_LAYOUTS = (
+    "bella_type_cover", "bella_type_fragments", "bella_type_escalation", "bella_type_pause", "bella_type_close",
+)
+_TYPE_MIDDLE_CYCLE = ("bella_type_fragments", "bella_type_escalation", "bella_type_pause")
+
+
+def _type_layout(index: int, total: int, declared, previous) -> str:
+    """Capa e fechamento são fixos; o miolo respeita a escolha do Oráculo e evita repetir o vizinho."""
+    if index == 1:
+        return "bella_type_cover"
+    if index == total:
+        return "bella_type_close"
+    middle = declared if declared in _TYPE_MIDDLE_CYCLE else None
+    if middle is None or middle == previous:
+        middle = next((layout for layout in _TYPE_MIDDLE_CYCLE[(index - 2) % 3:] + _TYPE_MIDDLE_CYCLE[:(index - 2) % 3]
+                       if layout != previous), _TYPE_MIDDLE_CYCLE[0])
+    return middle
+
+
+def direct_deck(slides: list[dict], preset_name: str, no_image_count: int = 0) -> tuple[list[dict], dict]:
     """Enriquece slides com um plano visual único e cenas recorrentes."""
     directed = deepcopy(slides)
     universe = _creative_universe(directed)
     art = _choose_art_direction(directed)
+    elemental_name, elemental = _choose_elemental_force(directed)
     deck = {
         **universe,
         "art_direction_id": art["id"],
@@ -237,8 +312,13 @@ def direct_deck(slides: list[dict], preset_name: str) -> tuple[list[dict], dict]
         "visual_language": art["language"],
         "cover_language": art["cover"],
         "cover_human_policy": art["cover_human_policy"],
-        "palette": "marfim quente, grafite, cacau, azul mineral dessaturado e terracota pontual",
+        "elemental_force": elemental_name,
+        "elemental_language": elemental["language"],
+        "palette": elemental["palette"],
         "texture": "grão orgânico, matéria tátil, bordas imperfeitas e contraste editorial",
+        "sacerdotal_rule": "Presença sacerdotal através de gesto consciente, circularidade, cuidado da matéria e passagem; nunca figurino de fantasia ou misticismo decorativo.",
+        "cover_revelation_rule": "A primeira capa traduz headline e ganho em uma visão sensível, expressiva, sacerdotal e psicodélica: presença viva, emoção reconhecível, uma metáfora central e transformação entre estados. Nunca objeto isolado, pose genérica ou psicodelia decorativa.",
+        "relational_rule": "Amor e união por reciprocidade, proximidade, gesto compartilhado, posturas espelhadas ou ecossistema interdependente; nunca coração literal.",
     }
 
     sequence_plan = SEQUENCE_PLANS.get(len(directed))
@@ -254,9 +334,23 @@ def direct_deck(slides: list[dict], preset_name: str) -> tuple[list[dict], dict]
     }
     essential_plan = essential_plans.get(len(directed))
 
+    previous_type_layout = None
     for index, slide in enumerate(directed, 1):
         sequence_no = sequence_plan[index - 1]
         role, fallback_scene = ROLE_MAP[sequence_no]
+
+        if preset_name == "bella_tipografico":
+            type_layout = _type_layout(index, len(directed), slide.get("layout"), previous_type_layout)
+            previous_type_layout = type_layout
+            slide["layout"] = type_layout
+            plan = slide.get("visual_plan") if isinstance(slide.get("visual_plan"), dict) else {}
+            if plan.get("text_side") not in ("left", "right"):
+                plan["text_side"] = "right" if type_layout == "bella_type_close" else "left"
+            slide["visual_plan"] = plan
+            slide["scene"] = None
+            slide["visual_role"] = type_layout.replace("bella_", "")
+            slide["deck_direction"] = deck
+            continue
 
         # O Editorial Bella sempre usa a gramática sequencial. Isto também
         # corrige roteiros antigos que chegavam como card/fullbleed genéricos.
@@ -281,9 +375,13 @@ def direct_deck(slides: list[dict], preset_name: str) -> tuple[list[dict], dict]
                     "Keep continuity through palette, tactile light and material atmosphere; vary subject, scale and action according "
                     "to the precise meaning of this page. Do not generate typography inside the image. "
                 )
+                if index == 1:
+                    continuity += f"NON-NEGOTIABLE COVER REVELATION: {deck['cover_revelation_rule']} "
             else:
                 continuity = (
                     f"Master visual universe: {deck['theme']}. Recurring material motif: {deck['motif']}. "
+                    f"Dominant elemental force: {deck['elemental_language']}. Palette: {deck['palette']}. "
+                    f"{deck['sacerdotal_rule']} {deck['relational_rule']} "
                     f"Art direction for this entire carousel: {deck['visual_language']}. "
                     f"Cover language: {deck['cover_language']}. "
                     f"Recurring human direction: {deck['gesture']}. Scene family {scene_id}; preserve the same "
@@ -291,10 +389,111 @@ def direct_deck(slides: list[dict], preset_name: str) -> tuple[list[dict], dict]
                     "and wardrobe; a person is not mandatory. Change scale, crop or symbolic state when the scene returns. "
                 )
                 if index == 1:
-                    continuity += f"Cover human policy: {deck['cover_human_policy']} "
+                    continuity += f"NON-NEGOTIABLE COVER REVELATION: {deck['cover_revelation_rule']} Cover human policy: {deck['cover_human_policy']} "
             slide["prompt"] = f"{continuity}{slide.get('prompt', '')}".strip()
 
+    _apply_no_image(directed, preset_name, no_image_count)
     return directed, deck
+
+
+_PAPER_CYCLE = ("papel", "areia", "cacau", "musgo")
+
+
+def _spread(candidates: list[int], k: int) -> list[int]:
+    """Escolhe k posições espaçadas por igual, para o ritmo foto/cor alternar."""
+    if k <= 0:
+        return []
+    if k >= len(candidates):
+        return list(candidates)
+    step = len(candidates) / k
+    return [candidates[int((i + 0.5) * step)] for i in range(k)]
+
+
+def _pick_far(candidates: list[int], existing: list[int], k: int, total: int) -> list[int]:
+    """Escolhe, um a um, a lâmina mais distante das que já ficam sem imagem (e das bordas)."""
+    chosen: list[int] = []
+    for _ in range(k):
+        taken = [-1, total, *existing, *chosen]
+        options = [c for c in candidates if c not in chosen]
+        if not options:
+            break
+        chosen.append(max(options, key=lambda c: (min(abs(c - t) for t in taken), -c)))
+    return chosen
+
+
+def _free_layout(preset_name: str, index: int, total: int, order: int, previous: str | None) -> str:
+    """Layout sem imagem (fundo de cor + tipografia) próprio de cada preset."""
+    if preset_name == "bella_tipografico":
+        if index == 1:
+            return "bella_type_coverpaper"
+        if index == total:
+            return "bella_type_closepaper"
+        return next(l for l in _TYPE_MIDDLE_CYCLE[order % 3:] + _TYPE_MIDDLE_CYCLE[:order % 3] if l != previous)
+    if preset_name == "bella_essencial":
+        return "bella_essential_04"
+    if preset_name == "bella_editorial_luxo":
+        if index == total:
+            return "bella_sequence_10"
+        return ("bella_sequence_04", "bella_sequence_02", "bella_sequence_08")[order % 3]
+    return "text_only"
+
+
+def _photo_layout(preset_name: str, index: int, total: int, order: int) -> str:
+    """Layout com imagem, usado quando um slide sem imagem precisa voltar a ter foto."""
+    if preset_name == "bella_tipografico":
+        return "bella_type_cover" if index == 1 else "bella_type_close" if index == total else "bella_type_photo"
+    if preset_name == "bella_essencial":
+        return "bella_essential_01" if index == 1 else "bella_essential_05" if index == total else f"bella_essential_0{2 + order % 2}"
+    if preset_name == "bella_editorial_luxo":
+        return "bella_sequence_01" if index == 1 else "bella_sequence_09" if index == total else ("bella_sequence_03", "bella_sequence_05", "bella_sequence_06", "bella_sequence_07")[order % 4]
+    return "fullbleed"
+
+
+def _apply_no_image(directed: list[dict], preset_name: str, count: int) -> None:
+    """Garante exatamente `count` lâminas só com fundo de cor (0 = padrão do preset).
+
+    Vale para todos os presets: escolhe lâminas espaçadas, preferindo o miolo e
+    poupando capa e fechamento, e troca para o layout sem imagem do preset.
+    """
+    total = len(directed)
+    count = max(0, min(int(count or 0), total))
+    if count == 0 or total == 0:
+        return
+
+    free_now = [i for i, s in enumerate(directed) if not layout_uses_generated_image(s.get("layout", "fullbleed"))]
+    middle = list(range(1, total - 1))
+
+    if len(free_now) < count:
+        photo = [i for i in range(total) if i not in free_now]
+        preferred = [i for i in photo if i in middle]
+        pool = preferred + [i for i in (total - 1, 0) if i in photo and i not in preferred]
+        need = min(count - len(free_now), len(preferred))
+        chosen = _spread(sorted(preferred), need) if not free_now else _pick_far(preferred, free_now, need, total)
+        for i in pool:
+            if len(chosen) >= count - len(free_now):
+                break
+            if i not in chosen:
+                chosen.append(i)
+        previous = None
+        for order, i in enumerate(sorted(chosen)):
+            layout = _free_layout(preset_name, i + 1, total, order, previous)
+            previous = layout
+            directed[i]["layout"] = layout
+    elif len(free_now) > count:
+        extra = len(free_now) - count
+        preferred = [i for i in free_now if i in middle] or free_now
+        for order, i in enumerate(_spread(sorted(preferred), extra)):
+            directed[i]["layout"] = _photo_layout(preset_name, i + 1, total, order)
+
+    paper_order = 0
+    for slide in directed:
+        free = not layout_uses_generated_image(slide.get("layout", "fullbleed"))
+        slide["no_image"] = free
+        if free and str(slide.get("layout", "")).startswith("bella_type_"):
+            plan = slide.get("visual_plan") if isinstance(slide.get("visual_plan"), dict) else {}
+            plan.setdefault("palette", _PAPER_CYCLE[paper_order % len(_PAPER_CYCLE)])
+            slide["visual_plan"] = plan
+            paper_order += 1
 
 
 def layout_uses_generated_image(layout: str) -> bool:
@@ -304,5 +503,11 @@ def layout_uses_generated_image(layout: str) -> bool:
         "bella_sequence_02",
         "bella_sequence_04",
         "bella_sequence_08",
+        "bella_sequence_10",
         "bella_essential_04",
+        "bella_type_fragments",
+        "bella_type_escalation",
+        "bella_type_pause",
+        "bella_type_coverpaper",
+        "bella_type_closepaper",
     }

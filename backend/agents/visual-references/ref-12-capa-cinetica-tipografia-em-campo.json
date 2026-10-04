@@ -1,0 +1,32 @@
+{
+  "ref_id": "ref-12-capa-cinetica-tipografia-em-campo",
+  "fonte": "Referência enviada pelo usuário: capa em campo com gesto de lançar um avião de papel",
+  "papel_no_carrossel": "capa / ruptura do padrão / abertura expansiva",
+  "layout_arquetipo": "capa_cinetica_com_tipografia_em_campo",
+  "papel_no_fluxo": "Interromper o feed com uma ação humana verdadeira e introduzir a metáfora sem explicar tudo.",
+  "resumo": "Fotografia ambiental de baixa fidelidade intencional, luz dourada e figura de costas em movimento. A manchete ocupa o vazio do céu e do campo, alternando sans leve, serifa monumental e um gesto caligráfico. Texto, horizonte e corpo formam uma única composição.",
+  "composicao": {
+    "proporcao": "4:5 vertical",
+    "zonas": ["céu silencioso para contexto", "horizonte para a virada tipográfica", "gesto humano no terço direito"],
+    "figura": "presença em ação, vista lateral ou de costas, sem pose e ocupando menos de 38% do quadro",
+    "titulo": "alinhado à esquerda, escala crescente, com a palavra-conceito atravessando o horizonte",
+    "assinatura": "microcabeçalho e rodapé simétricos como costura editorial"
+  },
+  "tipografia": {
+    "voz_contextual": "sans humanista leve",
+    "voz_conceito": "serifa display de alto contraste em escala monumental",
+    "voz_intima": "caligrafia ou itálica orgânica usada uma única vez",
+    "regra": "as três vozes precisam formar uma frase contínua; não são ornamentos independentes"
+  },
+  "paleta": ["verde campo profundo", "azul névoa", "marfim", "laranja queimado", "luz dourada"],
+  "linguagem_de_imagem": "cinema ambiental analógico, grão fino, contraluz quente, gesto espontâneo e horizonte amplo",
+  "energia_bella": "Ar — deslocamento, soltura e comparação abandonada",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar uma ação de soltar, lançar, atravessar ou abrir como metáfora",
+    "fazer a tipografia acompanhar a profundidade do ambiente",
+    "preservar grande campo de atmosfera sem blur ou card",
+    "permitir pessoa, objeto ou elemento natural como agente do gesto"
+  ],
+  "nao_copiar_literalmente": "Não repetir mulher de costas lançando avião em campo. Reutilizar ação cinética + horizonte + tipografia integrada, escolhendo outro gesto e outro ambiente segundo a copy.",
+  "antipadrao": "Retrato frontal estático, texto todo do mesmo tamanho, faixa preta atrás da copy e figura decorativa sem ação."
+}

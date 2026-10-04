@@ -1,0 +1,32 @@
+{
+  "ref_id": "ref-15-escalada-tipografica-material",
+  "fonte": "Referência enviada pelo usuário: página marfim 'A sua é de espinhos'",
+  "papel_no_carrossel": "prova / especificação do custo / confronto",
+  "layout_arquetipo": "escalada_tipografica_com_faixas_e_objeto_lateral",
+  "papel_no_fluxo": "Transformar uma explicação em ritmo visual crescente e culminar numa frase impossível de ignorar.",
+  "resumo": "Três faixas claras levemente desalinhadas constroem o raciocínio no topo. Um texto intermediário estreita o foco e a conclusão explode em sans monumental, atravessada por fragmentos do símbolo material nas laterais.",
+  "composicao": {
+    "fundo": "marfim quente com textura de papel",
+    "argumento": "duas a quatro linhas sobre tiras independentes, desalinhadas como colagem",
+    "ponte": "frase curta em escala média antes da conclusão",
+    "conclusao": "duas linhas sans enormes ocupando o centro inferior",
+    "objeto": "fragmentos laterais invadem a conclusão e materializam a consequência"
+  },
+  "tipografia": {
+    "argumento": "sans forte em faixas claras",
+    "ponte": "sans leve e compacta",
+    "conclusao": "sans grotesca ultrapesada com entrelinha negativa",
+    "regra": "o crescimento de escala acompanha o aumento da precisão emocional"
+  },
+  "paleta": ["marfim", "verde petróleo", "branco papel", "cinza esverdeado"],
+  "linguagem_de_imagem": "tipografia como colagem física, fragmentos gravados e tensão horizontal",
+  "energia_bella": "Terra — consequência concreta, textura e fricção",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar faixas como passos de raciocínio, não como cards",
+    "reservar a maior escala para a conclusão mais específica",
+    "deixar o símbolo material invadir a tipografia nas bordas",
+    "manter apenas dois pesos cromáticos para evitar aparência publicitária"
+  ],
+  "nao_copiar_literalmente": "Não repetir espinhos nem a mesma construção de três faixas. Variar material, quantidade e direção conforme o argumento.",
+  "antipadrao": "Lista de três benefícios em cards, subtítulo genérico, conclusão pequena e ilustração isolada sem contato com as palavras."
+}

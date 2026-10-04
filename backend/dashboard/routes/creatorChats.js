@@ -31,11 +31,12 @@ function cleanConversation(conversation) {
     title: String(conversation.title || 'Nova conversa').slice(0, 120),
     messages: (Array.isArray(conversation.messages) ? conversation.messages : [])
       .slice(-MAX_MESSAGES).map(cleanMessage).filter(Boolean),
-    templateId: String(conversation.templateId || 'bella_essencial').slice(0, 80),
+    templateId: String(conversation.templateId || 'bella_tipografico').slice(0, 80),
     model: String(conversation.model || 'gpt-5.6-terra').slice(0, 80),
     reasoningEffort: ['low', 'medium', 'high'].includes(conversation.reasoningEffort)
       ? conversation.reasoningEffort : 'medium',
     totalSlides: ALLOWED_SLIDE_COUNTS.has(slideCount) ? slideCount : 5,
+    noImageSlides: Math.max(0, Math.min(Number(conversation.noImageSlides) || 0, ALLOWED_SLIDE_COUNTS.has(slideCount) ? slideCount : 5)),
     createdAt: conversation.createdAt || new Date().toISOString(),
     updatedAt: conversation.updatedAt || new Date().toISOString(),
     isPinned: Boolean(conversation.isPinned)

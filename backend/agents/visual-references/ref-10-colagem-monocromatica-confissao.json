@@ -1,0 +1,33 @@
+{
+  "ref_id": "ref-10-colagem-monocromatica-confissao",
+  "fonte": "Referência enviada pelo usuário: slide verde 'Canso'",
+  "papel_no_carrossel": "mergulho / clímax emocional / voz da parte cansada",
+  "layout_arquetipo": "colagem_monocromatica_com_faixas_depoimento",
+  "resumo": "A sequência mergulha no escuro. Uma imagem humana monocromática e granulada ocupa o campo; uma única palavra monumental vira atmosfera; três faixas recortadas materializam pensamentos repetitivos como fragmentos de uma voz interna.",
+  "sensibilidade": {
+    "tom": "exaustão nomeada sem melodrama",
+    "imagem": "o rosto e as mãos carregam a emoção; a degradação gráfica sugere memória e desgaste",
+    "efeito": "a leitora escuta o padrão falando por dentro"
+  },
+  "composicao": {
+    "fundo": "verde profundo monocromático com grão de impressão",
+    "figura": "perfil ou gesto emocional integrado à textura",
+    "palavra_atmosfera": "uma palavra enorme atrás ou atravessando a figura",
+    "faixas": "duas a quatro tiras claras irregulares, desalinhadas com intenção",
+    "ritmo": "repetição de faixas cria insistência sem usar lista convencional"
+  },
+  "tipografia": {
+    "palavra_atmosfera": "sans pesada, pouco contraste e textura impressa",
+    "depoimentos": "sans compacta com trechos em negrito ou itálico",
+    "regra": "as faixas são vozes ou lembranças, nunca bullets informativos"
+  },
+  "paleta": ["verde profundo", "verde névoa", "marfim", "preto esverdeado"],
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar monocromia para sinalizar mergulho emocional",
+    "usar uma palavra como atmosfera e não como título convencional",
+    "materializar pensamentos recorrentes em fragmentos físicos",
+    "variar quantidade, inclinação e formato das faixas conforme a cadência da copy"
+  ],
+  "nao_copiar_literalmente": "Não usar sempre três tickets nem sempre perfil feminino. O princípio é transformar a voz interna em matéria gráfica repetitiva.",
+  "antipadrao": "Lista de sintomas dentro de três cards idênticos, fotografia limpa de banco e palavra gigante usada sem função narrativa."
+}

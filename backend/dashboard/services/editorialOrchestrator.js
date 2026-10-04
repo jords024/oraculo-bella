@@ -4,10 +4,10 @@ const OPENAI_RESPONSES_URL = 'https://api.openai.com/v1/responses';
 // ideação e a escrita; os prompts criador/copywriter/gancho e a reescrita do revisor ficam
 // de fora. Defina ORACULO_MODO_UNICO=0 no .env para voltar ao pipeline com vários agentes.
 const ORACULO_UNICO = process.env.ORACULO_MODO_UNICO !== '0';
-const IDEAS_SCHEMA = '{"candidates":[{"theme":"","title":"","cena_humana":"","confissao_silenciosa":"","acordo_invisivel":"","protecao":"","beneficio_oculto":"","custo_real":"","mecanismo":"","contradicao":"","virada":"","capacidade_ausente":"","ponte_tafa":"","por_que_so_bella":"","relevancia":0,"nivel_consciencia":"","visual_world":"","score":0}]}';
+const IDEAS_SCHEMA = '{"candidates":[{"theme":"","title":"","estado_emocional":"","territorio":"","motor_narrativo":"","abertura_de_loop":"","cena_humana":"","confissao_silenciosa":"","acordo_invisivel":"","protecao":"","beneficio_oculto":"","custo_real":"","mecanismo":"","contradicao":"","virada":"","capacidade_ausente":"","ponte_tafa":"","por_que_so_bella":"","relevancia":0,"nivel_consciencia":"","visual_world":"","score":0}]}';
 
-const clean = value => String(value || '').replace(/\s+/g, ' ').trim();
-const conversationText = (messages, limit = 12) => (Array.isArray(messages) ? messages : [])
+export const clean = value => String(value || '').replace(/\s+/g, ' ').trim();
+export const conversationText = (messages, limit = 12) => (Array.isArray(messages) ? messages : [])
   .slice(-limit).map(message => `${message.role === 'assistant' ? 'ASSISTENTE' : 'USUÁRIO'}: ${message.content || ''}`).join('\n\n');
 
 // O scorecard do revisor é controle interno; não deve chegar como parte da entrega.
@@ -18,7 +18,7 @@ function outputText(response) {
   return (response?.output || []).flatMap(item => item?.content || []).map(item => item?.text || '').filter(Boolean).join('\n').trim();
 }
 
-function parseJson(text, fallback = {}) {
+export function parseJson(text, fallback = {}) {
   const raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
   try { return JSON.parse(raw); } catch {}
   const start = raw.indexOf('{'); const end = raw.lastIndexOf('}');
@@ -40,7 +40,7 @@ function collectSources(response) {
   return sources;
 }
 
-async function callResponses({ apiKey, model, reasoningEffort, instructions, input, maxOutputTokens = 6500, webSearch = false, onProgress = () => {} }) {
+export async function callResponses({ apiKey, model, reasoningEffort, instructions, input, maxOutputTokens = 6500, webSearch = false, onProgress = () => {} }) {
   const payload = { model, instructions, input, reasoning: { effort: reasoningEffort }, max_output_tokens: maxOutputTokens };
   if (webSearch) { payload.tools = [{ type: 'web_search' }]; payload.include = ['web_search_call.action.sources']; }
   let lastError;
@@ -65,9 +65,9 @@ async function callResponses({ apiKey, model, reasoningEffort, instructions, inp
   throw lastError || new Error('Falha editorial inesperada.');
 }
 
-function emit(onActivity, event) { try { onActivity({ timestamp: Date.now(), ...event }); } catch {} }
-function progress(onActivity, base) { return ({ elapsedSeconds, attempt }) => emit(onActivity, { ...base, status: 'working', elapsedSeconds, detail: attempt > 1 ? `${base.detail} Nova tentativa automática.` : base.detail }); }
-function addUsage(total, usage = {}) { total.input_tokens += Number(usage.input_tokens || 0); total.output_tokens += Number(usage.output_tokens || 0); }
+export function emit(onActivity, event) { try { onActivity({ timestamp: Date.now(), ...event }); } catch {} }
+export function progress(onActivity, base) { return ({ elapsedSeconds, attempt }) => emit(onActivity, { ...base, status: 'working', elapsedSeconds, detail: attempt > 1 ? `${base.detail} Nova tentativa automática.` : base.detail }); }
+export function addUsage(total, usage = {}) { total.input_tokens += Number(usage.input_tokens || 0); total.output_tokens += Number(usage.output_tokens || 0); }
 
 export function detectEditorialMode(messages) {
   const users = (messages || []).filter(message => message.role === 'user').map(message => clean(message.content).toLowerCase());
@@ -148,6 +148,50 @@ export function contextualizeThemeSelection(messages) {
   return history;
 }
 
+const EFFORT_ORDER = ['low', 'medium', 'high'];
+const FALLBACK_HOOK_PLAYBOOK = 'Você escreve o GANCHO DA CAPA da Bella: cada gancho evoca UM estado emocional universal que a leitora sente e não nomeia, é paradoxal, metafórico ou confrontacional, abre uma tensão sem resolver e tem 8 a 22 palavras faláveis. Evite cenas situacionais aleatórias, terceira pessoa analítica, o molde chama-de-X-o-que-é-Y, abstrações e vocabulário clínico.';
+
+// Etapa dedicada: a ideação preenche dezenas de campos por tema e sobra pouca atenção para o
+// gancho. Aqui cada tema recebe 5 versões, cada uma por um mecanismo psicológico diferente,
+// e a melhor passa pelo "teste dos 3 segundos". Se algo falhar, a ideação segue com o título original.
+async function forgeHooks({ apiKey, model, reasoningEffort, candidates, playbook, onActivity }) {
+  const base = { id: 'ideas-hooks', agent: 'Forja de Ganchos', collaborators: ['Oráculo Bella'], title: 'Lapidando o gancho pelo gatilho psicológico', detail: 'Escreve versões paradoxais, metafóricas e confrontacionais e escolhe a que a leitora sente em 3 segundos.' };
+  emit(onActivity, { ...base, status: 'working', elapsedSeconds: 0 });
+  const effort = EFFORT_ORDER.indexOf(reasoningEffort) < 1 ? 'medium' : reasoningEffort;
+  const themes = candidates.map((item, index) => ({
+    indice: index + 1, tema: clean(item.theme), estado_emocional: clean(item.estado_emocional), gancho_atual: clean(item.title), cena_humana: clean(item.cena_humana),
+    confissao_silenciosa: clean(item.confissao_silenciosa), custo_real: clean(item.custo_real),
+    contradicao: clean(item.contradicao), virada: clean(item.virada)
+  }));
+  try {
+    const result = await callResponses({ apiKey, model, reasoningEffort: effort, maxOutputTokens: 7000,
+      instructions: `${playbook}\n\nPara CADA tema recebido escreva exatamente 5 versões de gancho (pelo menos uma paradoxal, uma metafórica e uma confrontacional), todas evocando o estado emocional do tema, e escolha a melhor pelo teste dos 3 segundos. VARIEDADE OBRIGATÓRIA NO LOTE DE ESCOLHIDAS: no máximo 2 ganchos do mesmo tipo (pelo menos 1 metafórico e 1 confrontacional entre as escolhidas); no máximo 2 com "Ela" como sujeito; pelo menos 2 falando direto com "você" e pelo menos 1 em lei/máxima ("Toda mulher que…" ou "Mulheres que…"); nenhum estado emocional repetido; tamanhos variados. O "gancho_atual" é só ponto de partida e costuma ser frio demais: não o repita nem o parafraseie. Responda apenas em JSON válido: {"hooks":[{"indice":1,"versoes":[{"tipo":"paradoxal|metafórico|confrontacional","estado_emocional":"","texto":""}],"escolhida":0,"tipo_escolhido":"","estado_emocional":"o que a leitora sente","por_que_prende":"uma frase simples dizendo por que ela quer ver o próximo slide","gatilhos":["Curiosidade","Identificação"]}]}. "escolhida" é o índice (0 a 4) da melhor versão em "versoes".`,
+      input: `TEMAS:\n${JSON.stringify(themes, null, 1)}` });
+    const parsed = parseJson(result.text, { hooks: [] });
+    const hooks = Array.isArray(parsed.hooks) ? parsed.hooks : [];
+    let improved = 0;
+    for (const hook of hooks) {
+      const item = candidates[Number(hook.indice) - 1];
+      const versions = (hook.versoes || []).map(v => clean(v?.texto)).filter(Boolean);
+      const chosen = versions[Number(hook.escolhida)] || versions[0];
+      if (!item || !chosen) continue;
+      item.title_original = item.title;
+      item.title = chosen;
+      item.por_que_prende = clean(hook.por_que_prende);
+      item.tipo_gancho = clean(hook.tipo_escolhido);
+      if (clean(hook.estado_emocional)) item.estado_emocional = clean(hook.estado_emocional);
+      item.gatilhos = (Array.isArray(hook.gatilhos) ? hook.gatilhos : []).map(clean).filter(Boolean);
+      item.outras_versoes = versions.filter(v => v !== chosen).slice(0, 2);
+      improved += 1;
+    }
+    emit(onActivity, { ...base, status: 'done', title: 'Ganchos lapidados', detail: 'Cada título passou pelo teste dos 3 segundos.', metrics: [{ label: 'ganchos', value: improved }] });
+    return result.usage || {};
+  } catch (error) {
+    emit(onActivity, { ...base, status: 'done', title: 'Ganchos mantidos', detail: 'Não foi possível lapidar agora; usando os títulos da ideação.' });
+    return {};
+  }
+}
+
 export async function runBigIdeaLab({ apiKey, model, reasoningEffort, messages, memory = '', prompts = {}, onStage = () => {}, onActivity = () => {} }) {
   const usage = { input_tokens: 0, output_tokens: 0 };
   onStage('ideation', 'Abrindo territórios emocionais diferentes');
@@ -155,7 +199,7 @@ export async function runBigIdeaLab({ apiKey, model, reasoningEffort, messages, 
   emit(onActivity, { ...base, status: 'working', elapsedSeconds: 0 });
   const result = await callResponses({ apiKey, model, reasoningEffort, maxOutputTokens: 9000,
     instructions: ORACULO_UNICO
-      ? `${prompts.strategist || ''}\n\nMODO IDEIAS. Crie exatamente 12 candidatos de tema para Isabella Dalcin seguindo as Partes 4 e 6 deste prompt. O campo "title" é o gancho da capa. Cada candidato usa uma forma de capa diferente e um alvo concreto diferente. Preencha todos os campos; se não conseguir preencher "por_que_so_bella" com algo específico, descarte o tema e crie outro. "relevancia" vai de 0 a 10, honesta, com no máximo dois temas 9 ou 10. "nivel_consciencia" é uma destas: ainda não percebe o padrão, percebe mas não nomeia, já nomeia e procura saída. Responda em JSON válido: ${IDEAS_SCHEMA}.`
+      ? `${prompts.strategist || ''}\n\nMODO IDEIAS. Crie exatamente 12 candidatos de tema para Isabella Dalcin seguindo as Partes 4 e 6 deste prompt. Cada tema nasce de UM estado emocional central que a leitora sente e nunca nomeou (ex.: medo de incomodar, vergonha de querer, solidão dentro da utilidade, culpa de descansar, cansaço de ser a forte, raiva engolida, invisibilidade): preencha "estado_emocional" e escolha temas universais para o público da Bella, não cenas aleatórias ou situações que só algumas viveram (jantar, bloco de notas, grupo de WhatsApp). Nenhum estado emocional se repete entre os candidatos. O campo "title" é um rascunho do gancho da capa, que será lapidado em seguida; ele já deve evocar o estado emocional. Cada candidato usa território, motor narrativo, abertura de loop, forma de capa e conflito diferentes. Aplique a Lei de rotação: família em no máximo 1 candidato; corpo/sintoma em no máximo 1; pelo menos 8 territórios não familiares. Pai, mãe, infância e sintomas não podem ser atalhos de profundidade. Preencha todos os campos; se não conseguir preencher "por_que_so_bella" com algo específico, descarte o tema e crie outro. "relevancia" vai de 0 a 10, honesta, com no máximo dois temas 9 ou 10. "nivel_consciencia" é uma destas: ainda não percebe o padrão, percebe mas não nomeia, já nomeia e procura saída. Responda em JSON válido: ${IDEAS_SCHEMA}.`
       : `${prompts.master || ''}\n\n${prompts.strategist || ''}\n\nCrie exatamente 12 TEMAS PROFUNDOS autorais para Isabella Dalcin e Academia Sete — nunca categorias abstratas ou conselhos de autoajuda genéricos que poderiam pertencer a qualquer conta de bem-estar. Cada tema nasce de uma cena humana real, atravessa um mecanismo específico e só faz sentido dentro do universo da Bella (a vergonha de saber muito e integrar pouco, a espiritualidade usada como fuga, a integração como o produto que ninguém nomeia, o T.A.F.A como sustentação pós-experiência). Rejeite clichês sobre corpo, cansaço, limites, mulher forte, janela, cadeira, e qualquer tese que já é lugar-comum em contas de terapia ou desenvolvimento pessoal. O TÍTULO é o GANCHO da capa (siga "Título e gancho" e "Anatomia do carrossel" da Bíblia): 1 ou 2 frases curtas, até 14 palavras, esdrúxulas de propósito (provocam, incomodam), na Fórmula do choque: uma coisa sofisticada que ela já tem CONTRA um ato humano básico que ela ainda não faz, com a pessoa ou a coisa NOMEADA. Todo substantivo precisa ter referente claro: se dá pra perguntar "qual?" ou "quem?" depois de ler, reescreva ("a mesma conversa" reprova; "a conversa com a sua mãe" passa). Nunca um fragmento poético de 4 ou 5 palavras que só nomeia o assunto, nunca sujeito abstrato, nunca estatística inventada. Distribua os 12 candidatos entre formas diferentes: no máximo 4 na Fórmula do choque; os demais em "Você diz X. Mas Y.", pergunta que cobra com nome, confissão de Bella e denúncia da indústria. No máximo um gancho com a segunda frase começando por "Ainda", e cada gancho com uma pessoa ou ato diferente (mãe, pai, ex, amiga, dinheiro, corpo, trabalho). Profundidade fica nos campos de raciocínio, não no vocabulário do título. Para cada tema, preencha TODOS os campos abaixo — se não conseguir preencher "por_que_so_bella" com algo específico, descarte o tema e crie outro. Responda em JSON válido: {"candidates":[{"theme":"","title":"","cena_humana":"","confissao_silenciosa":"","acordo_invisivel":"","protecao":"","beneficio_oculto":"","custo_real":"","mecanismo":"","contradicao":"","virada":"","capacidade_ausente":"","ponte_tafa":"","por_que_so_bella":"","relevancia":0,"nivel_consciencia":"","visual_world":"","score":0}]}. "relevancia" é de 0 a 10 (quanto o tema ressoa com o momento atual da leitora); seja honesto: no máximo dois temas com nota 9 ou 10 e as notas precisam variar entre os candidatos. E "nivel_consciencia" diz se ela ainda não percebe o padrão, percebe mas não nomeia, ou já nomeia e procura saída.`,
     input: `PEDIDO:\n${conversationText(messages)}\n\nMEMÓRIA ANTIRREPETIÇÃO:\n${memory || 'Nenhuma.'}`,
     onProgress: progress(onActivity, base) });
@@ -167,10 +211,18 @@ export async function runBigIdeaLab({ apiKey, model, reasoningEffort, messages, 
   // deixamos a lista vazia — usamos o que veio, em vez de travar a etapa.
   const candidates = (deepCandidates.length ? deepCandidates : allCandidates)
     .sort((a, b) => Number(b.score || 0) - Number(a.score || 0)).slice(0, 5);
+  addUsage(usage, await forgeHooks({ apiKey, model, reasoningEffort, candidates, playbook: prompts.hookForge || FALLBACK_HOOK_PLAYBOOK, onActivity }));
   emit(onActivity, { ...base, status: 'done', title: 'Territórios selecionados', detail: 'As ideias mais distintas e ressonantes passaram pelo filtro antirrepetição.', metrics: [{ label: 'ideias finais', value: candidates.length }] });
   const text = candidates.map((item, index) => [
     `${index + 1}. Tema: ${item.theme}`,
     `Título: ${item.title}`,
+    item.estado_emocional && `Estado emocional: ${item.estado_emocional}`,
+    item.tipo_gancho && `Tipo de gancho: ${item.tipo_gancho}`,
+    item.por_que_prende && `Por que prende: ${item.por_que_prende}${item.gatilhos?.length ? ` · Gatilhos: ${item.gatilhos.join(' + ')}` : ''}`,
+    item.outras_versoes?.length && `Outras versões do gancho: ${item.outras_versoes.join(' | ')}`,
+    item.territorio && `Território: ${item.territorio}`,
+    item.motor_narrativo && `Motor narrativo: ${item.motor_narrativo}`,
+    item.abertura_de_loop && `Loop aberto: ${item.abertura_de_loop}`,
     item.cena_humana && `Cena humana: ${item.cena_humana}`,
     item.confissao_silenciosa && `Confissão silenciosa: ${item.confissao_silenciosa}`,
     item.acordo_invisivel && `Acordo invisível: ${item.acordo_invisivel}`,
@@ -191,7 +243,7 @@ export async function runEditorialOrchestration({ apiKey, model, reasoningEffort
   const strategyBase = { id: 'strategy', agent: 'Arquiteto de Percepção', collaborators: ['Oráculo Bella', 'Gancho Viral'], title: 'Desenhando a mudança de percepção', detail: 'Define o que a leitora acredita antes, o que descobre e por que isso importa.' };
   emit(onActivity, { ...strategyBase, status: 'working', elapsedSeconds: 0 });
   const strategyResult = await callResponses({ apiKey, model, reasoningEffort, maxOutputTokens: 5000,
-    instructions: `${ORACULO_UNICO ? (prompts.strategist || '') : `${prompts.master || ''}\n\n${prompts.strategist || ''}\n${prompts.hooks || ''}`}\nResponda apenas em JSON válido: {"selected_big_idea":"","old_belief":"","new_perception":"","emotional_arc":[],"narrative_mechanism":"","visual_law":"","research_mode":"required|useful|dispensable","research_question":"","anti_repetition_changes":[]}. Pesquisa é required apenas quando a tese depende de ciência, lei, história, notícia, número ou comparação verificável. Não fixe S3 em corpo ou sintomas.`,
+    instructions: `${ORACULO_UNICO ? (prompts.strategist || '') : `${prompts.master || ''}\n\n${prompts.strategist || ''}\n${prompts.hooks || ''}`}\nResponda apenas em JSON válido: {"selected_big_idea":"","territory":"","old_belief":"","new_perception":"","emotional_arc":[],"narrative_mechanism":"","opening_loop":"","stakes":"","visual_law":"","research_mode":"required|useful|dispensable","research_question":"","anti_repetition_changes":[]}. Pesquisa é required apenas quando a tese depende de ciência, lei, história, notícia, número ou comparação verificável. Escolha um arco da Parte 7 e um motor narrativo coerente. Pai, mãe, infância, família e sintomas só entram quando forem causalmente indispensáveis; não fixe S3 nem qualquer outra posição em corpo ou validação.`,
     input: `CONVERSA:\n${conversationText(messages)}\n\nMEMÓRIA:\n${memory || 'Nenhuma.'}\n\nQUANTIDADE: ${totalSlides} lâminas.`,
     onProgress: progress(onActivity, strategyBase) });
   addUsage(usage, strategyResult.usage); const brief = parseJson(strategyResult.text, {});
@@ -214,7 +266,7 @@ export async function runEditorialOrchestration({ apiKey, model, reasoningEffort
   emit(onActivity, { ...writingBase, status: 'working', elapsedSeconds: 0 });
   const writingResult = await callResponses({ apiKey, model, reasoningEffort, maxOutputTokens: 12000,
     instructions: ORACULO_UNICO
-      ? `${prompts.strategist || ''}\n\n${prompts.artDirector || ''}\n${visualDirection}\nMODO PRODUÇÃO. Produza exatamente ${totalSlides} lâminas seguindo a Parte 7 deste prompt (anatomia comprimida para ${totalSlides} lâminas) e a Parte 9 (formato de entrega). Entregue somente as lâminas, depois CAPTION e CTA TRIBAL, sem análise, plano de arte, big idea ou auditoria. O BRIEF APROVADO abaixo é seu ponto de partida. Toda lâmina tem TÍTULO e CORPO por extenso. O campo VISUAL segue o Diretor Artístico acima e nasce da mesma ideia da copy; cumpra o CONTRATO TÉCNICO DAS LÂMINAS acima (plano de layouts e DIREÇÃO_JSON em cada lâmina); não repita metáforas, cenas ou construções da memória.`
+      ? `${prompts.strategist || ''}\n\n${prompts.artDirector || ''}\n${visualDirection}\nMODO PRODUÇÃO. Produza exatamente ${totalSlides} lâminas seguindo o arco adaptativo escolhido na Parte 7 e o formato da Parte 9. Não reserve posição para corpo, infância, validação ou lista. Entregue somente as lâminas, depois CAPTION e CTA TRIBAL, sem análise, plano de arte, big idea ou auditoria. O BRIEF APROVADO abaixo é seu ponto de partida. Toda lâmina tem TÍTULO e CORPO por extenso. Cada lâmina responde algo e abre a tensão seguinte; a virada deve alterar a leitura, não apenas renomeá-la. O campo VISUAL segue o Diretor Artístico acima e nasce da mesma ideia da copy; cumpra o CONTRATO TÉCNICO DAS LÂMINAS acima (plano de layouts e DIREÇÃO_JSON em cada lâmina); não repita metáforas, cenas, pronomes, cadências ou construções da memória.`
       : `${prompts.master || ''}\n\n${prompts.strategist || ''}\n\n${prompts.copywriter || ''}\n${prompts.artDirector || ''}\n${visualDirection}\nProduza exatamente ${totalSlides} lâminas. O BRIEF APROVADO abaixo já decidiu praça, big idea, arco e gancho — não repita esse raciocínio, vá direto para a Partitura Emocional (breve) e o ROTEIRO OFICIAL. O ROTEIRO OFICIAL é a entrega principal: TODA lâmina precisa ter TÍTULO e CORPO com texto completo escrito por extenso, no formato exato "[SX — ESTADO | layout: LAYOUT]" seguido de TÍTULO:/CORPO:/CENA:/RESPIRO:/VISUAL: em linhas próprias — nunca entregue uma lâmina só com estado e layout, sem título e corpo escritos. Não explique seu processo fora das seções pedidas. A copy e o visual devem nascer da mesma ideia. Varie o ritmo; não use papel fixo para S3; não repita metáforas, cenas ou construções da memória.`,
     input: `PEDIDO:\n${conversationText(messages)}\n\nBRIEF APROVADO:\n${JSON.stringify(brief)}\n\nPESQUISA:\n${research.text || 'Dispensada.'}\n\nMEMÓRIA ANTIRREPETIÇÃO:\n${memory || 'Nenhuma.'}`,
     onProgress: progress(onActivity, writingBase) });

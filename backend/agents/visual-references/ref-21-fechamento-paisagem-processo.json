@@ -1,0 +1,68 @@
+{
+  "ref_id": "ref-21-fechamento-paisagem-processo",
+  "schema": "bella-visual-reference-detail-v1",
+  "fonte": "Referência enviada pelo usuário: fechamento com paisagem e CTA terapêutico",
+  "papel_no_carrossel": "fechamento / expansão / portal de continuidade",
+  "layout_arquetipo": "fechamento_paisagem_com_tese_no_ceu",
+  "papel_no_fluxo": "Encerrar abrindo horizonte, posicionando o CTA como continuidade natural do processo e não como anúncio separado.",
+  "proporcao_original": { "pixels": "736x920", "aspect_ratio": "4:5", "destino_bella": "1080x1350" },
+  "resumo": "Paisagem montanhosa ocupa a metade inferior; céu sálvia granulado oferece campo para a tese. Uma figura fragmentada entra pela lateral inferior, sugerindo caminhada e escala humana. Título serifado vinho, corpo sans terroso e CTA incorporado à última frase.",
+  "imagem_de_fundo": {
+    "tipo": "paisagem ambiental full bleed",
+    "cenario": "vale montanhoso, floresta escura, céu claro e gramado no primeiro plano",
+    "sujeito": "fragmento de corpo entrando pela lateral, sem pose ou centralidade",
+    "tratamento": "filme vintage, baixa saturação, luz suave, sombras profundas e névoa cromática",
+    "destaque": "o pico central organiza a leitura e aponta para a palavra de processo",
+    "espaco_negativo": "céu ocupa aproximadamente 48% da página e recebe toda a tipografia"
+  },
+  "textura": {
+    "grao": "grão fino e abundante sobre céu e montanhas",
+    "cor": "desbotamento oliva e leve dominante amarela",
+    "profundidade": "silhuetas escuras nas laterais emolduram o vale central",
+    "acabamento": "fotografia de viagem antiga, sem nitidez publicitária"
+  },
+  "paleta": {
+    "dominantes_extraidas": ["#acb590", "#0f0e03", "#99926b", "#6b6a54", "#c1bd93", "#4e310d", "#5e4c23"],
+    "titulo": "vinho profundo",
+    "corpo": "terracota/cacau médio",
+    "paisagem": "verde-negro, oliva, sálvia e bege solar"
+  },
+  "hierarquia": [
+    { "nivel": 1, "conteudo": "tese de processo", "tratamento": "serifa display itálica vinho, grande, duas linhas, topo central" },
+    { "nivel": 2, "conteudo": "corpo e CTA", "tratamento": "sans média terrosa, centralizada, logo abaixo" },
+    { "nivel": 3, "conteudo": "palavra de continuidade", "tratamento": "serifa itálica em cor suavizada dentro do título" },
+    { "nivel": 4, "conteudo": "assinaturas", "tratamento": "microtipografia nos cantos" }
+  ],
+  "camadas": [
+    { "ordem": 1, "tipo": "ceu-texturizado", "cobertura": "metade superior" },
+    { "ordem": 2, "tipo": "montanhas", "cobertura": "faixa central" },
+    { "ordem": 3, "tipo": "floresta-e-grama", "cobertura": "base e laterais" },
+    { "ordem": 4, "tipo": "presenca-fragmentada", "cobertura": "canto inferior esquerdo" },
+    { "ordem": 5, "tipo": "titulo", "cobertura": "céu superior" },
+    { "ordem": 6, "tipo": "corpo-cta", "cobertura": "céu médio" },
+    { "ordem": 7, "tipo": "assinaturas", "cobertura": "cantos" }
+  ],
+  "composicao": {
+    "horizonte": "ligeiramente abaixo do centro",
+    "titulo": "aproximadamente y=205-350 no original",
+    "corpo": "aproximadamente y=370-465",
+    "pico": "centralizado sob o bloco tipográfico como continuação visual",
+    "figura": "cortada pela borda para sugerir movimento além da página"
+  },
+  "tipografia": {
+    "display": "serifa itálica elegante e ampla",
+    "apoio": "sans geométrica leve",
+    "cta": "última expressão em vinho e peso maior, sem botão",
+    "regra": "o CTA permanece parte da narrativa e não recebe card, caixa ou cor de interface"
+  },
+  "energia_bella": "Terra + Ar — processo enraizado que continua em direção ao horizonte",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar paisagem como promessa de continuidade, não como decoração aspiracional",
+    "reservar céu ou campo natural para a tipografia",
+    "incluir presença humana fragmentada somente quando reforçar percurso",
+    "incorporar CTA à última frase sem botão visual"
+  ],
+  "adaptacao_bella": "O horizonte pode ser água, campo, floresta, deserto mineral ou ambiente escultórico. O CTA aponta para Academia Sete como espaço de integração, mantendo tom íntimo.",
+  "nao_copiar_literalmente": "Não repetir montanhas e braço entrando pela esquerda. Reutilizar horizonte + escala humana + CTA narrativo.",
+  "antipadrao": "Foto de paisagem de banco, degradê preto para sustentar texto, botão comercial, promessa de cura instantânea ou figura contemplativa posada de costas."
+}

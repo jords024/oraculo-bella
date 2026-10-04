@@ -1,0 +1,32 @@
+{
+  "ref_id": "ref-16-liberacao-caligrafica-aerea",
+  "fonte": "Referência enviada pelo usuário: página verde-clara 'se perde' com círculo e aves",
+  "papel_no_carrossel": "libertação / síntese / devolução de direção",
+  "layout_arquetipo": "liberacao_caligrafica_com_sinal_aereo",
+  "papel_no_fluxo": "Abrir espaço depois do clímax e devolver movimento, escolha e horizonte.",
+  "resumo": "Campo verde-névoa silencioso, frase serifada e caligráfica monumental em marfim, círculo laranja como sol ou passagem e duas formas aéreas brancas. O apoio final usa sans com uma única sentença em negrito.",
+  "composicao": {
+    "fundo": "cor clara texturizada e uniforme",
+    "abertura": "pequena frase serifada no alto esquerdo",
+    "palavra_gesto": "caligrafia ou serifa itálica ocupa o centro e atravessa o círculo",
+    "sinal": "um círculo de acento com duas formas direcionais leves",
+    "apoio": "bloco sans centralizado na base, com uma frase em peso forte"
+  },
+  "tipografia": {
+    "intimidade": "serifa clássica pequena",
+    "libertacao": "caligrafia editorial ou itálica de grande amplitude",
+    "apoio": "sans leve com uma linha em negrito",
+    "regra": "a forma tipográfica precisa sugerir movimento e respiração, não luxo ornamental"
+  },
+  "paleta": ["verde névoa", "marfim", "laranja queimado"],
+  "linguagem_de_imagem": "cartaz poético de baixa densidade, textura têxtil, gesto aéreo e sinal solar",
+  "energia_bella": "Ar — direção própria, deslocamento e retorno ao caminho",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "reduzir a densidade visual depois do clímax",
+    "usar forma direcional viva quando liberdade ou escolha fizer parte da virada",
+    "deixar a palavra principal atravessar o sinal cromático",
+    "concentrar o negrito na frase que devolve agência"
+  ],
+  "nao_copiar_literalmente": "Não repetir sempre sol laranja e pássaros. O sinal pode ser folha ao vento, tecido, semente, água, abertura ou outro movimento coerente com a força elemental.",
+  "antipadrao": "Frase motivacional sobre fundo liso, caligrafia decorativa sem função, símbolo espiritual genérico e CTA agressivo."
+}

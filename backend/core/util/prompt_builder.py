@@ -23,6 +23,12 @@ _STYLE_PROFILES = {
         "Do not promote a literal noun from the copy into the main subject unless it reveals the psychological conflict by itself. "
         "No generic portrait, wellness stock image, decorative mysticism or collage of unrelated symbols. "
     ),
+    "bella_tipografico": (
+        "Bella Tipográfico art direction: high-end editorial cover photography with the feeling of a real moment caught on analog film — "
+        "natural light, 35mm grain, slightly soft focus, warm film color, unposed human gesture in a real environment (open field, room, street, water, doorway). "
+        "Authentic, spontaneous and emotionally legible; never stock, never a posed portrait, never decorative mysticism. "
+        "The photograph exists to give oversized lettering a place to live, so it always keeps one large calm region. "
+    ),
     "bella_organico_terracota": (
         "Earthy organic editorial, sun-baked terracotta, raw linen, clay, skin and roots, "
         "soft imperfect daylight, grounded intimate atmosphere, artisanal tactility. "
@@ -42,8 +48,23 @@ _COMPOSITION = (
     "for the typography described by the art direction. The image must feel authored, not like a generic stock photograph. "
 )
 
+_BELLA_ELEMENTAL_DNA = (
+    "Bella elemental editorial DNA: prefer painterly editorial illustration, refined analog collage, natural surrealism or a sculptural material world over ordinary lifestyle photography. "
+    "Let one dominant elemental force organize the scene: Earth sustains, Water integrates, Fire transforms, Air moves, or Ether connects. Do not stack all five elements. "
+    "Sacerdotal energy means conscious gesture, stillness, circular relation, reverence for matter and a sense of passage; never fantasy costumes, crowns, generic altars or decorative occult imagery. "
+    "A circle may act as field, cycle, community, wholeness or portal only when it structures the meaning. It is never an automatic mandala. "
+    "When women appear, give them agency and expressive action. Consider two women, a small circle, mirrored postures, shared work or hands exchanging care when the message concerns love, belonging or union; do not default to a solitary sad woman. "
+    "Express love through proximity, reciprocity, shared gesture and interdependent nature, never through literal hearts. "
+)
+
 _EXPANSIVE_COVER = (
-    "Cover art direction: create an expansive expressive world, never a close portrait or a fixed photographic recipe. "
+    "NON-NEGOTIABLE COVER LAW: embody the headline and its emotional gain as a sensitive, expressive, sacerdotal and psychologically psychedelic vision. "
+    "The viewer must feel the source message before reading it. Build one precise central metaphor as a transition between two emotional states, "
+    "made visible through an authentic living gesture and a poetic alteration of reality. Psychedelia means organic double exposure, material metamorphosis, "
+    "delicate spatial distortion, repetition, orbit, luminous field or impossible scale that deepens the psychological meaning; never random neon, rainbow smoke, "
+    "decorative kaleidoscopes or an accumulation of occult props. Never use an isolated bowl, chair, vase, door, crystal or other still object as the cover subject. "
+    "Prefer an emotionally legible female presence in action or relationship. If no person appears, nature, light or matter must behave like a living expressive presence. "
+    "Create an expansive expressive world, never a close portrait or a fixed photographic recipe. "
     "The scene may be mixed-media collage, surreal construction, sculptural installation, bold graphic composition or a wide cinematic moment, "
     "according to the carousel art direction. Build visible depth, atmosphere, movement and a sense of discovery. "
     "A person is optional; when present, show full body, partial gesture or small figure occupying at most 35 percent of the frame. "
@@ -53,17 +74,21 @@ _EXPANSIVE_COVER = (
 )
 
 _ESSENTIAL_COVER = (
-    "Essential cover composition: the image occupies the upper visual field and must carry the hook by itself. "
+    "NON-NEGOTIABLE COVER LAW: embody the headline and its emotional gain as a sensitive, expressive, sacerdotal and psychologically psychedelic vision. "
+    "The viewer must feel the source message before reading it. Use one central metaphor that visibly transforms from one emotional state into another. "
+    "Ground the scene in an authentic living gesture; prefer an expressive female presence, or make nature, light or matter behave as a living presence. "
+    "Psychological psychedelia may use organic double exposure, material metamorphosis, delicate distortion, repetition, orbit, luminous fields or impossible scale, "
+    "but never random neon, rainbow smoke, kaleidoscopes or decorative occult props. Never build the cover around an isolated bowl, vase, chair, door or symbolic object. "
+    "Essential cover composition: use the full vertical frame as one authored editorial world and preserve organic negative space for external editable typography. "
     "Use the full frame for one emotionally expressive symbolic scene with depth, scale and a strong focal point. "
     "The cover must reveal an invisible psychological truth, not merely display the object named in the script. "
-    "Do not reserve empty space for typography and do not add a dark blur, gradient panel or fake text area inside the image; "
-    "the design system will place all copy in a separate clean band below the photograph. "
+    "Do not add a dark blur, gradient panel, fake text area or graphic icon inside the image; the design system will place all copy as independent native layers over the naturally quiet region. "
     "A person is optional and must never be a generic posed portrait. "
 )
 
 _RESTRICTIONS = (
     "Absolutely no text, letters, words, numbers, logos, watermarks or readable symbols. "
-    "No 3D-render look, no cartoon aesthetic, no interface elements. "
+    "No 3D-render look, no cartoon aesthetic, no interface elements. No decorative moons, crystals, mandalas, flames or plants added only to signal spirituality. "
     "Avoid the overused recipe of a woman bound or tethered by threads, ropes or ribbons walking away down an "
     "ornate palace corridor with arched doorways — this exact composition has already been used repeatedly and must not recur."
 )
@@ -152,6 +177,8 @@ def build_prompt(slide_prompt: str, preset_name: str = "bella_editorial_luxo", *
     profile = _STYLE_PROFILES.get(preset_name, _STYLE_PROFILES["bella_editorial_luxo"])
     concept = p.rstrip(". ") or "An emotionally resonant symbolic portrait"
     semantic = _semantic_direction(title, body)
+    title = (title or "").replace("*", "")
+    body = (body or "").replace("*", "")
     copy_context = f"Source message to embody: {title}. {body}. " if (title or body) else ""
     layout_hint = "" if not layout else f"Editorial slide role: {layout}. "
     plan_hint = ""
@@ -161,15 +188,26 @@ def build_prompt(slide_prompt: str, preset_name: str = "bella_editorial_luxo", *
             "mood", "accent", "photo_treatment", "text_density", "continuity_key", "unique_detail",
             "emotional_intent", "care_signal", "sensory_focus", "light", "lens", "composition",
             "human_presence", "authenticity_detail", "anti_corporate_guard"
+            ,"asset_strategy", "avoid_primitives", "native_layers"
         ) if visual_plan.get(key) not in (None, "")}
         plan_hint = f"Structured visual plan: {json.dumps(allowed, ensure_ascii=False)}. "
     if layout == "bella_essential_01":
         cover_direction = _ESSENTIAL_COVER
     elif layout in {"bella_sequence_01", "bella_editorial_cover"}:
         cover_direction = _EXPANSIVE_COVER
+    elif layout in {"bella_type_cover", "bella_type_close", "bella_type_photo"}:
+        side = visual_plan.get("text_side") if isinstance(visual_plan, dict) else None
+        side = side if side in ("left", "right") else "left"
+        opposite = "right" if side == "left" else "left"
+        cover_direction = (
+            f"TYPOGRAPHIC COMPOSITION (non-negotiable): place the human subject and the main action on the {opposite} third of the frame, "
+            "three-quarter or full body, occupying less than 40% of the frame, caught in a real spontaneous gesture. "
+            f"Keep the {side} 58% of the frame as calm atmospheric negative space (sky, field, wall, mist, soft shadow) with no objects, faces "
+            "or busy detail, so oversized editorial lettering can sit there. Natural light, analog 35mm grain, slight film softness, warm color grade. "
+        )
     else:
         cover_direction = ""
     return (
-        f"{_CAMERA}{profile}{layout_hint}{plan_hint}{cover_direction}{copy_context}{semantic}"
+        f"{_CAMERA}{profile}{_BELLA_ELEMENTAL_DNA}{layout_hint}{plan_hint}{cover_direction}{copy_context}{semantic}"
         f"Scene concept from the art director: {concept}. {_COMPOSITION}{_RESTRICTIONS}"
     )

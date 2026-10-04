@@ -1,18 +1,37 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { customFetch } from '../utils/customFetch';
 import { parseCarouselText } from '../utils/carouselParser';
 
-export function useCarouselsData({ showToast, setActiveTab }) {
+const IN_PROGRESS_STATUSES = ['queued', 'generating', 'generating_image'];
+const DONE_STATUSES = ['pronto', 'done'];
+
+export function useCarouselsData({ showToast, setActiveTab, onGenerationComplete }) {
   const [allCarousels, setAllCarousels] = useState([]);
   const [stats, setStats] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [imageVersion, setImageVersion] = useState(Date.now());
+  // Guarda o status anterior de cada carrossel só para detectar a transição
+  // "estava gerando -> ficou pronto" e abrir o Estúdio sozinho nesse momento
+  // (nunca ao simplesmente revisitar um carrossel antigo já pronto).
+  const previousStatusesRef = useRef({});
+  const onGenerationCompleteRef = useRef(onGenerationComplete);
+  useEffect(() => { onGenerationCompleteRef.current = onGenerationComplete; }, [onGenerationComplete]);
 
-  const loadCarousels = async () => {
+  const loadCarousels = useCallback(async () => {
     try {
       const res = await customFetch('/api/carousels');
       const data = await res.json();
       if (res.ok) {
+        const previous = previousStatusesRef.current;
+        const nextStatuses = {};
+        data.forEach(c => {
+          nextStatuses[c.id] = c.status;
+          const wasInProgress = IN_PROGRESS_STATUSES.includes(previous[c.id]);
+          if (wasInProgress && DONE_STATUSES.includes(c.status)) {
+            onGenerationCompleteRef.current?.(c.id);
+          }
+        });
+        previousStatusesRef.current = nextStatuses;
         setAllCarousels(data);
         setImageVersion(Date.now());
         return data;
@@ -21,7 +40,7 @@ export function useCarouselsData({ showToast, setActiveTab }) {
       showToast?.('Erro ao carregar carrosséis.');
     }
     return [];
-  };
+  }, [showToast]);
 
   const loadStats = async () => {
     try {
@@ -39,13 +58,13 @@ export function useCarouselsData({ showToast, setActiveTab }) {
   // `queued` podia ficar visualmente parado até que outra ação recarregasse a
   // lista, dando a impressão de que o botão não tinha funcionado.
   useEffect(() => {
-    const hasActiveGeneration = allCarousels.some(c => ['queued', 'generating'].includes(c.status));
+    const hasActiveGeneration = allCarousels.some(c => IN_PROGRESS_STATUSES.includes(c.status));
     if (!hasActiveGeneration) return;
     const interval = setInterval(() => {
       loadCarousels();
     }, 5000);
     return () => clearInterval(interval);
-  }, [allCarousels]);
+  }, [allCarousels, loadCarousels]);
 
   const handleCreateCarousel = async (payload) => {
     try {
@@ -97,6 +116,12 @@ export function useCarouselsData({ showToast, setActiveTab }) {
     }
     if (opts.format) {
       payload.format = opts.format;
+    }
+    if (opts.imageSource === 'pinterest') {
+      payload.imageSource = 'pinterest';
+    }
+    if (opts.noImageSlidesCount !== undefined && opts.noImageSlidesCount !== null) {
+      payload.noImageSlidesCount = Math.max(0, Math.min(Number(opts.noImageSlidesCount) || 0, payload.slides.length));
     }
 
     try {

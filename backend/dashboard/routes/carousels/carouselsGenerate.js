@@ -27,6 +27,7 @@ import { logger } from '../../logger.js';
 import { query } from '../../db.js';
 import { enrichPromptWithReferences } from "../../services/referencePromptEnricher.js";
 import { contextualizeThemeSelection, detectEditorialMode, runBigIdeaLab, runEditorialOrchestration } from "../../services/editorialOrchestrator.js";
+import { runSimpleIdeas, runSimpleProduction } from "../../services/simpleOracle.js";
 import { getBellaVisualReferenceContract } from "../../services/visualReferenceService.js";
 
 const execFileAsync = promisify(execFile);
@@ -422,6 +423,18 @@ router.get('/api/debug-jobs', (req, res) => {
 });
 
 const CREATOR_TEMPLATE_DIRECTIONS = {
+  bella_tipografico: {
+    name: 'Bella Tipográfico',
+    freeMiddle: true,
+    layouts: ['bella_type_cover', 'bella_type_fragments', 'bella_type_escalation', 'bella_type_pause', 'bella_type_close'],
+    plans: {
+      3: ['bella_type_cover', 'bella_type_pause', 'bella_type_close'],
+      5: ['bella_type_cover', 'bella_type_fragments', 'bella_type_escalation', 'bella_type_pause', 'bella_type_close'],
+      7: ['bella_type_cover', 'bella_type_fragments', 'bella_type_pause', 'bella_type_escalation', 'bella_type_fragments', 'bella_type_pause', 'bella_type_close'],
+      10: ['bella_type_cover', 'bella_type_fragments', 'bella_type_pause', 'bella_type_escalation', 'bella_type_fragments', 'bella_type_pause', 'bella_type_escalation', 'bella_type_fragments', 'bella_type_pause', 'bella_type_close']
+    },
+    direction: 'design tipográfico editorial de revista: a TIPOGRAFIA é a protagonista e a copy já nasce desenhada. Cada frase mistura vozes — texto leve para o contexto, uma palavra-conceito monumental em serifa e a virada em itálico — com escala crescente, caixas de destaque, fragmentos de falas e barra de acento. Capa e fechamento são fotografia analógica real (gesto humano espontâneo, luz natural, grão, ambiente verdadeiro: campo, sala, rua, água) com UM lado da imagem deixado como campo calmo para as letras; esta regra prevalece sobre qualquer preferência por ilustração ou estética sacerdotal. O miolo é sem foto: papel, fragmentos de fala, citações e objetos de medida desenhados pelo sistema. Paletas: papel, musgo, areia, cacau. Proibido: faixa escura atrás do texto, cards genéricos, ícones, mandalas, misticismo decorativo, texto dentro da imagem gerada'
+  },
   bella_essencial: {
     name: 'Bella Essencial',
     layouts: ['bella_essential_01', 'bella_essential_02', 'bella_essential_03', 'bella_essential_04', 'bella_essential_05'],
@@ -431,7 +444,7 @@ const CREATOR_TEMPLATE_DIRECTIONS = {
       7: ['bella_essential_01', 'bella_essential_02', 'bella_essential_03', 'bella_essential_02', 'bella_essential_03', 'bella_essential_04', 'bella_essential_05'],
       10: ['bella_essential_01', 'bella_essential_02', 'bella_essential_03', 'bella_essential_02', 'bella_essential_03', 'bella_essential_04', 'bella_essential_02', 'bella_essential_03', 'bella_essential_04', 'bella_essential_05']
     },
-    direction: 'design simples e preciso com universo esotérico sensível: antes de escolher objetos, invente uma lei visual exclusiva que revele a tensão psicológica da copy; preserve essa lei no carrossel e transforme gesto, escala e estado em cada página; capa com imagem dominante e texto em base escura; desenvolvimento com imagem enquadrada e copy abaixo; uma pausa tipográfica; sem literalidade pobre, barras, blur improvisado, cards decorativos, misticismo decorativo ou retratos genéricos'
+    direction: 'design editorial sensível e desmontável: invente uma lei visual exclusiva que revele a tensão psicológica da copy; a capa é uma cena autoral em quadro inteiro, com gesto humano, profundidade, transformação e espaço negativo real para tipografia nativa — nunca imagem em cima com faixa escura automática; varie fotografia, colagem, matéria e pausa tipográfica; preserve cada texto, recorte, textura, faixa e campo gráfico como camada editável; sem ícones de CSS, setas, estrelas, réguas digitais, círculos decorativos, literalidade pobre, blur improvisado, cards genéricos, misticismo decorativo ou retratos de banco de imagens'
   },
   bella_editorial_luxo: {
     name: 'Direção Viva Bella',
@@ -459,6 +472,11 @@ const CREATOR_TEMPLATE_DIRECTIONS = {
 // chega ao Criador para que a fotografia, a copy e a tipografia nasçam como
 // uma mesma decisão — e não como uma foto escolhida depois do texto.
 const BELLA_SEQUENCE_ROLES = {
+  bella_type_cover: 'capa tipográfica sobre fotografia analógica. TÍTULO em três vozes: contexto em texto normal, a palavra-conceito entre [[colchetes duplos]] (serifa monumental) e a virada em *itálico* — ex.: Pare de medir sua vida com a [[régua]] *dos* [[outros]]. Marque no máximo 3 palavras. CORPO = subtítulo de 1 frase curta. CENA: A. VISUAL = gesto humano espontâneo em ambiente real, sujeito num terço lateral e o resto campo calmo; no DIREÇÃO_JSON informe "text_side":"left" ou "right" (lado onde as letras ficam)',
+  bella_type_fragments: 'colagem de fragmentos sem foto. TÍTULO = tese em serifa com a última palavra em *itálico*. CORPO = 2 a 3 falas curtas entre aspas “…” (comparações, cobranças ou frases que a leitora ouve), cada uma numa linha, depois 2 a 3 frases de consequência; a última termina com o fecho em [[negrito]]. CENA: TIPOGRÁFICA. DIREÇÃO_JSON: "palette":"musgo" ou "papel"',
+  bella_type_escalation: 'escalada tipográfica sem foto. CORPO: a 1ª frase é o ARGUMENTO (vai em caixa de destaque, até 14 palavras); as seguintes formam a ponte leve. TÍTULO = conclusão monumental curtíssima (3 a 6 palavras) que fecha o argumento com ironia ou imagem concreta. CENA: TIPOGRÁFICA. DIREÇÃO_JSON: "palette":"papel" ou "areia"',
+  bella_type_pause: 'pausa tipográfica sem foto. TÍTULO = tese serifada longa com uma palavra-chave em *itálico*. CORPO = 2 a 3 frases curtas, uma por linha. CENA: TIPOGRÁFICA. DIREÇÃO_JSON: "palette":"areia" ou "cacau"',
+  bella_type_close: 'fechamento sobre fotografia analógica. TÍTULO com [[palavra]] e *itálico* como na capa. CORPO = 2 a 3 ações curtas e o convite COMENTE BELLA. CENA: A. VISUAL = outro gesto do mesmo mundo da capa; "text_side" do DIREÇÃO_JSON no lado oposto ao da capa quando possível',
   bella_essential_01: 'capa essencial: imagem impactante ocupa os 70% superiores; título e subheadline ficam abaixo em base carvão limpa; crie uma metáfora psicológica esotérica e expressiva — nunca apenas um objeto citado na copy',
   bella_essential_02: 'desenvolvimento: título curto no topo, imagem simbólica enquadrada ao centro e corpo abaixo; a última frase contém a virada',
   bella_essential_03: 'aprofundamento: repete a grade para criar reconhecimento, mas muda ação, escala e sentido da imagem',
@@ -522,7 +540,7 @@ async function getRecentBellaCopyContext(limit = 6) {
 
 // ── API: Criador — Chat unificado com streaming SSE ──────────────────────────
 router.post('/api/criador/stream', async (req, res) => {
-  const { messages, totalSlides, noImageSlidesCount, model, reasoningEffort, template, format, recentContentMemory, editorialIntent } = req.body;
+  const { messages, totalSlides, noImageSlidesCount, model, reasoningEffort, template, format, recentContentMemory, editorialIntent, modoOraculo } = req.body;
   let system = await getAgentPromptAsync('criador');
   if (!system) return res.status(500).json({ error: 'Agente criador não configurado' });
   const artDirectorSystem = await getAgentPromptAsync('diretor-artistico-bella-v2');
@@ -547,16 +565,24 @@ router.post('/api/criador/stream', async (req, res) => {
     system = `IMPORTANTE: Para esta geração, o usuário configurou e deseja estritamente um carrossel de exatamente ${numSlides} slides. Adapte a estrutura para caberem exatamente em ${numSlides} slides (S1 até S${numSlides}), garantindo que o slide final S${numSlides} seja o CTA Oficial BELLA com a palavra-chave BELLA.\n\n` + system;
   }
 
+  const noImageCount = Math.max(0, Math.min(Number(noImageSlidesCount) || 0, numSlides));
+  const noImageInstruction = noImageCount > 0
+    ? `ECONOMIA DE IMAGEM: ${noImageCount} das ${numSlides} lâminas serão SOMENTE tipografia sobre fundo de cor (sem imagem) e ${numSlides - noImageCount} terão imagem. O sistema escolhe quais lâminas ficam sem imagem (de preferência as do miolo, nunca por critério de qualidade). Escreva TODAS as lâminas para funcionar nos dois casos: TÍTULO e CORPO carregam o impacto sozinhos, sem depender da foto.`
+    : '';
   const activeTemplate = CREATOR_TEMPLATE_DIRECTIONS[template] || CREATOR_TEMPLATE_DIRECTIONS.bella_editorial_luxo;
   const selectedPlan = activeTemplate.plans?.[numSlides] || activeTemplate.layouts;
   const layoutPlan = Array.from({ length: numSlides }, (_, index) => {
     const layout = selectedPlan[index % selectedPlan.length];
     const role = BELLA_SEQUENCE_ROLES[layout];
+    if (activeTemplate.freeMiddle && index > 0 && index < numSlides - 1) {
+      return `S${index + 1}: escolha UMA entre bella_type_fragments | bella_type_escalation | bella_type_pause conforme a função da lâmina (nunca repita o layout da anterior). Sugestão do sistema: ${layout}. Como escrever cada um:\n  - bella_type_fragments: ${BELLA_SEQUENCE_ROLES.bella_type_fragments}\n  - bella_type_escalation: ${BELLA_SEQUENCE_ROLES.bella_type_escalation}\n  - bella_type_pause: ${BELLA_SEQUENCE_ROLES.bella_type_pause}`;
+    }
     return `S${index + 1}: ${layout}${role ? ` — ${role}` : ''}`;
   }
   ).join('\n');
 
   const mandatoryFormatInstruction = `\n\n⚠️ PROTOCOLO CRIATIVO COMPLETO OBRIGATÓRIO:
+${noImageInstruction}
 Direção visual selecionada pelo usuário: ${activeTemplate.name} (${template || 'bella_editorial_luxo'}).
 Formato selecionado: ${format || '4:5'}.
 Toda a copy, as metáforas visuais, os objetos, a luz e a atmosfera DEVEM refletir esta direção: ${activeTemplate.direction}.
@@ -576,10 +602,15 @@ DIREÇÃO ARTÍSTICA OBRIGATÓRIA:
 - Em VISUAL, descreva uma metáfora concreta, o enquadramento nativo vertical 4:5, a posição do sujeito (esquerda/direita/centro), expressão/gesto, matéria e luz, além de onde deve existir espaço negativo para a tipografia.
 - Na capa S1, crie um universo expansivo e expressivo. Pode ser colagem, surrealismo, instalação escultórica, grafismo ou cinema ambiental — o meio deve nascer da tese. Uma pessoa é opcional; se existir, deve ocupar no máximo 35% do quadro. Preserve uma grande região de silêncio orgânico para a manchete. Nunca use close, retrato sentado contra parede lisa, mulher posando diante de parede ou pose genérica.
 - A imagem precisa participar do significado da copy. Evite retratos genéricos, banco de imagens, poses artificiais e símbolos óbvios.
+- DNA ELEMENTAL BELLA: escolha UMA força dominante por carrossel — Terra sustenta, Água integra, Fogo transforma, Ar desloca ou Éter conecta. Não empilhe os cinco elementos e não use lua, cristal, mandala, chama ou planta somente para parecer espiritual.
+- ENERGIA SACERDOTAL: expresse presença, gesto consciente, circularidade, cuidado da matéria e passagem ritual. São proibidos figurino de sacerdotisa, coroa, altar genérico e fantasia mística.
+- MULHERES COM AGÊNCIA: quando houver presença feminina, mostre escolha, gesto, travessia, criação, encontro, entrega ou recebimento. Amor e união aparecem por proximidade, reciprocidade, posturas espelhadas, mãos em ação, pequenos círculos humanos ou ecossistemas — nunca por coração literal.
+- Priorize imagens ilustrativas de alto nível: ilustração editorial pictórica, surrealismo natural, colagem analógica refinada ou matéria escultórica. Fotografia comum é uma exceção consciente, não a resposta padrão.
+- Círculos só entram quando organizam campo, ciclo, inteireza, comunidade ou portal. Mandala decorativa automática reprova o slide.
 - Nunca peça texto dentro da imagem gerada; a cena nasce limpa e a tipografia editorial é composta pelo sistema para preservar acentos, ortografia, alinhamento e edição posterior.
 
 PLANO-MESTRE DO CARROSSEL:
-- Antes dos slides, defina LINGUAGEM-MÃE, paleta de cinco cores, um símbolo material recorrente e no máximo três CENAS-MÃE (A, B e C). Escolha a linguagem-mãe entre: colagem poética, surrealismo simbólico, matéria escultórica, grafismo expressivo ou cinema em movimento. Varie essa escolha entre conteúdos; fotografia não é padrão.
+- Antes dos slides, defina LINGUAGEM-MÃE, ELEMENTO DOMINANTE, paleta de cinco cores, um símbolo material recorrente e no máximo três CENAS-MÃE (A, B e C). Escolha a linguagem-mãe entre: ilustração ritual elemental, surrealismo natural relacional, colagem poética, matéria escultórica, grafismo expressivo ou cinema em movimento. Varie essa escolha entre conteúdos; fotografia não é padrão.
 - Uma CENA-MÃE deve voltar em outro slide com a mesma personagem, roupa, atmosfera e símbolo, porém com recorte diferente. Não invente uma fotografia independente para cada lâmina.
 - Conduza uma curva visual: impacto fotográfico → respiro tipográfico → retorno da cena → explicação gráfica → transformação.
 - Nos slides puramente tipográficos use CENA: TIPOGRÁFICA. Nos fotográficos use CENA: A, B ou C.
@@ -602,7 +633,7 @@ TÍTULO: [título completo — NUNCA use reticências ou "..."]
 CORPO: [conteúdo do texto/copy do slide]
 CENA: [A, B, C ou TIPOGRÁFICA]
 VISUAL: [descrição da imagem visual do slide com espaço negativo para tipografia]
-DIREÇÃO_JSON: {"visual_role":"","subject":"","action":"","environment":"","material_anchor":"","crop_focus":"","mood":"","accent":"","photo_treatment":"","text_density":"","continuity_key":"","unique_detail":"","emotional_intent":"","care_signal":"","sensory_focus":"","light":"","lens":"","composition":"","human_presence":"","authenticity_detail":"","anti_corporate_guard":""}
+DIREÇÃO_JSON: {"visual_role":"","subject":"","action":"","environment":"","material_anchor":"","crop_focus":"","mood":"","accent":"","photo_treatment":"","text_density":"","continuity_key":"","unique_detail":"","emotional_intent":"","care_signal":"","sensory_focus":"","light":"","lens":"","composition":"","human_presence":"","authenticity_detail":"","anti_corporate_guard":"","asset_strategy":"generated_scene_without_text_plus_native_editable_layers","avoid_primitives":["generic_css_icons","decorative_arrows","perfect_geometry_without_meaning"],"native_layers":[]}
 
 O DIREÇÃO_JSON deve ocupar uma única linha e conter JSON válido. Ele é a ponte entre a copy, o diretor artístico e o gerador/compositor; não repita valores genéricos entre lâminas.
 
@@ -679,7 +710,7 @@ Esta memória não é referência de estilo para copiar; é uma lista antirrepet
     logger.info('[Carousel]', `Criador Bella selecionou modo editorial: ${editorialMode} (detectado=${detectedEditorialMode}, contrato=${editorialIntent || 'auto'}, pedido=${compactRecentCopy(latestUserMessage, 120)})`);
     if (editorialMode === 'ideas' || editorialMode === 'production') {
       try {
-        const promptIds = ['oraculo-v2', 'gancho-viral', 'copywriter', 'diretor-artistico-bella-v2', 'oraculo-revisor-bella', 'pesquisador-bella', 'verificador-fatos-bella'];
+        const promptIds = ['oraculo-v2', 'forja-ganchos-bella', 'gancho-viral', 'copywriter', 'diretor-artistico-bella-v2', 'oraculo-revisor-bella', 'pesquisador-bella', 'verificador-fatos-bella'];
         const promptValues = await Promise.all(promptIds.map(id => getAgentPromptAsync(id)));
         const editorialPrompts = Object.fromEntries(promptIds.map((id, index) => [id, promptValues[index] || '']));
         const memory = [recentCopyContext, JSON.stringify(recentContentMemory || [])].filter(Boolean).join('\n');
@@ -690,8 +721,9 @@ Esta memória não é referência de estilo para copiar; é uma lista antirrepet
 - Use exatamente este plano de layouts para a direção escolhida:
 ${layoutPlan}
 - Ordem dos campos em cada lâmina: cabeçalho [SX — ESTADO | layout: LAYOUT], TÍTULO:, CORPO:, CENA:, RESPIRO:, VISUAL:, DIREÇÃO_JSON:.
-- DIREÇÃO_JSON ocupa uma única linha com JSON válido e estas chaves preenchidas de forma específica para aquela lâmina, sem valores genéricos repetidos entre lâminas: {"visual_role":"","subject":"","action":"","environment":"","material_anchor":"","crop_focus":"","mood":"","accent":"","photo_treatment":"","text_density":"","continuity_key":"","unique_detail":"","emotional_intent":"","care_signal":"","sensory_focus":"","light":"","lens":"","composition":"","human_presence":"","authenticity_detail":"","anti_corporate_guard":""}`;
-        const visualDirection = `IDENTIDADE BELLA: ${activeTemplate.name}. ${activeTemplate.direction}\nQuantidade variável: ${numSlides} lâminas. Preserve CTA COMENTE BELLA no encerramento. Aplique o plano de layouts já fornecido pelo sistema, mas varie linguagem-mãe, escala, densidade e presença humana entre conteúdos.\nMEMÓRIA VISUAL E ANTIPADRÕES: ${JSON.stringify(visualReferenceContract)}\n${technicalContract}`;
+- DIREÇÃO_JSON ocupa uma única linha com JSON válido e estas chaves preenchidas de forma específica para aquela lâmina, sem valores genéricos repetidos entre lâminas: {"visual_role":"","subject":"","action":"","environment":"","material_anchor":"","crop_focus":"","mood":"","accent":"","photo_treatment":"","text_density":"","continuity_key":"","unique_detail":"","emotional_intent":"","care_signal":"","sensory_focus":"","light":"","lens":"","composition":"","human_presence":"","authenticity_detail":"","anti_corporate_guard":"","asset_strategy":"generated_scene_without_text_plus_native_editable_layers","avoid_primitives":["generic_css_icons","decorative_arrows","perfect_geometry_without_meaning"],"native_layers":[]}
+- native_layers aceita no máximo 12 camadas desmontáveis dos tipos image, shape ou texture, com nome, x, y, width, height, rotation e opacity. Use image somente como recorte alternativo da fotografia-base; shape apenas como matéria editorial (faixa, campo, papel, véu), nunca como ícone; texture para grão/papel. Não peça setas, estrelas, luas, régua digital, aro perfeito ou pictogramas de CSS.`;
+        const visualDirection = `IDENTIDADE BELLA: ${activeTemplate.name}. ${activeTemplate.direction}\nQuantidade variável: ${numSlides} lâminas. ${noImageInstruction ? ` ${noImageInstruction}` : ''} Preserve CTA COMENTE BELLA no encerramento. Aplique o plano de layouts já fornecido pelo sistema, mas varie linguagem-mãe, escala, densidade e presença humana entre conteúdos.\nMEMÓRIA VISUAL E ANTIPADRÕES: ${JSON.stringify(visualReferenceContract)}\n${technicalContract}`;
         const orchestrationArgs = {
           apiKey, model: activeModel, reasoningEffort: activeEffort,
           messages: formattedMessages, totalSlides: numSlides, memory, visualDirection,
@@ -699,6 +731,7 @@ ${layoutPlan}
             master: system,
             strategist: editorialPrompts['oraculo-v2'],
             hooks: editorialPrompts['gancho-viral'],
+            hookForge: editorialPrompts['forja-ganchos-bella'],
             copywriter: editorialPrompts.copywriter,
             artDirector: editorialPrompts['diretor-artistico-bella-v2'],
             reviewer: editorialPrompts['oraculo-revisor-bella'],
@@ -708,9 +741,22 @@ ${layoutPlan}
           onStage: (stage, label) => res.write(`data: ${JSON.stringify({ stage, label })}\n\n`),
           onActivity: activity => res.write(`data: ${JSON.stringify({ activity })}\n\n`)
         };
-        const orchestration = editorialMode === 'ideas'
-          ? await runBigIdeaLab(orchestrationArgs)
-          : await runEditorialOrchestration(orchestrationArgs);
+        let orchestration;
+        const simpleMaster = modoOraculo === 'simples' ? await getAgentPromptAsync('oraculo-simples') : null;
+        if (simpleMaster) {
+          // Versão de teste: só o prompt-mestre simples, em uma chamada por etapa.
+          const simpleArgs = {
+            apiKey, model: activeModel, reasoningEffort: activeEffort, messages: formattedMessages,
+            totalSlides: numSlides, memory, master: simpleMaster, layoutPlan, noImageInstruction,
+            usesMarkup: Boolean(activeTemplate.freeMiddle),
+            onStage: orchestrationArgs.onStage, onActivity: orchestrationArgs.onActivity
+          };
+          orchestration = editorialMode === 'ideas' ? await runSimpleIdeas(simpleArgs) : await runSimpleProduction(simpleArgs);
+        } else {
+          orchestration = editorialMode === 'ideas'
+            ? await runBigIdeaLab(orchestrationArgs)
+            : await runEditorialOrchestration(orchestrationArgs);
+        }
         const finalText = orchestration.text || '';
         for (let index = 0; index < finalText.length; index += 180) {
           res.write(`data: ${JSON.stringify({ token: finalText.slice(index, index + 180) })}\n\n`);

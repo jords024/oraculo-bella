@@ -67,59 +67,9 @@ export function initCarouselQueueWorker() {
       // "Recriar" deve aplicar a direção atual, não recuperar imagens brutas
       // de uma tentativa anterior como se fossem um checkpoint desta sessão.
       forceRegenerate: Boolean(taskData.isRetry),
+      // O pipeline (deck_director) decide, para cada preset, quais lâminas ficam só com fundo de cor.
+      noImageSlidesCount: Math.max(0, Number(taskData.noImageSlidesCount ?? payload.noImageSlidesCount) || 0),
     };
-
-    // ── Forçamento estrito de slides de fundo preto (text_only) ──────────────
-    // Se o usuário solicitou N slides de fundo preto, garantir exatamente N.
-    if (taskData.noImageSlidesCount > 0 && spawnPayload.slides && spawnPayload.slides.length > 0) {
-      const totalS = spawnPayload.slides.length;
-      const target = Math.min(taskData.noImageSlidesCount, totalS);
-
-      // Contar quantos a IA já marcou como text_only
-      const currentTextOnly = spawnPayload.slides.filter(s => s.layout === 'text_only').length;
-
-      if (currentTextOnly < target) {
-        // Precisamos converter mais slides para text_only.
-        // Ordem de prioridade de candidatos: PS > CTA > Síntese > slides do fim para o início
-        const priority = ['PS', 'CTA', 'SINTESE', 'REFLEXÃO', 'SETUP'];
-        const candidates = [];
-
-        // Primeiro: slides com estado prioritário que ainda têm imagem
-        for (const p of priority) {
-          spawnPayload.slides.forEach((s, i) => {
-            if (s.layout !== 'text_only' && s.estado?.toUpperCase().includes(p)) {
-              candidates.push(i);
-            }
-          });
-        }
-
-        // Depois: slides do fim para o início que ainda têm imagem
-        for (let i = totalS - 1; i >= 0; i--) {
-          if (!candidates.includes(i) && spawnPayload.slides[i].layout !== 'text_only') {
-            candidates.push(i);
-          }
-        }
-
-        let remaining = target - currentTextOnly;
-        for (const idx of candidates) {
-          if (remaining <= 0) break;
-          spawnPayload.slides[idx].layout = 'text_only';
-          remaining--;
-        }
-
-      } else if (currentTextOnly > target) {
-        // A IA gerou mais text_only do que o pedido — restaurar alguns para 'fullbleed'
-        let excess = currentTextOnly - target;
-        for (let i = totalS - 1; i >= 0 && excess > 0; i--) {
-          if (spawnPayload.slides[i].layout === 'text_only') {
-            spawnPayload.slides[i].layout = 'fullbleed';
-            excess--;
-          }
-        }
-      }
-
-      logger.info('[QueueWorker]', `Distribuição final: ${spawnPayload.slides.filter(s => s.layout === 'text_only').length} slides fundo preto de ${totalS} totais (pedido: ${target})`);
-    }
 
     return new Promise((resolve) => {
       let settled = false;

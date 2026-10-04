@@ -4,6 +4,15 @@ import re
 from PIL import Image, ImageOps
 
 
+def rgba_to_hex(color) -> str:
+    """Converte uma tupla RGB(A) do Pillow em hex '#rrggbb' para uso no editor web."""
+    try:
+        r, g, b = color[0], color[1], color[2]
+        return f'#{int(r):02x}{int(g):02x}{int(b):02x}'
+    except Exception:
+        return '#ffffff'
+
+
 def clean_editorial_copy(value: str) -> str:
     """Remove marcas técnicas que nunca devem chegar à composição final."""
     text = str(value or '').replace(r'\n', '\n')

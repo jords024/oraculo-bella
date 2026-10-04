@@ -1,0 +1,62 @@
+{
+  "ref_id": "ref-20-pausa-tipografica-terrosa",
+  "schema": "bella-visual-reference-detail-v1",
+  "fonte": "Referência enviada pelo usuário: página marrom 'Relações mudam'",
+  "papel_no_carrossel": "síntese / pausa / cristalização da virada",
+  "layout_arquetipo": "pausa_tipografica_monocromatica_terrosa",
+  "papel_no_fluxo": "Retirar a imagem no momento certo para permitir que a descoberta respire e seja lembrada.",
+  "proporcao_original": { "pixels": "736x920", "aspect_ratio": "4:5", "destino_bella": "1080x1350" },
+  "resumo": "Página integralmente tipográfica sobre marrom argila texturizado. A pergunta de abertura é leve; a tese central usa serifa condensada monumental; o desenvolvimento retorna à sans e destaca apenas uma expressão em vinho.",
+  "imagem_de_fundo": {
+    "tipo": "campo cromático sem fotografia",
+    "cor": "marrom argila médio com variação tonal mínima",
+    "destaque": "a ausência de imagem cria contraste rítmico com as páginas vizinhas",
+    "espaco_negativo": "amplo topo e laterais; bloco central ocupa cerca de 58% da altura"
+  },
+  "textura": {
+    "grao": "papel áspero ou parede pigmentada com ruído analógico uniforme",
+    "profundidade": "manchas quase imperceptíveis, sem degradê digital",
+    "acabamento": "fosco, quente e tátil"
+  },
+  "paleta": {
+    "dominantes_extraidas": ["#7b613c", "#836a47", "#7e6440", "#9e8b70", "#b0a18a", "#c4b9a7", "#4e3021"],
+    "fundo": "argila/cacau claro",
+    "texto": "marfim envelhecido",
+    "acento": "vinho queimado"
+  },
+  "hierarquia": [
+    { "nivel": 1, "conteudo": "tese central", "tratamento": "serifa condensada itálica, caixa alta, grande e central" },
+    { "nivel": 2, "conteudo": "pergunta de abertura", "tratamento": "sans leve, média, acima da tese" },
+    { "nivel": 3, "conteudo": "desenvolvimento", "tratamento": "sans regular centralizada, várias linhas curtas" },
+    { "nivel": 4, "conteudo": "expressão de virada", "tratamento": "mesma sans em vinho, sem aumentar excessivamente" }
+  ],
+  "camadas": [
+    { "ordem": 1, "tipo": "papel-terroso", "cobertura": "100%" },
+    { "ordem": 2, "tipo": "pergunta", "cobertura": "topo central" },
+    { "ordem": 3, "tipo": "tese", "cobertura": "centro superior" },
+    { "ordem": 4, "tipo": "corpo", "cobertura": "centro inferior" },
+    { "ordem": 5, "tipo": "microassinaturas-e-seta", "cobertura": "base e cantos" }
+  ],
+  "composicao": {
+    "alinhamento": "central deliberado, usado como pausa e não como padrão do carrossel",
+    "largura_do_bloco": "aproximadamente 64% da página",
+    "ritmo": "pergunta leve → tese comprimida → explicação espaçada → acento curto",
+    "navegacao": "seta pequena no centro inferior"
+  },
+  "tipografia": {
+    "contraste": "sans geométrica versus serifa display condensada",
+    "cor": "marfim em quase todo o texto; vinho em uma expressão",
+    "entrelinha": "apertada na tese e confortável no desenvolvimento",
+    "regra": "a centralização só funciona porque a página anterior era assimétrica e imagética"
+  },
+  "energia_bella": "Terra — integração, sustentação e verdade que assenta",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar uma página monocromática como silêncio entre duas imagens",
+    "reservar serifa monumental para a síntese",
+    "destacar apenas a expressão que contém a virada",
+    "manter navegação e assinatura quase invisíveis"
+  ],
+  "adaptacao_bella": "Excelente para cristalizar uma verdade T.A.F.A depois de uma cena emocional. A cor do campo acompanha o elemento dominante do carrossel.",
+  "nao_copiar_literalmente": "Não repetir sempre fundo marrom e tese em duas linhas. Reutilizar monocromia, silêncio e contraste de vozes.",
+  "antipadrao": "Frase motivacional isolada, fundo perfeitamente liso, cinco destaques coloridos ou centralização repetida em todas as páginas."
+}

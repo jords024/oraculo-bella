@@ -1,0 +1,67 @@
+{
+  "ref_id": "ref-19-diptico-humano-colagem-papel",
+  "schema": "bella-visual-reference-detail-v1",
+  "fonte": "Referência enviada pelo usuário: díptico com rosto sorrindo e colagem de papéis",
+  "papel_no_carrossel": "redefinição / prova afetiva / tradução prática",
+  "layout_arquetipo": "diptico_fotografia_intima_e_papel_editorial",
+  "papel_no_fluxo": "Humanizar a tese e apresentar sua tradução prática sem transformar a lâmina em depoimento publicitário.",
+  "proporcao_original": { "pixels": "736x920", "aspect_ratio": "4:5", "destino_bella": "1080x1350" },
+  "resumo": "Metade esquerda ocupada por close fotográfico espontâneo; metade direita por papel claro texturizado. No centro, um quadrado de papel inclinado e preso com fita atravessa a divisão. A repetição da frase no topo e na base cria moldura conceitual.",
+  "imagem_de_fundo": {
+    "tipo": "díptico fotografia + papel",
+    "fotografia": "close parcial de rosto sorrindo, recorte radical, pele quente, grão alto e presença não posada",
+    "painel": "papel mineral claro com textura suave e ausência de borda explícita",
+    "destaque": "o papel central cruza os dois campos e impede que a divisão pareça uma grade rígida",
+    "espaco_negativo": "painel direito superior reservado para tese; base direita para refrão"
+  },
+  "textura": {
+    "fotografia": "grão cromático pesado, tons âmbar e vinho, leve perda de nitidez",
+    "painel": "papel reciclado claro, fibras discretas e ruído fino",
+    "colagem": "quadrado cinza-bege com duas fitas translúcidas no topo",
+    "imperfeicao": "rotação aproximada de -7 graus e bordas não perfeitamente paralelas"
+  },
+  "paleta": {
+    "dominantes_extraidas": ["#b0a492", "#d4cec2", "#cec8bc", "#642604", "#8f561e", "#220402", "#94755c"],
+    "tinta": "vinho escuro",
+    "pele": "âmbar queimado",
+    "papel": "cinza-bege e marfim frio"
+  },
+  "hierarquia": [
+    { "nivel": 1, "conteudo": "tese repetida", "tratamento": "serifa display itálica em caixa alta, grande, sublinhada, painel direito superior" },
+    { "nivel": 2, "conteudo": "explicação", "tratamento": "sans arredondada grande, centralizada no papel inclinado" },
+    { "nivel": 3, "conteudo": "frase introdutória e refrão", "tratamento": "sans média, uma no topo e outra na base" },
+    { "nivel": 4, "conteudo": "assinaturas e seta", "tratamento": "microtipografia periférica e círculo vinho" }
+  ],
+  "camadas": [
+    { "ordem": 1, "tipo": "foto-close", "cobertura": "41% à esquerda" },
+    { "ordem": 2, "tipo": "papel-base", "cobertura": "59% à direita" },
+    { "ordem": 3, "tipo": "tese-superior", "cobertura": "quadrante superior direito" },
+    { "ordem": 4, "tipo": "papel-inclinado", "cobertura": "centro, atravessando a divisão" },
+    { "ordem": 5, "tipo": "fitas", "cobertura": "borda superior do papel central" },
+    { "ordem": 6, "tipo": "texto-pratico", "cobertura": "papel central" },
+    { "ordem": 7, "tipo": "refrão-e-navegacao", "cobertura": "base direita" }
+  ],
+  "composicao": {
+    "divisao": "vertical fora do centro, aproximadamente 41/59",
+    "foto": "rosto ultrapassa limites do quadro; olhos e sorriso não aparecem inteiros ao mesmo tempo",
+    "papel_central": "x=245-665, y=365-755 no original, rotação negativa",
+    "tensao": "calor humano à esquerda versus clareza conceitual à direita",
+    "costura": "o papel central e a cor vinho atravessam os dois mundos"
+  },
+  "tipografia": {
+    "display": "serifa condensada e itálica, caixa alta",
+    "texto_pratico": "sans geométrica arredondada, pesos regular e bold",
+    "sublinhado": "somente na negação decisiva",
+    "regra": "repetição textual funciona como refrão, não como redundância acidental"
+  },
+  "energia_bella": "Éter relacional — presença, cuidado e reciprocidade traduzidos em linguagem concreta",
+  "parametros_reaproveitaveis_sem_engessar": [
+    "usar díptico para colocar experiência humana e compreensão em diálogo",
+    "cruzar a divisão com uma terceira camada física",
+    "trabalhar close parcial verdadeiro em vez de retrato central",
+    "repetir uma tese curta como refrão em pontos distintos"
+  ],
+  "adaptacao_bella": "A fotografia pode mostrar mãos, abraço, escuta ou gesto compartilhado, não necessariamente rosto. O painel pode usar matéria elemental coerente com o tema.",
+  "nao_copiar_literalmente": "Não repetir metade de rosto sorrindo e papel quadrado colado. Reutilizar díptico + camada-ponte + contraste humano/conceitual.",
+  "antipadrao": "Antes/depois comercial, retrato de banco, divisão 50/50 rígida, card perfeitamente alinhado e excesso de fita decorativa."
+}

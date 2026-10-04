@@ -13,16 +13,31 @@ function readJson(filename, fallback = {}) {
 export function getBellaVisualReferenceContract() {
   const index = readJson('index.json', { arquivos: [], principios_transversais_de_flow: {} });
   const references = (index.arquivos || []).map(filename => readJson(filename, null)).filter(Boolean);
+  const designDna = index.dna ? readJson(index.dna, {}) : {};
+  const sequenceContract = index.sequence_contract ? readJson(index.sequence_contract, {}) : {};
   return {
     library: index.biblioteca || 'bella-visual-flow-references',
     objective: index.objetivo || '',
     flowPrinciples: index.principios_transversais_de_flow || {},
+    designDna,
+    sequenceContract,
     references: references.map(reference => ({
       id: reference.ref_id,
       role: reference.papel_no_carrossel,
       archetype: reference.layout_arquetipo,
       purpose: reference.papel_no_fluxo,
       reusableParameters: reference.parametros_reaproveitaveis_sem_engessar,
+      elementalEnergy: reference.energia_bella || null,
+      composition: reference.composicao || null,
+      typography: reference.tipografia || null,
+      palette: reference.paleta || null,
+      imageLanguage: reference.linguagem_de_imagem || null,
+      backgroundImage: reference.imagem_de_fundo || null,
+      texture: reference.textura || null,
+      hierarchy: reference.hierarquia || null,
+      layers: reference.camadas || null,
+      originalRatio: reference.proporcao_original || null,
+      bellaAdaptation: reference.adaptacao_bella || null,
       doNotCopy: reference.nao_copiar_literalmente,
       antiPattern: reference.antipadrao || reference.por_que_falha || null
     }))

@@ -72,6 +72,18 @@ export function parseIdeasFromText(text) {
 
 export const TEMPLATES = [
   {
+    id: 'bella_tipografico',
+    label: 'Bella — Tipográfico',
+    badge: 'Aa Tipográfico',
+    format: 'TAFA',
+    color: '#C65E24',
+    desc: 'Design de revista: tipografia em vozes (leve, serifa monumental, itálico), fragmentos, caixas de destaque e capa fotográfica analógica.',
+    icon: 'Aa', shortName: 'Tipográfico', accentRgb: '198, 94, 36',
+    welcomeTitle: 'A copy já nasce desenhada',
+    welcomeDescription: 'Cada lâmina ganha seu próprio desenho tipográfico: escala crescente, palavra-conceito em serifa, fragmentos de fala e capa fotográfica com espaço real para as letras.',
+    suggestions: ['Pare de medir sua vida com a régua dos outros', 'Seu descanso chamado de abandono', 'A mulher que responde o que não é dela']
+  },
+  {
     id: 'bella_essencial',
     label: 'Bella — Essencial',
     badge: '● Essencial',
