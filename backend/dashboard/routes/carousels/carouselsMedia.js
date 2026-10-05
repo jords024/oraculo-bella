@@ -50,67 +50,138 @@ router.get("/api/carousels/:id/image/:filename", async (req, res) => {
     res.setHeader("Cache-Control", "public, max-age=86400, must-revalidate");
   }
 
-  // Se o carrossel foi de fato enviado ao MinIO (possui b2BaseUrl, slides com url ou slidesDir b2://)
-  const isUploadedToB2 = c.b2BaseUrl || (c.slides && c.slides.length > 0 && typeof c.slides[0] === 'object' && c.slides[0].url) || (c.slidesDir && c.slidesDir.startsWith("b2://"));
+  const safeFilename = path.basename(req.params.filename);
+  const ext = path.extname(safeFilename).toLowerCase();
+  const contentType = ext === ".png" ? "image/png" : "image/jpeg";
 
-  if (isUploadedToB2 && b2) {
-    try {
-      const stream = await b2.getImageStream(c.id, req.params.filename);
-      res.setHeader("Content-Type", "image/jpeg");
-      return stream.pipe(res);
-    } catch (err) {
-      logger.warn('[Carousel Image]', `Imagem não encontrada no B2 para ${c.id}/${req.params.filename}, tentando local: ${err.message}`);
-    }
+  // 1. Prioridade absoluta: servir diretamente do volume local persistente (/app/storage/carousels/...)
+  let localDir = getLocalSlidesDir(c);
+  if (!localDir && c.id) {
+    const baseStorage = path.resolve(__dirname, '..', '..', 'storage', 'carousels');
+    localDir = path.join(baseStorage, c.id);
   }
 
-  const localDir = getLocalSlidesDir(c);
-  if (!localDir) return res.status(404).send("Diretório local não encontrado");
-  
-  let imgPath = path.join(localDir, req.params.filename);
-  if (!fs.existsSync(imgPath)) {
+  let imgPath = localDir ? path.join(localDir, safeFilename) : null;
+  if (imgPath && !fs.existsSync(imgPath) && fs.existsSync(localDir)) {
     // Procura arquivos correspondentes ao slide no diretório
-    if (fs.existsSync(localDir)) {
-      try {
-        const reqBase = req.params.filename.replace(/\.(jpg|jpeg|png)$/i, '');
-        const files = fs.readdirSync(localDir);
-        const match = files.find(f => {
-          const fBase = f.replace(/\.(jpg|jpeg|png)$/i, '');
-          return f === req.params.filename || fBase === reqBase || f.startsWith(`${reqBase}-`) || f.startsWith(`${reqBase}_`);
-        });
-        if (match) {
-          imgPath = path.join(localDir, match);
+    try {
+      const reqBase = safeFilename.replace(/\.(jpg|jpeg|png)$/i, '');
+      const files = fs.readdirSync(localDir);
+      const match = files.find(f => {
+        const fBase = f.replace(/\.(jpg|jpeg|png)$/i, '');
+        return f === safeFilename || fBase === reqBase || f.startsWith(`${reqBase}-`) || f.startsWith(`${reqBase}_`);
+      });
+      if (match) {
+        imgPath = path.join(localDir, match);
+      }
+    } catch {}
+  }
+
+  if (imgPath && fs.existsSync(imgPath)) {
+    res.setHeader("Content-Type", contentType);
+    return res.sendFile(imgPath);
+  }
+
+  // 2. Fallback resiliente: se não encontrado no volume local, buscar no MinIO/B2
+  if (b2) {
+    try {
+      const stream = await b2.getImageStream(c.id, safeFilename);
+      if (stream) {
+        res.setHeader("Content-Type", contentType);
+        // Persistir no volume local para que requisições subsequentes sejam instantâneas
+        if (localDir) {
+          try {
+            fs.mkdirSync(localDir, { recursive: true });
+            const cachePath = path.join(localDir, safeFilename);
+            const chunks = [];
+            stream.on("data", chunk => chunks.push(chunk));
+            stream.on("end", () => {
+              try { fs.writeFileSync(cachePath, Buffer.concat(chunks)); } catch {}
+            });
+          } catch {}
         }
-      } catch {}
+        return stream.pipe(res);
+      }
+    } catch (err) {
+      logger.warn('[Carousel Image]', `Imagem não encontrada no B2 para ${c.id}/${safeFilename}, tentando local: ${err.message}`);
     }
   }
 
-  if (!fs.existsSync(imgPath)) return res.status(404).send("Imagem não encontrada");
-  
-  res.setHeader("Content-Type", "image/jpeg");
-  res.sendFile(imgPath);
+  return res.status(404).send("Imagem não encontrada");
 });
 
 // ── API: Download single slide image ─────────────────────────────────────────
 router.get("/api/carousels/:id/download/:filename", async (req, res) => {
   const c = await getCarouselById(req.params.id);
   if (!c) return res.status(404).send("Não encontrado");
-  const imgPath = path.join(getLocalSlidesDir(c), req.params.filename);
-  if (!fs.existsSync(imgPath)) return res.status(404).send("Imagem não encontrada");
-  res.setHeader("Content-Disposition", `attachment; filename="${req.params.filename}"`);
-  res.sendFile(imgPath);
+  const safeFilename = path.basename(req.params.filename);
+
+  let localDir = getLocalSlidesDir(c);
+  if (!localDir && c.id) {
+    const baseStorage = path.resolve(__dirname, '..', '..', 'storage', 'carousels');
+    localDir = path.join(baseStorage, c.id);
+  }
+
+  let imgPath = localDir ? path.join(localDir, safeFilename) : null;
+  if (imgPath && fs.existsSync(imgPath)) {
+    res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`);
+    return res.sendFile(imgPath);
+  }
+
+  // Fallback para MinIO/B2 se não estiver no disco local
+  if (b2) {
+    try {
+      const stream = await b2.getImageStream(c.id, safeFilename);
+      if (stream) {
+        res.setHeader("Content-Disposition", `attachment; filename="${safeFilename}"`);
+        res.setHeader("Content-Type", safeFilename.toLowerCase().endsWith(".png") ? "image/png" : "image/jpeg");
+        return stream.pipe(res);
+      }
+    } catch (err) {
+      logger.warn('[Carousel Download]', `Slide não encontrado no B2 para download ${c.id}/${safeFilename}: ${err.message}`);
+    }
+  }
+
+  return res.status(404).send("Imagem não encontrada");
 });
 
 // ── API: Read slide meta ─────────────────────────────────────────────────────
 router.get("/api/carousels/:id/slide/:filename/meta", async (req, res) => {
   const c = await getCarouselById(req.params.id);
   if (!c) return res.status(404).json({ error: "Não encontrado" });
-  const metaPath = path.join(getLocalSlidesDir(c), req.params.filename.replace(/\.(jpg|jpeg|png)$/i, ".meta.json"));
-  if (!fs.existsSync(metaPath)) return res.json({ title: "", body: "", layout: "fullbleed" });
-  try {
-    res.json(JSON.parse(fs.readFileSync(metaPath, "utf-8")));
-  } catch {
-    res.json({ title: "", body: "", layout: "fullbleed" });
+  const safeFilename = path.basename(req.params.filename);
+
+  let localDir = getLocalSlidesDir(c);
+  if (!localDir && c.id) {
+    const baseStorage = path.resolve(__dirname, '..', '..', 'storage', 'carousels');
+    localDir = path.join(baseStorage, c.id);
   }
+
+  const metaFilename = safeFilename.replace(/\.(jpg|jpeg|png)$/i, ".meta.json");
+  const metaPath = localDir ? path.join(localDir, metaFilename) : null;
+
+  if (metaPath && fs.existsSync(metaPath)) {
+    try {
+      return res.json(JSON.parse(fs.readFileSync(metaPath, "utf-8")));
+    } catch {
+      return res.json({ title: "", body: "", layout: "fullbleed" });
+    }
+  }
+
+  // Fallback para MinIO/B2 se não estiver no disco local
+  if (b2) {
+    try {
+      const stream = await b2.getImageStream(c.id, metaFilename);
+      if (stream) {
+        const chunks = [];
+        for await (const chunk of stream) chunks.push(chunk);
+        const metaObj = JSON.parse(Buffer.concat(chunks).toString("utf-8"));
+        return res.json(metaObj);
+      }
+    } catch {}
+  }
+
+  return res.json({ title: "", body: "", layout: "fullbleed" });
 });
 
 // ── API: Save editable slide document ───────────────────────────────────────

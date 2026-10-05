@@ -1171,11 +1171,7 @@ router.post("/api/escala/criar-mock", async (req, res) => {
             } catch (err) {
               logger.error('[Carousel mock upload]', `Falha no upload de ${filename} para o MinIO: ${err.message}`);
             }
-
-            try { fs.unlinkSync(file); } catch {}
           }
-
-          try { fs.rmdirSync(outDir); } catch {}
         } else {
           for (const { num, estado, filename } of generatedFiles) {
             currentSlidesList.push(filename);

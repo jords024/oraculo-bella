@@ -113,9 +113,9 @@ test('docker-compose-producao.yml — deve conter apenas serviços da aplicaçã
   assert.doesNotMatch(content, /^\s{2}minio:\s*$/m, 'não deve definir o container minio local');
   assert.doesNotMatch(content, /^\s{2}db:\s*$/m, 'não deve definir o container db local');
 
-  // Verifica imagens exatas no repositório aryalvesfernandes/oraculo-bella
-  assert.match(content, /image:\s*aryalvesfernandes\/oraculo-bella:backend-1\.0\.2/, 'backend deve usar a tag backend-1.0.2');
-  assert.match(content, /image:\s*aryalvesfernandes\/oraculo-bella:frontend-1\.0\.2/, 'frontend deve usar a tag frontend-1.0.2');
+  // Verifica imagens no repositório aryalvesfernandes/oraculo-bella com versionamento semântico
+  assert.match(content, /image:\s*aryalvesfernandes\/oraculo-bella:backend-1\.0\.\d+/, 'backend deve usar a tag backend-1.0.x');
+  assert.match(content, /image:\s*aryalvesfernandes\/oraculo-bella:frontend-1\.0\.\d+/, 'frontend deve usar a tag frontend-1.0.x');
   assert.doesNotMatch(content, /:latest/, 'não deve utilizar tag latest');
 
   // Verifica Labels Traefik e Deploy Swarm

@@ -223,6 +223,26 @@ export function initCarouselQueueWorker() {
             retryCount: updatedRetryCount
           });
 
+          // Se MinIO/B2 estiver configurado, sincroniza os slides como backup na nuvem (sem remover do disco local)
+          if (b2 && isAllOk && slides.length > 0) {
+            const actualDir = donePayload?.slides_dir || getLocalSlidesDir(cRecord);
+            if (actualDir && fs.existsSync(actualDir)) {
+              for (const slideFile of slides) {
+                const fullPath = path.join(actualDir, slideFile);
+                if (fs.existsSync(fullPath)) {
+                  b2.uploadImageToB2(carouselId, slideFile, fullPath).catch(err => {
+                    logger.warn('[QueueWorker]', `Falha no upload B2 do slide ${slideFile}: ${err.message}`);
+                  });
+                  const metaFilename = slideFile.replace(/\.(jpg|jpeg|png)$/i, ".meta.json");
+                  const metaPath = path.join(actualDir, metaFilename);
+                  if (fs.existsSync(metaPath)) {
+                    b2.uploadImageToB2(carouselId, metaFilename, metaPath).catch(() => {});
+                  }
+                }
+              }
+            }
+          }
+
           // Registrar no extrato financeiro (usage_costs)
           await recordUsageCost({
             type: isRetry ? 'carousel_retry' : 'carousel_generation',

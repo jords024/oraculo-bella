@@ -9,6 +9,7 @@
     "dashboard": "node dashboard/server.js",
     "sync": "node sync-b2.js",
     "lint": "eslint . --ignore-pattern node_modules/",
+    "test": "node --test tests/**/*.test.js",
     "test:e2e": "playwright test",
     "security:check": "node scripts/security_check.mjs",
     "security:audit": "node scripts/security_check.mjs",
