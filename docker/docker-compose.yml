@@ -11,7 +11,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-123456}
       POSTGRES_DB: ${DB_NAME:-oracle_manager}
     ports:
-      - "${DB_PORT:-5432}:5432"
+      - "${DB_HOST_PORT:-5434}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -61,6 +61,9 @@ services:
       VITE_BACKEND_URL: http://backend:3131
     ports:
       - "${FRONTEND_PORT:-5177}:5176"
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
     networks:
       - oraculo-network
 

@@ -4,20 +4,33 @@ let activeLocks = 0;
 let originalOverflow = '';
 let originalTouchAction = '';
 
+export const isScrollAllowedTarget = (target) => {
+  if (typeof document !== 'undefined' && document.querySelector('.slide-studio')) {
+    return true;
+  }
+  if (!target) return false;
+  const isElement = typeof Element !== 'undefined' ? target instanceof Element : typeof target?.closest === 'function';
+  const element = isElement ? target : target.parentElement;
+  if (!element || typeof element.closest !== 'function') return false;
+  return Boolean(
+    element.closest('.form-box') ||
+    element.closest('.edit-box') ||
+    element.closest('.cancel-modal-panel') ||
+    element.closest('.modal-content-scroll') ||
+    element.closest('.image-details-modal-box') ||
+    element.closest('.lib-details-panel') ||
+    element.closest('.custom-modal-scroll') ||
+    element.closest('.studio-workspace') ||
+    element.closest('.studio-panel') ||
+    element.closest('.studio-tools') ||
+    element.closest('.studio-page-strip') ||
+    element.closest('.slide-studio')
+  );
+};
+
 const handleWheelPrevent = (e) => {
   if (activeLocks <= 0) return;
-  const target = e.target;
-  // Permite scroll somente se estiver dentro de uma área rolável do modal
-  const insideScrollable = target && (
-    target.closest('.form-box') ||
-    target.closest('.edit-box') ||
-    target.closest('.cancel-modal-panel') ||
-    target.closest('.modal-content-scroll') ||
-    target.closest('.image-details-modal-box') ||
-    target.closest('.lib-details-panel') ||
-    target.closest('.custom-modal-scroll')
-  );
-  if (!insideScrollable) {
+  if (!isScrollAllowedTarget(e.target)) {
     e.preventDefault();
   }
 };

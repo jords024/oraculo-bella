@@ -174,7 +174,10 @@ export async function writeDataAsync(data) {
 
 export async function getCarouselById(id) {
   try {
-    const res = await query("SELECT * FROM carousels WHERE id = $1", [id]);
+    const res = await query(
+      "SELECT * FROM carousels WHERE id = $1 OR slides_dir LIKE '%' || $1 OR slides_dir = $1 LIMIT 1",
+      [id]
+    );
     if (res.rows.length === 0) return null;
     return mapCarouselFromDb(res.rows[0]);
   } catch (err) {

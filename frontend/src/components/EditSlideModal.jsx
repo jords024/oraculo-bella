@@ -61,7 +61,7 @@ export default function EditSlideModal({
     }
   }, [isOpen, carouselId, filename, cacheBuster]);
 
-  useScrollLock(isOpen);
+  useScrollLock(isOpen && activeTab !== 'text');
 
   const handleImageError = () => {
     const token = encodeURIComponent(localStorage.getItem('fo_token') || '');

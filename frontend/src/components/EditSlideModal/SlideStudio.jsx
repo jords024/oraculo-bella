@@ -5,6 +5,7 @@ import {
   alignElements, boundsOf, clampMove, cloneWithNewGroups, distributeElements, expandToGroups, groupElements, groupHue,
   groupMembers, isPickable, normalizeRect, pickInRect, renameGroup, scaleElements, snapMove, ungroupElements
 } from './studioSelection';
+import { calculateFitZoom, calculateWheelDelta, computeNextZoom, createSmoothScroller, findClosestPageFilename, shouldRenderLine } from './slideWheelHelper';
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const makeId = type => `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -267,8 +268,9 @@ function ElementView({ element, layerIndex, selected, multi, scale, cropMode, on
 
 const loadCanvasImage = source => new Promise((resolve, reject) => {
   const image = new Image();
+  image.crossOrigin = 'anonymous';
   image.onload = () => resolve(image);
-  image.onerror = () => reject(new Error('Não foi possível carregar uma imagem da composição.'));
+  image.onerror = () => reject(new Error(`Não foi possível carregar uma imagem da composição (${source})`));
   image.src = withToken(source);
 });
 
@@ -289,6 +291,9 @@ const wrapCanvasText = (context, text, maxWidth) => {
 };
 
 async function renderDocument(documentState) {
+  if (typeof document !== 'undefined' && document.fonts?.ready) {
+    try { await document.fonts.ready; } catch {}
+  }
   const canvas = document.createElement('canvas');
   canvas.width = CANVAS_WIDTH;
   canvas.height = CANVAS_HEIGHT;
@@ -344,7 +349,13 @@ async function renderDocument(documentState) {
         }
       }
     } else if (element.type === 'image' && element.src) {
-      const image = await loadCanvasImage(element.src);
+      let image = null;
+      try {
+        image = await loadCanvasImage(element.src);
+      } catch (imageErr) {
+        console.warn(`[SlideStudio] Erro ao carregar imagem para renderização (${element.id}):`, imageErr);
+      }
+      if (!image) continue;
       if (Number(element.radius) > 0) {
         context.beginPath();
         context.roundRect(element.x, element.y, element.width, element.height, Math.min(Number(element.radius), element.width / 2, element.height / 2));
@@ -373,7 +384,12 @@ async function renderDocument(documentState) {
       context.textAlign = element.align || 'left';
       const x = element.align === 'center' ? element.x + element.width / 2 : element.align === 'right' ? element.x + element.width : element.x;
       const lineHeight = size * (Number(element.lineHeight) || 1.2);
-      wrapCanvasText(context, element.content, element.width).forEach((line, index) => { if (index * lineHeight < element.height) context.fillText(line, x, element.y + index * lineHeight); });
+      const lines = wrapCanvasText(context, element.content, element.width + 12);
+      lines.forEach((line, index) => {
+        if (shouldRenderLine(index, size, lineHeight, element.height)) {
+          context.fillText(line, x, element.y + index * lineHeight);
+        }
+      });
     }
     context.restore();
   }
@@ -419,7 +435,62 @@ export default function SlideStudio({ carouselId, slides = [], initialFilename, 
   const uploadIntentRef = useRef('smart');
   const elementClipboardRef = useRef(null);
   const pageClipboardRef = useRef(null);
-  const layerAnchorRef = useRef(null);
+  const workspaceRef = useRef(null);
+  const scrollerRef = useRef(null);
+  if (!scrollerRef.current) {
+    scrollerRef.current = createSmoothScroller(() => workspaceRef.current, { factor: 0.28, minStep: 0.5 });
+  }
+
+  useEffect(() => {
+    return () => scrollerRef.current?.stop();
+  }, []);
+
+  const handleWorkspaceWheel = useCallback(event => {
+    // Zoom com Ctrl ou Meta + wheel
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+      setZoom(currentZoom => computeNextZoom(currentZoom, event.deltaY));
+      return;
+    }
+
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+
+    // Rolagem horizontal ágil com Shift
+    if (event.shiftKey) {
+      const rawDelta = event.deltaX || event.deltaY;
+      if (rawDelta !== 0) {
+        event.preventDefault();
+        const delta = calculateWheelDelta(rawDelta, event.deltaMode, workspace.clientWidth, 2.4);
+        scrollerRef.current?.scrollBy(delta, 0);
+      }
+      return;
+    }
+
+    // Rolagem vertical rápida, responsiva e fluida com acúmulo de inércia
+    if (event.deltaY !== 0) {
+      event.preventDefault();
+      const delta = calculateWheelDelta(event.deltaY, event.deltaMode, workspace.clientHeight, 2.4);
+      scrollerRef.current?.scrollBy(0, delta);
+    }
+  }, []);
+
+  const handleFitToScreen = useCallback(() => {
+    const workspace = workspaceRef.current;
+    if (!workspace) return;
+    const fit = calculateFitZoom(workspace.clientHeight, workspace.clientWidth);
+    setZoom(fit);
+  }, []);
+
+  useEffect(() => {
+    if (loading) return;
+    // Ajusta o zoom automaticamente ao tamanho da tela para que a lâmina inteira caiba verticalmente sem cortes
+    const workspace = workspaceRef.current;
+    if (workspace && workspace.clientHeight > 0) {
+      const fit = calculateFitZoom(workspace.clientHeight, workspace.clientWidth);
+      setZoom(fit);
+    }
+  }, [loading]);
 
   useEffect(() => { documentsRef.current = documents; }, [documents]);
   useEffect(() => { showToastRef.current = showToast; }, [showToast]);
@@ -906,7 +977,10 @@ export default function SlideStudio({ carouselId, slides = [], initialFilename, 
     } catch (error) { showToast?.(error.message || 'Não foi possível salvar o documento.', 'error'); }
     finally { setSaving(false); }
   };
-  const scrollToPage = pageFilename => { activatePage(pageFilename); pageRefs.current[pageFilename]?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  const scrollToPage = pageFilename => {
+    activatePage(pageFilename);
+    pageRefs.current[pageFilename]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
 
   const selectionBox = multi ? boundsOf(selectedElements) : null;
   const partialGroups = activeDocument ? selectedGroupIds.filter(id => id !== wholeGroup).map(id => {
@@ -1023,7 +1097,12 @@ export default function SlideStudio({ carouselId, slides = [], initialFilename, 
             </div> : <div className="studio-empty-state">Clique em qualquer texto, imagem ou forma. Selecionar nunca altera o design.</div>}
           </>}
         </aside>
-        <main className="studio-workspace" onPointerDown={() => setSelectedId(null)}><div className="studio-pages-column">{pages.map((page, index) => {
+        <main
+          ref={workspaceRef}
+          className="studio-workspace"
+          onWheel={handleWorkspaceWheel}
+          onPointerDown={() => { scrollerRef.current?.stop(); setSelectedId(null); }}
+        ><div className="studio-pages-column">{pages.map((page, index) => {
           const pageDocument = documents[page.filename]; if (!pageDocument) return null;
           const editableElements = pageDocument.elements.filter(element => element.id !== 'background');
           const pageLocked = editableElements.length > 0 && editableElements.every(element => element.locked);
@@ -1033,7 +1112,7 @@ export default function SlideStudio({ carouselId, slides = [], initialFilename, 
             {guides?.page === page.filename && <>{guides.x != null && <i className="studio-guide vertical" style={{ left: guides.x, width: 2 / scale }} />}{guides.y != null && <i className="studio-guide horizontal" style={{ top: guides.y, height: 2 / scale }} />}</>}
             {marquee?.page === page.filename && <div className="studio-marquee" style={{ left: marquee.x, top: marquee.y, width: marquee.width, height: marquee.height, borderWidth: 1.5 / scale }} />}
           </div></div></section>;
-        })}</div><div className="studio-zoom"><button type="button" onClick={() => setZoom(value => clamp(value - 5, 20, 65))}>−</button><span>{zoom}%</span><button type="button" onClick={() => setZoom(value => clamp(value + 5, 20, 65))}>+</button></div></main>
+        })}</div><div className="studio-zoom" role="toolbar" aria-label="Controles de zoom"><button type="button" onClick={() => setZoom(value => clamp(value - 5, 20, 65))} title="Diminuir zoom">−</button><button type="button" className="studio-zoom-value" onClick={handleFitToScreen} title="Ajustar à tela">{zoom}%</button><button type="button" onClick={() => setZoom(value => clamp(value + 5, 20, 65))} title="Aumentar zoom">+</button><button type="button" className="studio-zoom-fit" onClick={handleFitToScreen} title="Ajustar tamanho à tela">⛶ Ajustar</button></div></main>
       </div>
       <footer className="studio-pages"><div className="studio-page-strip">{pages.map((page, index) => <button type="button" key={page.filename} className={`studio-page-thumb ${activeFilename === page.filename ? 'active' : ''}`} onClick={() => scrollToPage(page.filename)}><img src={page.imageUrl} alt={`Lâmina ${index + 1}`} /><span>{index + 1}</span></button>)}</div><span className="studio-tip">T texto · Ctrl+clique ou arraste no vazio seleciona vários · Ctrl+G agrupa · Ctrl+A tudo · Alt solta os ímãs · Shift+seta move 10 px</span></footer>
     </div>

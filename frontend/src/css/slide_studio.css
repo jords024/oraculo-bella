@@ -7,6 +7,7 @@
   grid-template-rows: 64px minmax(0, 1fr) 92px;
   background: #0b0b0d;
   color: #f4f1ec;
+  touch-action: auto;
 }
 
 .studio-topbar {
@@ -38,7 +39,7 @@
 .studio-save-button { color: #17100b; background: #e6a270; border: 1px solid #f0b68b; }
 .studio-save-button:disabled { opacity: .55; cursor: wait; }
 
-.studio-main { position: relative; min-height: 0; display: grid; grid-template-columns: 78px 308px minmax(0, 1fr); }
+.studio-main { position: relative; min-height: 0; height: 100%; max-height: 100%; display: grid; grid-template-columns: 78px 308px minmax(0, 1fr); overflow: hidden; }
 .studio-tools { padding: 12px 8px; border-right: 1px solid #242429; background: #101012; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; }
 .studio-tools button {
   min-height: 51px; border: 0; border-radius: 9px; background: transparent; color: #92929b;
@@ -96,9 +97,9 @@
 .studio-layer:hover { background: #1f1f23; }
 .studio-layer.selected { border-color: #744632; background: #2a2020; color: white; }
 
-.studio-workspace { position: relative; min-width: 0; min-height: 0; overflow: auto; padding: 76px 28px 28px; background-color: #08080a; background-image: radial-gradient(#232329 1px, transparent 1px); background-size: 22px 22px; scroll-behavior: smooth; }
+.studio-workspace { position: relative; min-width: 0; min-height: 0; height: 100%; max-height: 100%; overflow-y: auto; overflow-x: auto; padding: 76px 28px 28px; background-color: #08080a; background-image: radial-gradient(#232329 1px, transparent 1px); background-size: 22px 22px; overscroll-behavior: contain; touch-action: pan-x pan-y; will-change: scroll-position; -webkit-overflow-scrolling: touch; }
 .studio-pages-column { width: max-content; min-width: 100%; display: flex; flex-direction: column; align-items: center; gap: 34px; padding: 6px 0 80px; }
-.studio-page-block { padding: 10px; border: 1px solid transparent; border-radius: 9px; scroll-margin-top: 20px; transition: border-color .15s ease, background .15s ease; }
+.studio-page-block { padding: 10px; border: 1px solid transparent; border-radius: 9px; scroll-margin-top: 40px; transition: border-color .15s ease, background .15s ease; }
 .studio-page-block.active { border-color: #3a3433; background: rgba(255,255,255,.025); }
 .studio-page-label { min-height: 34px; display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; color: #8c8990; font-size: 10px; font-weight: 700; }
 .studio-page-label > div { display: flex; align-items: center; gap: 8px; min-height: 26px; }
@@ -137,7 +138,12 @@
 .studio-element.crop-mode { outline: 5px solid #f0a36f; outline-offset: -5px; }
 .studio-crop-badge { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); min-width: max-content; padding: 9px 13px; border-radius: 6px; background: rgba(20,15,13,.88); color: #f8dfce; font: 600 15px Arial, sans-serif; pointer-events: none; }
 .studio-zoom { position: fixed; right: 24px; bottom: 108px; z-index: 5; height: 34px; display: flex; align-items: center; overflow: hidden; border: 1px solid #303036; border-radius: 8px; background: #17171a; box-shadow: 0 8px 24px rgba(0,0,0,.3); }
-.studio-zoom button { width: 34px; height: 100%; border: 0; background: transparent; color: #d8d6d1; cursor: pointer; }
+.studio-zoom button { width: 34px; height: 100%; border: 0; background: transparent; color: #d8d6d1; cursor: pointer; transition: background .15s, color .15s; }
+.studio-zoom button:hover { background: #26262d; color: #ffffff; }
+.studio-zoom .studio-zoom-value { width: auto; min-width: 44px; padding: 0 6px; text-align: center; color: #b2b2ba; font-size: 10.5px; font-weight: 600; }
+.studio-zoom .studio-zoom-value:hover { color: #f0d2bf; }
+.studio-zoom .studio-zoom-fit { width: auto; padding: 0 10px; border-left: 1px solid #292931; color: #e2ccbc; font-size: 10.5px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+.studio-zoom .studio-zoom-fit:hover { background: #2a201d; color: #ffd8bf; }
 .studio-zoom span { min-width: 48px; text-align: center; color: #92929a; font-size: 10px; }
 
 .studio-pages { position: relative; display: flex; align-items: center; justify-content: center; gap: 14px; padding: 8px 18px; border-top: 1px solid #27272c; background: #111114; }

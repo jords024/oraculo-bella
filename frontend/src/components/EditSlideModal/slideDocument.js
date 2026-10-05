@@ -136,6 +136,15 @@ const uniqueIds = elements => {
   });
 };
 
+export const resolveImageSource = (element, rawImageUrl = '') => {
+  if (element.type !== 'image') return element.src;
+  // Se for camada crua/fundo original ou apontar para imagem raw do carrossel, sincroniza com rawImageUrl válido
+  if (element.sourceRole === 'raw' || (element.id === 'background' && (!element.src || element.src.includes('/image/raw-')))) {
+    return rawImageUrl || element.src;
+  }
+  return element.src || (element.id === 'background' ? rawImageUrl : '');
+};
+
 export const createSlideDocument = (meta = {}, rawImageUrl = '', finalImageUrl = '') => {
   const migratedEssential = essentialDevelopmentMigration(meta, rawImageUrl);
   if (migratedEssential) return migratedEssential;
@@ -147,9 +156,7 @@ export const createSlideDocument = (meta = {}, rawImageUrl = '', finalImageUrl =
       height: CANVAS_HEIGHT,
       elements: uniqueIds(meta.design.elements.map(element => ({
         ...element,
-        src: element.type === 'image'
-          ? (element.src || (element.sourceRole === 'raw' || element.id === 'background' ? rawImageUrl : ''))
-          : element.src
+        src: resolveImageSource(element, rawImageUrl)
       })))
     };
   }

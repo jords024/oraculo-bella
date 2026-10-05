@@ -53,7 +53,7 @@ export default function Lightbox({ isOpen, onClose, carouselId, slides = [], ini
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
     const now = Date.now();
-    if (now - lastScrollTimeRef.current < 220) return; // Cooldown de 220ms
+    if (now - lastScrollTimeRef.current < 120) return; // Cooldown ágil de 120ms para passar slides rapidamente
 
     // Captura qualquer variação de scroll vertical (deltaY) ou horizontal (deltaX)
     const deltaY = e.deltaY;
