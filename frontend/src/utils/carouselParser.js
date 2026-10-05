@@ -11,7 +11,8 @@ export function parseCarouselText(text, fallbackData = null) {
   const pracaMatch = t.match(/PRA[ÇC]A:\s*(.+)/i);
   const bigIdea = t.match(/BIG IDEA:\s*(.+)/i);
   const revisorMatch = t.match(/TOTAL:\s*([\d]+\/15)/i);
-  const captionMatch = t.match(/CAPTION[^:\n]*:\s*\n([\s\S]+?)(?=\n━|\nCTA TRIBAL|\nREVISÃO AUTÔNOMA|\n---|$)/i);
+  // Aceita "CAPTION:" (formato antigo) e "## CAPTION" sem dois-pontos (Oráculo Simples), que termina em "## CTA TRIBAL".
+  const captionMatch = t.match(/^[#*\s]*CAPTION[^:\n]*:?[ \t]*\n([\s\S]+?)(?=\n━|\n#{1,3}\s*CTA|\nCTA TRIBAL|\nREVISÃO AUTÔNOMA|\n---|(?![\s\S]))/im);
   const ctaMatch = t.match(/CTA TRIBAL:\s*"([^"\n]+)"/i);
   
   // Se houver fallbackData, usamos o título original do formulário. Caso contrário, tenta do Match, senão fallback final.

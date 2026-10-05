@@ -25,6 +25,10 @@ COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
+# Chromium para a curadoria por BUSCA no Pinterest. Falhar aqui não derruba a imagem: a busca cai para IA
+# e a fonte "Minhas pastas" (RSS, sem navegador) continua funcionando.
+RUN playwright install --with-deps chromium || echo "AVISO: Chromium nao instalado; a busca do Pinterest usara IA"
+
 # Instala dependências Node
 COPY backend/package*.json ./
 RUN npm ci --omit=dev

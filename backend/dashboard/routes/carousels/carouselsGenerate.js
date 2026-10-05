@@ -26,7 +26,7 @@ import {
 import { logger } from '../../logger.js';
 import { query } from '../../db.js';
 import { enrichPromptWithReferences } from "../../services/referencePromptEnricher.js";
-import { contextualizeThemeSelection, detectEditorialMode, runBigIdeaLab, runEditorialOrchestration } from "../../services/editorialOrchestrator.js";
+import { callResponses, contextualizeThemeSelection, detectEditorialMode, parseJson, runBigIdeaLab, runEditorialOrchestration } from "../../services/editorialOrchestrator.js";
 import { runSimpleIdeas, runSimpleProduction } from "../../services/simpleOracle.js";
 import { getBellaVisualReferenceContract } from "../../services/visualReferenceService.js";
 
@@ -324,6 +324,9 @@ router.post('/api/carousels/:id/retry', async (req, res) => {
 
 // ── API: Criador — Gerar carrossel completo ───────────────────────────────────
 router.post('/api/criador/generate', async (req, res) => {
+  // Bella Essencial foi aposentado: qualquer pedido antigo (conversa salva, aba aberta) usa o Tipográfico.
+  if (req.body?.template === 'bella_essencial') req.body.template = 'bella_tipografico';
+  if (req.body?.preset === 'bella_essencial') req.body.preset = 'bella_tipografico';
   const payload = req.body;
   if (!payload || !Array.isArray(payload.slides) || payload.slides.length === 0) {
     return res.status(400).json({ error: 'slides é obrigatório' });
@@ -540,6 +543,9 @@ async function getRecentBellaCopyContext(limit = 6) {
 
 // ── API: Criador — Chat unificado com streaming SSE ──────────────────────────
 router.post('/api/criador/stream', async (req, res) => {
+  // Bella Essencial foi aposentado: qualquer pedido antigo (conversa salva, aba aberta) usa o Tipográfico.
+  if (req.body?.template === 'bella_essencial') req.body.template = 'bella_tipografico';
+  if (req.body?.preset === 'bella_essencial') req.body.preset = 'bella_tipografico';
   const { messages, totalSlides, noImageSlidesCount, model, reasoningEffort, template, format, recentContentMemory, editorialIntent, modoOraculo } = req.body;
   let system = await getAgentPromptAsync('criador');
   if (!system) return res.status(500).json({ error: 'Agente criador não configurado' });
@@ -917,6 +923,63 @@ ${layoutPlan}
     const userMsg = `Erro inesperado ao processar resposta da IA: ${e.message}${cause ? ' (' + cause + ')' : ''}`;
     if (!res.headersSent) res.status(500).json({ error: userMsg });
     else { res.write(`data: ${JSON.stringify({ error: userMsg })}\n\n`); res.end(); }
+  }
+});
+
+// ── Reescrita assistida: a Isabella edita o roteiro e pede ao Oráculo para ajustar um trecho ou uma lâmina ──
+const REWRITE_MODELS = ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna'];
+const REWRITE_PRICES = { 'gpt-5.6-sol': { input: 4.00, output: 20.00 }, 'gpt-5.6-terra': { input: 2.00, output: 12.00 }, 'gpt-5.6-luna': { input: 0.20, output: 1.20 } };
+
+router.post('/api/criador/rewrite', async (req, res) => {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return res.status(500).json({ ok: false, error: 'OPENAI_API_KEY não configurada' });
+  const text = (value, max) => String(value ?? '').replace(/\r/g, '').slice(0, max);
+  const instruction = text(req.body?.instruction, 600).trim();
+  const title = text(req.body?.title, 1200);
+  const body = text(req.body?.body, 3000);
+  const selection = text(req.body?.selection, 1500).trim();
+  if (!instruction) return res.status(400).json({ ok: false, error: 'Diga o que você quer mudar. Ex.: “deixa mais ácida”.' });
+  if (!title.trim() && !body.trim()) return res.status(400).json({ ok: false, error: 'Não há texto para ajustar nesta lâmina.' });
+  const model = REWRITE_MODELS.includes(req.body?.model) ? req.body.model : 'gpt-5.6-terra';
+  const usesMarkup = Boolean(req.body?.usesMarkup);
+  const others = (Array.isArray(req.body?.slides) ? req.body.slides : []).slice(0, 12)
+    .map(item => `S${text(item?.num, 4)}: ${text(item?.title, 200).replace(/\s+/g, ' ')} — ${text(item?.body, 300).replace(/\s+/g, ' ')}`).join('\n');
+  const master = (await getAgentPromptAsync('oraculo-simples')) || '';
+  const rules = `MODO REESCRITA. A Isabella editou o roteiro e pediu um ajuste na copy de UMA lâmina. Faça exatamente o que ela pediu (mais ácida, mais curta, mais simples, mais emocional, mais concreta, mais confrontadora…), sem perder o sentido, a voz humana e simples e a coerência com as outras lâminas. Regras: frases curtas; nada abstrato (cena e gesto concretos); nunca em CAIXA ALTA (maiúscula só no início das frases); sem reticências; não invente fatos; se o texto original tem COMENTE BELLA, mantenha. ${usesMarkup ? 'Preserve as marcações do texto: [[palavra]] (palavra-conceito) e *palavra* (itálico de virada); no máximo 3 por título, só em palavras que carregam sentido.' : 'Não use marcações como [[ ]] nem asteriscos.'} Entregue 2 opções claramente DIFERENTES entre si.
+${selection
+    ? 'ESCOPO: apenas o TRECHO SELECIONADO. Reescreva só esse trecho para ele entrar no lugar do original, no mesmo ponto do texto (não repita o resto). Responda apenas JSON válido: {"opcoes":[{"texto":""},{"texto":""}]}'
+    : 'ESCOPO: a lâmina inteira (título e corpo). Responda apenas JSON válido: {"opcoes":[{"title":"","body":""},{"title":"","body":""}]}'}`;
+  const input = [
+    `PEDIDO DA ISABELLA: ${instruction}`,
+    `TEMA DO CARROSSEL: ${text(req.body?.theme, 300) || '(não informado)'}`,
+    `LÂMINA ${text(req.body?.slideNum, 4)}${req.body?.estado ? ` — ${text(req.body.estado, 80)}` : ''}`,
+    `TÍTULO ATUAL:\n${title}`,
+    `CORPO ATUAL:\n${body}`,
+    selection ? `TRECHO SELECIONADO (reescreva só isto):\n${selection}` : '',
+    others ? `OUTRAS LÂMINAS (para manter a coerência):\n${others}` : ''
+  ].filter(Boolean).join('\n\n');
+  try {
+    const result = await callResponses({ apiKey, model, reasoningEffort: 'low', instructions: `${master}\n\n${rules}`, input, maxOutputTokens: 2500 });
+    const parsed = parseJson(result.text, { opcoes: [] });
+    const clip = (value, max) => String(value ?? '').replace(/\r/g, '').trim().slice(0, max);
+    const options = (Array.isArray(parsed.opcoes) ? parsed.opcoes : []).map(item => selection
+      ? { texto: clip(item?.texto, 1500) }
+      : { title: clip(item?.title, 1200), body: clip(item?.body, 3000) })
+      .filter(item => selection ? item.texto : (item.title || item.body)).slice(0, 3);
+    if (!options.length) return res.status(502).json({ ok: false, error: 'O Oráculo não conseguiu reescrever agora. Tente de novo ou mude o pedido.' });
+    const inputTokens = result.usage?.input_tokens || 0;
+    const outputTokens = result.usage?.output_tokens || 0;
+    const prices = REWRITE_PRICES[model];
+    const costUsd = Number((((inputTokens * prices.input) + (outputTokens * prices.output)) / 1_000_000).toFixed(5));
+    await recordUsageCost({
+      type: 'agent_prompt', itemId: 'bella-rewrite', description: 'Reescrita assistida de lâmina Bella', model, provider: 'openai',
+      costUsd, costBrl: Number((costUsd * 5).toFixed(4)), tokensInput: inputTokens, tokensOutput: outputTokens, quantity: 1,
+      metadata: { workspace: 'bella', scope: selection ? 'trecho' : 'lamina' }
+    });
+    res.json({ ok: true, scope: selection ? 'trecho' : 'lamina', options, costUSD: costUsd });
+  } catch (error) {
+    logger.error('[Carousel]', `criador/rewrite falhou: ${error.message}`);
+    res.status(502).json({ ok: false, error: 'Não consegui falar com o Oráculo agora. Tente de novo em instantes.' });
   }
 });
 

@@ -10,6 +10,8 @@ export default function CriadorChatList({
   onSend,
   onCopy,
   onCreateCarousel,
+  onSaveSlide,
+  onRewrite,
   startingCarousel,
   msgsRef,
   scrollAnchorRef,
@@ -58,7 +60,14 @@ export default function CriadorChatList({
                     });
                   }
 
-                  return <MarkdownMessage content={m.content} />;
+                  return (
+                    <MarkdownMessage
+                      content={m.content}
+                      editable={m.role === 'ai' && !m.streaming && !generating && !startingCarousel}
+                      onSaveSlide={(num, fields) => onSaveSlide?.(idx, num, fields)}
+                      onRewrite={request => onRewrite?.({ ...request, slides: m.parsedSlides, theme: m.parsedPayload?.title || '' })}
+                    />
+                  );
                 })()}
                 {m.streaming && <span className="criador-cursor"></span>}
                 {m.role === 'ai' && Array.isArray(m.activities) && m.activities.length > 0 ? (

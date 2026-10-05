@@ -84,18 +84,6 @@ export const TEMPLATES = [
     suggestions: ['Pare de medir sua vida com a régua dos outros', 'Seu descanso chamado de abandono', 'A mulher que responde o que não é dela']
   },
   {
-    id: 'bella_essencial',
-    label: 'Bella — Essencial',
-    badge: '● Essencial',
-    format: 'TAFA',
-    color: '#B8623E',
-    desc: 'Universo esotérico sensível, imagem expressiva em destaque e texto abaixo.',
-    icon: '●', shortName: 'Bella Essencial', accentRgb: '184, 98, 62',
-    welcomeTitle: 'Uma imagem. Uma ideia. Uma virada.',
-    welcomeDescription: 'Uma metáfora psicológica exclusiva para cada conteúdo, com desenvolvimento limpo e pausas elegantes.',
-    suggestions: ['A mulher controladora quer descanso', 'Quando ser necessária virou identidade', 'Receber também exige maturidade']
-  },
-  {
     id: 'bella_editorial_luxo',
     label: 'Bella — Direção Viva',
     badge: '✦ Direção Viva',
@@ -144,6 +132,11 @@ export const TEMPLATES = [
     suggestions: ['A clareza que chega depois da pressa', 'Você já sabe o que precisa encerrar', 'Nem toda luz precisa fazer barulho']
   }
 ];
+
+// Direções que já foram removidas da lista (ex.: Bella Essencial) voltam para o Tipográfico em conversas e seleções antigas.
+export function normalizeTemplateId(templateId) {
+  return TEMPLATES.some(template => template.id === templateId) ? templateId : 'bella_tipografico';
+}
 
 export function getTemplate(templateId) {
   return TEMPLATES.find(template => template.id === templateId) || TEMPLATES[0];

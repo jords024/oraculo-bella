@@ -17,11 +17,18 @@ from pathlib import Path
 from PIL import Image
 
 from . import vision_rank
-from .pinterest_playwright import search_pins
+from .board_source import fetch_board
 
 ROOT = Path(__file__).resolve().parents[2]
-ANCHOR = ROOT / "storage" / "curadoria" / "anchor-halo.jpg"
+# A referência ideal acompanha o código (assets/, versionado); storage/ pode sobrescrevê-la sem mexer no repositório.
+ANCHOR = next((p for p in (ROOT / "storage" / "curadoria" / "anchor-halo.jpg", ROOT / "assets" / "curadoria" / "anchor-halo.jpg") if p.exists()),
+              ROOT / "assets" / "curadoria" / "anchor-halo.jpg")
 MIN_SCORE = 7.0  # abaixo disso a lâmina volta para a geração por IA
+BOARD_MIN_SCORE = 6.0  # pastas do próprio usuário já são curadas por ele: o filtro só barra texto, rosto e falta de espaço
+RELAXED_DELTA = 1.5    # se faltar imagem, a 2ª passada aceita nota até 1,5 abaixo do mínimo (nunca cai para IA)
+USED_FILE = ROOT / "storage" / "curadoria" / "used_pins.json"
+USED_TTL_DAYS = 120    # uma imagem usada num carrossel não volta em outro por 120 dias
+HASH_NEAR = 6          # distância (de 64 bits) abaixo da qual duas imagens contam como a mesma foto
 FALLBACK_QUERIES = [
     "silhouette sun halo minimal surreal",
     "lone figure glowing light vast space",
@@ -76,6 +83,26 @@ def _download(pin, dest):
     return False
 
 
+def _boards_from(payload):
+    """Lista de endereços de pastas escolhidas pelo usuário (aceita strings ou {url, name})."""
+    out = []
+    for item in payload.get("pinterestBoards") or []:
+        url = item.get("url") if isinstance(item, dict) else item
+        if isinstance(url, str) and url.strip():
+            out.append(url.strip())
+    return out[:6]
+
+
+def _usable_for_cover(path):
+    """Pastas não informam tamanho: mede a imagem baixada (largura mínima e proporção que o recorte 4:5 aguenta)."""
+    try:
+        with Image.open(path) as im:
+            w, h = im.size
+        return w >= 700 and 0.8 <= h / w <= 2.0
+    except Exception:
+        return False
+
+
 def _prefilter(pins):
     out = [p for p in pins
            if p["width"] >= 900 and p["height"] > 0 and 1.1 <= p["height"] / p["width"] <= 1.9
@@ -100,8 +127,70 @@ def _room_for_type(path):
     return 0.0
 
 
+def _dhash(path):
+    """Impressão digital visual de 64 bits: a mesma foto repostada com outro ID tem hash quase igual."""
+    try:
+        with Image.open(path) as im:
+            small = im.convert("L").resize((9, 8), Image.LANCZOS)
+        px = list(small.getdata())
+        bits = 0
+        for row in range(8):
+            for col in range(8):
+                bits = (bits << 1) | (1 if px[row * 9 + col] > px[row * 9 + col + 1] else 0)
+        return bits
+    except Exception:
+        return None
+
+
+_STOP = {"com", "sem", "para", "numa", "num", "uma", "uns", "das", "dos", "que", "por", "entre", "sobre", "ao", "em", "no", "na", "de", "da", "do", "a", "o", "e"}
+
+
+def _subject_words(text):
+    words = re.findall(r"[a-zà-ÿ]{4,}", str(text or "").lower())
+    return {re.sub(r"(os|as|a|o|s)$", "", w) for w in words if w not in _STOP}  # raiz aproximada: vazio/vazia, sentado/sentada
+
+
+def _similar_subject(a, b):
+    """Dois assuntos descritos de forma parecida (ex.: 'figura sentada em cadeira') contam como a mesma cena."""
+    wa, wb = _subject_words(a), _subject_words(b)
+    if not wa or not wb:
+        return False
+    return len(wa & wb) / min(len(wa), len(wb)) >= 0.5
+
+
+def _near(a, b):
+    return a is not None and b is not None and bin(a ^ b).count("1") <= HASH_NEAR
+
+
+def _load_used():
+    try:
+        data = json.loads(USED_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    cutoff = time.time() - USED_TTL_DAYS * 86400
+    return {k: v for k, v in data.items() if isinstance(v, dict) and v.get("ts", 0) >= cutoff}
+
+
+def _remember(picks, carousel_id):
+    """Guarda as imagens usadas (ID + impressão visual) para nunca repeti-las em outros carrosséis."""
+    used = _load_used()
+    now = time.time()
+    for pin, h in picks:
+        used[pin["pin_id"]] = {"ts": now, "hash": format(h, "x") if h is not None else "", "carousel": str(carousel_id or "")}
+    try:
+        USED_FILE.parent.mkdir(parents=True, exist_ok=True)
+        USED_FILE.write_text(json.dumps(used, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
 def curate_images(slides, out_dir, payload, log, layout_uses_image, pool_cap=48, queries_cap=4):
-    """Escolhe imagens para as lâminas com foto. Altera `slides` e devolve quantas foram curadas."""
+    """Escolhe imagens do Pinterest para as lâminas com foto. Altera `slides` e devolve quantas foram curadas.
+
+    Regras: nunca repete imagem (nem a mesma foto repostada com outro ID) dentro do carrossel nem em carrosséis
+    anteriores; nunca recorre à IA — se faltar imagem boa, relaxa a nota e busca mais; o que ainda faltar é
+    resolvido pelo pipeline (lâmina só com tipografia).
+    """
     targets = [i for i, s in enumerate(slides)
                if layout_uses_image(s.get("layout", "fullbleed")) and not s.get("curated_image_path")]
     if not targets:
@@ -111,66 +200,134 @@ def curate_images(slides, out_dir, payload, log, layout_uses_image, pool_cap=48,
     theme = payload.get("theme") or payload.get("title") or ""
     t0 = time.time()
 
-    queries, emotion = plan_queries(slides, theme, log)
-    log(f"Curadoria Pinterest: {len(targets)} lâmina(s) com foto · consultas: {' | '.join(queries[:queries_cap])}")
+    used = _load_used()
+    used_hashes = [int(v["hash"], 16) for v in used.values() if v.get("hash")]
+    boards = _boards_from(payload)
+    floor = BOARD_MIN_SCORE if boards else MIN_SCORE
+    relaxed = floor - RELAXED_DELTA
+    seen = set(used)          # IDs já usados em outros carrosséis ou já avaliados nesta rodada
+    scored = []               # (nota, caminho, pin, avaliação, hash)
+    usage_total = {"input_tokens": 0, "output_tokens": 0}
+    state = {"emotion": ""}
 
-    pins = {}
-    for q in queries[:queries_cap]:
-        try:
-            found, diag = search_pins(q, scrolls=1)
-        except Exception as exc:
-            log(f"  consulta '{q}' falhou: {str(exc)[:80]}")
-            continue
-        for p in found:
-            pins.setdefault(p.pin_id, dict(p.__dict__))
-        log(f"  '{q}': {len(found)} pins" + (f" (parou: {diag['stopped']})" if diag.get("stopped") else ""))
-        time.sleep(6)
-    if not pins:
-        log("Curadoria: nenhum pin coletado; usando geração por IA.")
-        return 0
+    def evaluate(raw_pins, prefilter):
+        fresh = []
+        for p in raw_pins:
+            if p["pin_id"] not in seen:
+                seen.add(p["pin_id"])
+                fresh.append(p)
+        pool = (_prefilter(fresh) if prefilter else fresh)[:(max(pool_cap, 60) if boards else pool_cap)]
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            done = list(ex.map(lambda p: _download(p, work / "images" / f"{p['pin_id']}.jpg"), pool))
+        pool = [p for p, ok in zip(pool, done) if ok]
+        if boards:
+            pool = [p for p in pool if _usable_for_cover(work / "images" / f"{p['pin_id']}.jpg")]
+        candidates, hashes = [], [item[4] for item in scored]
+        for p in pool:
+            path = work / "images" / f"{p['pin_id']}.jpg"
+            h = _dhash(path)
+            if any(_near(h, other) for other in used_hashes + hashes):
+                continue  # mesma foto já usada antes (ou repetida dentro desta busca)
+            hashes.append(h)
+            candidates.append((p, path, h))
+        log(f"  {len(fresh)} pins novos → {len(candidates)} candidatas inéditas; ranqueando por visão…")
+        if not candidates:
+            return
+        paths = [path for _, path, _ in candidates]
+        context = f"Tema: {theme}. Estado emocional: {state['emotion'] or 'inferir das lâminas'}. Capa: {_plain(slides[0].get('title'))}."
+        ranked, usage = vision_rank.rank(paths, ANCHOR, context=context)
+        for key in usage_total:
+            usage_total[key] += int(usage.get(key, 0))
+        for p, path, h in candidates:
+            r = ranked.get(str(path))
+            if not r or r.get("eliminar"):
+                continue
+            total = r["bella"] * 0.35 + r["emocao"] * 0.35 + r["estetica"] * 0.30
+            if r.get("espaco_limpo") not in ("topo", "base", "esquerda", "direita"):
+                total -= 2
+            if r.get("rosto") == "identificavel":
+                total -= 3
+            total += _room_for_type(path)
+            scored.append((round(total, 2), path, p, r, h))
+        scored.sort(key=lambda x: -x[0])
 
-    pool = _prefilter(list(pins.values()))[:pool_cap]
-    with ThreadPoolExecutor(max_workers=6) as ex:
-        done = list(ex.map(lambda p: _download(p, work / "images" / f"{p['pin_id']}.jpg"), pool))
-    pool = [p for p, ok in zip(pool, done) if ok]
-    log(f"  {len(pins)} pins únicos → {len(pool)} candidatas baixadas; ranqueando por visão…")
-    if not pool:
-        return 0
+    def search(queries):
+        from .pinterest_playwright import search_pins  # só a busca precisa do navegador (Playwright)
+        raw = {}
+        for q in queries:
+            try:
+                found, diag = search_pins(q, scrolls=1)
+            except Exception as exc:
+                log(f"  consulta '{q}' falhou: {str(exc)[:80]}")
+                continue
+            for p in found:
+                raw.setdefault(p.pin_id, dict(p.__dict__))
+            log(f"  '{q}': {len(found)} pins" + (f" (parou: {diag['stopped']})" if diag.get("stopped") else ""))
+            time.sleep(6)
+        return list(raw.values())
 
-    paths = [work / "images" / f"{p['pin_id']}.jpg" for p in pool]
-    context = f"Tema: {theme}. Estado emocional: {emotion or 'inferir das lâminas'}. Capa: {_plain(slides[0].get('title'))}."
-    ranked, usage = vision_rank.rank(paths, ANCHOR, context=context)
-    scored = []
-    for path, pin in zip(paths, pool):
-        r = ranked.get(str(path))
-        if not r or r.get("eliminar"):
-            continue
-        total = r["bella"] * 0.35 + r["emocao"] * 0.35 + r["estetica"] * 0.30
-        if r.get("espaco_limpo") not in ("topo", "base", "esquerda", "direita"):
-            total -= 2
-        if r.get("rosto") == "identificavel":
-            total -= 3
-        total += _room_for_type(path)
-        scored.append((round(total, 2), path, pin, r))
-    scored.sort(key=lambda x: -x[0])
-    (work / "ranking.json").write_text(json.dumps(
-        [{"total": t, "pin_id": p["pin_id"], "pin_url": p["pin_url"], **r} for t, _, p, r in scored],
-        ensure_ascii=False, indent=1), encoding="utf-8")
+    queries = []
+    if boards:
+        log(f"Curadoria nas pastas do usuário: {len(targets)} lâmina(s) com foto · {len(boards)} pasta(s)")
+        raw = {}
+        for url in boards:
+            try:
+                name, found = fetch_board(url)
+            except Exception as exc:
+                log(f"  pasta {url}: {str(exc)[:100]}")
+                continue
+            for p in found:
+                raw.setdefault(p["pin_id"], p)
+            log(f"  pasta '{name}': {len(found)} pins")
+        evaluate(list(raw.values()), False)
+    else:
+        queries, state["emotion"] = plan_queries(slides, theme, log)
+        log(f"Curadoria Pinterest: {len(targets)} lâmina(s) com foto · consultas: {' | '.join(queries[:queries_cap])}"
+            + (f" · {len(used)} imagens já usadas serão ignoradas" if used else ""))
+        evaluate(search(queries[:queries_cap]), True)
 
-    taken, used_zones, picked = set(), [], 0
+    assignments, taken, used_zones, chosen_hashes, chosen_subjects = {}, set(), [], [], []
+
+    def assign(min_score):
+        for i in targets:
+            if i in assignments:
+                continue
+            free = [it for it in scored if it[1] not in taken and it[0] >= min_score
+                    and not any(_near(it[4], h) for h in chosen_hashes)]
+            if not free:
+                continue
+            # cenas diferentes: só repete o assunto (ex.: duas figuras numa cadeira) se não houver outra opção
+            varied = [it for it in free if not any(_similar_subject(it[3].get("assunto"), s) for s in chosen_subjects)]
+            free = varied or free
+            # a variedade de zona só decide entre imagens boas; nunca passa na frente da qualidade
+            pick = next((it for it in free if it[3].get("espaco_limpo") not in used_zones and it[0] >= free[0][0] - 1.0), None) or free[0]
+            assignments[i] = pick
+            taken.add(pick[1])
+            chosen_hashes.append(pick[4])
+            chosen_subjects.append(pick[3].get("assunto"))
+            used_zones.append(pick[3].get("espaco_limpo"))
+
+    assign(floor)
+    if len(assignments) < len(targets) and not boards:
+        extra = [q for q in FALLBACK_QUERIES if q not in queries][:queries_cap]
+        log(f"  faltam {len(targets) - len(assignments)} imagem(ns) boas; buscando mais no Pinterest ({len(extra)} consultas extras)…")
+        evaluate(search(extra), True)
+        assign(floor)
+    assign(relaxed)
+
+    if scored:
+        (work / "ranking.json").write_text(json.dumps(
+            [{"total": t, "pin_id": p["pin_id"], "pin_url": p["pin_url"], **r} for t, _, p, r, _ in scored],
+            ensure_ascii=False, indent=1), encoding="utf-8")
+
     for i in targets:
-        free = [item for item in scored if item[1] not in taken and item[0] >= MIN_SCORE]
-        # a variedade de zona só decide entre imagens boas; nunca passa na frente da qualidade
-        pick = next((item for item in free if item[3].get("espaco_limpo") not in used_zones and item[0] >= free[0][0] - 1.0), None) or (free[0] if free else None)
+        pick = assignments.get(i)
+        num = slides[i].get("num", str(i + 1).zfill(2))
         if not pick:
-            log(f"  S{slides[i].get('num', i + 1)}: sem candidata com nota >= {MIN_SCORE}; esta lâmina será gerada por IA.")
-            break
-        total, path, pin, r = pick
-        if total < MIN_SCORE:
-            log(f"  S{slides[i].get('num', i + 1)}: melhor candidata restante tem nota {total} (< {MIN_SCORE}); esta lâmina será gerada por IA.")
-            break
-        taken.add(path)
-        dest = Path(out_dir) / f"curada-{slides[i].get('num', str(i + 1).zfill(2))}.jpg"
+            log(f"  S{num}: sem imagem inédita e boa o bastante no Pinterest; a lâmina ficará só com tipografia (sem IA).")
+            continue
+        total, path, pin, r, _ = pick
+        dest = Path(out_dir) / f"curada-{num}.jpg"
         Image.open(path).convert("RGB").save(dest, "JPEG", quality=95)
         zone = r.get("espaco_limpo")
         plan = slides[i].get("visual_plan") if isinstance(slides[i].get("visual_plan"), dict) else {}
@@ -182,11 +339,11 @@ def curate_images(slides, out_dir, payload, log, layout_uses_image, pool_cap=48,
             plan["text_side"] = "left" if zone == "esquerda" else "right"
         slides[i]["visual_plan"] = plan
         slides[i]["curated_image_path"] = str(dest)
-        slides[i]["image_source"] = {"origem": "pinterest", "pin_id": pin["pin_id"], "pin_url": pin["pin_url"],
+        slides[i]["image_source"] = {"origem": "pasta_pinterest" if boards else "pinterest", "pin_id": pin["pin_id"], "pin_url": pin["pin_url"],
                                      "nota": total, "estado_emocional": r.get("estado_emocional"),
                                      "motivo": r.get("motivo"), "consulta": pin.get("query")}
-        used_zones.append(zone)
-        picked += 1
-        log(f"  S{slides[i].get('num', i + 1)}: nota {total} · {r.get('estado_emocional')} · espaço {zone}")
-    log(f"Curadoria concluída em {round(time.time() - t0)}s ({picked} imagem(ns); visão: {usage['input_tokens']}+{usage['output_tokens']} tokens).")
-    return picked
+        log(f"  S{num}: nota {total}{' (aceita pelo critério flexível)' if total < floor else ''} · {r.get('estado_emocional')} · espaço {zone}")
+
+    _remember([(assignments[i][2], assignments[i][4]) for i in assignments], payload.get("id"))
+    log(f"Curadoria concluída em {round(time.time() - t0)}s ({len(assignments)} de {len(targets)} imagem(ns); visão: {usage_total['input_tokens']}+{usage_total['output_tokens']} tokens).")
+    return len(assignments)

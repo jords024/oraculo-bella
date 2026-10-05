@@ -120,6 +120,11 @@ export function useCarouselsData({ showToast, setActiveTab, onGenerationComplete
     if (opts.imageSource === 'pinterest') {
       payload.imageSource = 'pinterest';
     }
+    // "Minhas pastas": o pipeline usa só as pastas escolhidas em vez da busca aberta.
+    if (opts.imageSource === 'pasta' && Array.isArray(opts.pinterestBoards) && opts.pinterestBoards.length) {
+      payload.imageSource = 'pinterest';
+      payload.pinterestBoards = opts.pinterestBoards.slice(0, 6).map(board => ({ url: String(board.url || ''), name: String(board.name || '') }));
+    }
     if (opts.noImageSlidesCount !== undefined && opts.noImageSlidesCount !== null) {
       payload.noImageSlidesCount = Math.max(0, Math.min(Number(opts.noImageSlidesCount) || 0, payload.slides.length));
     }

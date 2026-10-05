@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
-const INLINE_PATTERN = /(\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|https?:\/\/[^\s]+)/g;
+const INLINE_PATTERN = /(\[\[[^\]\n]+\]\]|\*\*[^*\n]+\*\*|__[^_\n]+__|`[^`\n]+`|\*[^*\n]+\*|https?:\/\/[^\s]+)/g;
 
 function InlineContent({ text }) {
   return text.split(INLINE_PATTERN).filter(Boolean).map((part, index) => {
     if (/^https?:\/\//.test(part)) {
       return <a key={index} href={part} target="_blank" rel="noopener noreferrer">{part}</a>;
+    }
+    if (part.startsWith('[[') && part.endsWith(']]')) {
+      return <strong key={index} className="creator-concept">{part.slice(2, -2)}</strong>;
     }
     if ((part.startsWith('**') && part.endsWith('**')) || (part.startsWith('__') && part.endsWith('__'))) {
       return <strong key={index}>{part.slice(2, -2)}</strong>;
@@ -129,19 +132,204 @@ function parseSlideSegments(rawLines) {
   return segments;
 }
 
-function SlideCard({ slide }) {
+const QUICK_ASKS = [
+  ['Mais ácida', 'deixa mais ácida, direta e sem suavizar'],
+  ['Mais curta', 'deixa mais curta, cortando o que sobra'],
+  ['Mais simples', 'deixa mais simples e humana, como conversa de mesa'],
+  ['Mais emocional', 'deixa mais emocional e íntima'],
+  ['Mais concreta', 'troca o abstrato por uma cena concreta'],
+];
+
+function AutoTextarea({ value, onChange, onSelectRange, onKeyDown, innerRef, className, placeholder, label }) {
+  const localRef = useRef(null);
+  const ref = innerRef || localRef;
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [value, ref]);
+  const report = event => {
+    const el = event.currentTarget;
+    onSelectRange?.(el.selectionEnd > el.selectionStart ? { start: el.selectionStart, end: el.selectionEnd } : null);
+  };
+  return (
+    <textarea
+      ref={ref}
+      rows={1}
+      className={className}
+      value={value}
+      placeholder={placeholder}
+      aria-label={label}
+      onChange={event => onChange(event.target.value)}
+      onSelect={report}
+      onKeyUp={report}
+      onMouseUp={report}
+      onKeyDown={onKeyDown}
+    />
+  );
+}
+
+function SlideCard({ slide, editable, onSave, onRewrite }) {
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ title: '', body: '' });
+  const [selection, setSelection] = useState(null); // { field, start, end }
+  const [instruction, setInstruction] = useState('');
+  const [ai, setAi] = useState({ status: 'idle', options: [], scope: 'lamina', error: '' });
+  const [previous, setPrevious] = useState(null);
+  const titleRef = useRef(null);
+  const bodyRef = useRef(null);
+  const focusRef = useRef('title');
   const hasDetails = Boolean(slide.visual || slide.scene || slide.respiro || slide.layout);
+  const cleanTitle = String(slide.title || '').trim();
+  const cleanBody = String(slide.body || '').trim();
+
+  const startEdit = field => {
+    if (!editable || editing) return;
+    focusRef.current = field;
+    setDraft({ title: cleanTitle, body: cleanBody });
+    setSelection(null); setInstruction(''); setPrevious(null);
+    setAi({ status: 'idle', options: [], scope: 'lamina', error: '' });
+    setEditing(true);
+  };
+  useEffect(() => {
+    if (!editing) return;
+    const el = focusRef.current === 'body' ? bodyRef.current : titleRef.current;
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  }, [editing]);
+
+  const cancel = () => { setEditing(false); setAi({ status: 'idle', options: [], scope: 'lamina', error: '' }); };
+  const dirty = draft.title.trim() !== cleanTitle || draft.body.trim() !== cleanBody;
+  const save = () => {
+    if (dirty && onSave) onSave(slide.num, { title: draft.title.trim(), body: draft.body.trim() });
+    setEditing(false);
+    setAi({ status: 'idle', options: [], scope: 'lamina', error: '' });
+  };
+  const onKeyDown = event => {
+    if (event.key === 'Escape') { event.preventDefault(); cancel(); }
+    if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) { event.preventDefault(); save(); }
+  };
+
+  const selectedText = selection ? draft[selection.field].slice(selection.start, selection.end) : '';
+
+  const ask = async (text) => {
+    const wanted = String(text ?? instruction).trim();
+    if (!wanted || ai.status === 'loading' || !onRewrite) return;
+    setAi({ status: 'loading', options: [], scope: selection ? 'trecho' : 'lamina', error: '' });
+    const asked = selection ? { ...selection, text: selectedText } : null;
+    const result = await onRewrite({ instruction: wanted, title: draft.title, body: draft.body, selection: asked?.text || '', slideNum: slide.num, estado: slide.estado });
+    if (!result.ok) { setAi({ status: 'error', options: [], scope: 'lamina', error: result.error }); return; }
+    setAi({ status: 'done', options: result.options, scope: result.scope, error: '', asked });
+  };
+
+  const useOption = option => {
+    setPrevious(draft);
+    if (ai.scope === 'trecho' && ai.asked) {
+      const { field, start, end, text } = ai.asked;
+      const current = draft[field];
+      const exact = current.slice(start, end) === text;
+      const at = exact ? start : current.indexOf(text);
+      const next = at >= 0 ? current.slice(0, at) + option.texto + current.slice(at + text.length) : `${current} ${option.texto}`;
+      setDraft({ ...draft, [field]: next });
+    } else {
+      setDraft({ title: option.title ?? draft.title, body: option.body ?? draft.body });
+    }
+    setSelection(null);
+    setAi({ status: 'idle', options: [], scope: 'lamina', error: '' });
+  };
+
+  if (editing) {
+    return (
+      <article className="creator-slide-card is-editing">
+        <header className="creator-slide-card__header">
+          <span className="creator-slide-card__badge">Slide {slide.num}</span>
+          {slide.estado && <span className="creator-slide-card__estado">{slide.estado}</span>}
+          <span className="creator-slide-card__spacer" />
+          <button type="button" className="csc-btn" onClick={cancel}>Cancelar</button>
+          <button type="button" className="csc-btn csc-btn--primary" onClick={save} disabled={!dirty} title="Ctrl+Enter">Salvar</button>
+        </header>
+
+        <label className="csc-label">Título</label>
+        <AutoTextarea
+          innerRef={titleRef}
+          className="csc-field csc-field--title"
+          value={draft.title}
+          label={`Título do slide ${slide.num}`}
+          onChange={value => setDraft(current => ({ ...current, title: value }))}
+          onSelectRange={range => setSelection(range ? { field: 'title', ...range } : current => (current?.field === 'title' ? null : current))}
+          onKeyDown={onKeyDown}
+        />
+        <label className="csc-label">Texto</label>
+        <AutoTextarea
+          innerRef={bodyRef}
+          className="csc-field csc-field--body"
+          value={draft.body}
+          label={`Texto do slide ${slide.num}`}
+          onChange={value => setDraft(current => ({ ...current, body: value }))}
+          onSelectRange={range => setSelection(range ? { field: 'body', ...range } : current => (current?.field === 'body' ? null : current))}
+          onKeyDown={onKeyDown}
+        />
+
+        <section className="csc-ai" aria-label="Ajustar com o Oráculo">
+          <div className="csc-ai__head">
+            <strong>✨ Ajustar com o Oráculo</strong>
+            <span>{selection && selectedText ? <>Só o trecho: <em>“{selectedText.length > 60 ? `${selectedText.slice(0, 60)}…` : selectedText}”</em></> : 'Vale para o slide inteiro. Selecione uma frase para ajustar só ela.'}</span>
+          </div>
+          <div className="csc-ai__chips">
+            {QUICK_ASKS.map(([label, text]) => (
+              <button type="button" key={label} className="csc-chip" onClick={() => ask(text)} disabled={ai.status === 'loading'}>{label}</button>
+            ))}
+          </div>
+          <div className="csc-ai__row">
+            <input
+              type="text"
+              value={instruction}
+              placeholder="Ou diga o que quer: “deixa essa frase mais ácida”"
+              onChange={event => setInstruction(event.target.value)}
+              onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); ask(); } if (event.key === 'Escape') cancel(); }}
+              aria-label="Pedido para o Oráculo"
+            />
+            <button type="button" className="csc-btn csc-btn--primary" onClick={() => ask()} disabled={!instruction.trim() || ai.status === 'loading'}>{ai.status === 'loading' ? 'Pensando…' : 'Pedir'}</button>
+          </div>
+          {ai.status === 'loading' && <div className="csc-ai__loading" role="status" aria-live="polite"><i /><i /></div>}
+          {ai.status === 'error' && <div className="csc-ai__error" role="alert">{ai.error}</div>}
+          {ai.status === 'done' && (
+            <div className="csc-ai__options">
+              {ai.options.map((option, index) => (
+                <div key={index} className="csc-option">
+                  <span className="csc-option__tag">Opção {index + 1}</span>
+                  {ai.scope === 'trecho'
+                    ? <p>{option.texto}</p>
+                    : <>{option.title && <p className="csc-option__title">{option.title}</p>}{option.body && <p>{option.body}</p>}</>}
+                  <button type="button" className="csc-btn csc-btn--primary" onClick={() => useOption(option)}>Usar esta</button>
+                </div>
+              ))}
+              <button type="button" className="csc-link" onClick={() => ask(instruction || 'reescreva de outro jeito')}>Gerar outras opções</button>
+            </div>
+          )}
+          {previous && ai.status !== 'loading' && (
+            <button type="button" className="csc-link" onClick={() => { setDraft(previous); setPrevious(null); }}>↶ Desfazer o último ajuste</button>
+          )}
+        </section>
+      </article>
+    );
+  }
 
   return (
-    <article className="creator-slide-card">
+    <article className={`creator-slide-card${editable ? ' is-editable' : ''}`}>
       <header className="creator-slide-card__header">
         <span className="creator-slide-card__badge">Slide {slide.num}</span>
         {slide.estado && <span className="creator-slide-card__estado">{slide.estado}</span>}
+        {editable && <><span className="creator-slide-card__spacer" /><button type="button" className="csc-edit" onClick={() => startEdit('title')} title="Editar este slide">✎ Editar</button></>}
       </header>
-      {slide.title && <h4 className="creator-slide-card__title"><InlineContent text={slide.title.replace(/\n+/g, ' ')} /></h4>}
+      {slide.title && (
+        <h4 className="creator-slide-card__title" onClick={() => startEdit('title')} title={editable ? 'Clique para editar' : undefined}>
+          <InlineContent text={slide.title.replace(/\n+/g, ' ')} />
+        </h4>
+      )}
       {slide.body && slide.body.trim().split('\n').filter(Boolean).map((line, i) => (
-        <p className="creator-slide-card__body" key={i}><InlineContent text={line} /></p>
+        <p className="creator-slide-card__body" key={i} onClick={() => startEdit('body')} title={editable ? 'Clique para editar' : undefined}><InlineContent text={line} /></p>
       ))}
       {hasDetails && (
         <details className="creator-slide-card__details" open={open} onToggle={(e) => setOpen(e.target.open)}>
@@ -158,7 +346,9 @@ function SlideCard({ slide }) {
   );
 }
 
-export default function MarkdownMessage({ content }) {
+// `editable` liga a edição por clique nos cartões; `onSaveSlide(num, {title, body})` devolve o texto editado ao roteiro
+// e `onRewrite(pedido)` pede ao Oráculo para reescrever um trecho ou o slide (devolve {ok, scope, options}).
+export default function MarkdownMessage({ content, editable = false, onSaveSlide, onRewrite }) {
   const lines = String(content || '').replace(/\r\n/g, '\n').split('\n');
   const segments = parseSlideSegments(lines);
   const hasSlides = segments.some(segment => segment.type === 'slide');
@@ -171,7 +361,7 @@ export default function MarkdownMessage({ content }) {
     <div className="creator-markdown creator-markdown--roteiro">
       {segments.map((segment, index) => (
         segment.type === 'slide'
-          ? <SlideCard key={`slide-${segment.num}-${index}`} slide={segment} />
+          ? <SlideCard key={`slide-${segment.num}-${index}`} slide={segment} editable={editable} onSave={onSaveSlide} onRewrite={onRewrite} />
           : <React.Fragment key={`text-${index}`}>{renderProseLines(segment.lines)}</React.Fragment>
       ))}
     </div>

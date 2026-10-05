@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { parseCarouselText } from '../utils/carouselParser';
+import { replaceSlideFields } from '../utils/scriptEditing';
 import { exportChatToHtml } from '../utils/exportChat';
-import { IDEAS_PROMPT, TEMPLATES, getTemplate } from './Criador/criadorConstants';
+import { IDEAS_PROMPT, TEMPLATES, getTemplate, normalizeTemplateId } from './Criador/criadorConstants';
 import CriadorTemplateBar from './Criador/CriadorTemplateBar';
 import CriadorHistorySidebar from './Criador/CriadorHistorySidebar';
 import CriadorChatList from './Criador/CriadorChatList';
 import ModelExperienceSelector, { CREATOR_MODELS, REASONING_LEVELS } from './Criador/ModelExperienceSelector';
 import NoImageSlidesSelector from './Criador/NoImageSlidesSelector';
 import ImageSourceSelector from './Criador/ImageSourceSelector';
+import PinterestBoardsPanel from './Criador/PinterestBoardsPanel';
+import { customFetch } from '../utils/customFetch';
 import OracleModeSelector from './Criador/OracleModeSelector';
 import SlideCountSelector from './Criador/SlideCountSelector';
 
@@ -45,10 +48,31 @@ function buildRecentContentMemory(conversations, activeConversationId) {
   return memory;
 }
 
+const plainText = value => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+// Reconhece pedidos como "use a pasta Luz e silêncio" ou "usar as pastas X, Y". Devolve null se não for esse comando.
+function parseBoardCommand(text, boards) {
+  const match = String(text || '').trim().match(/^(?:ok[, ]+|certo[, ]+|ent[aã]o[, ]+)?(?:use|usa|usar|utilize|utilizar|pegue|pega|puxe|puxar|quero usar)\s+(?:as?\s+|nas?\s+|das?\s+)?(?:imagens?\s+d[aeo]s?\s+)?pastas?\s+(?:d[oa]\s+pinterest\s+)?(.+?)[.!\s]*$/i);
+  if (!match) return null;
+  const names = match[1].replace(/\s+(?:para|pra|nas?|no)\s+(?:as\s+)?(?:imagens?|carrossel|fotos?).*$/i, '').split(/\s*(?:,|;|\be\b)\s*/i).map(name => name.replace(/^["“”']+|["“”']+$/g, '').trim()).filter(Boolean);
+  const matched = [];
+  const missing = [];
+  names.forEach(name => {
+    const wanted = plainText(name);
+    const found = wanted.length >= 2 && (
+      boards.find(board => plainText(board.name) === wanted)
+      || boards.find(board => plainText(board.name).includes(wanted) || (wanted.length >= 4 && wanted.includes(plainText(board.name))))
+      || boards.find(board => wanted.split(' ').filter(token => token.length > 2).every(token => plainText(board.name).includes(token)))
+    );
+    if (found && !matched.includes(found)) matched.push(found); else if (!found) missing.push(name);
+  });
+  return { matched, missing };
+}
+
 export default function Criador({ onStartGeneration, showToast, initialMessages, isReadOnly, isMockFlow }) {
   const [input, setInput] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState(() => {
-    try { return sessionStorage.getItem('criador_selected_template') || 'bella_editorial_luxo'; } catch { return 'bella_editorial_luxo'; }
+    try { return normalizeTemplateId(sessionStorage.getItem('criador_selected_template') || 'bella_tipografico'); } catch { return 'bella_tipografico'; }
   });
 
   const [selectedModel, setSelectedModel] = useState(() => {
@@ -80,8 +104,80 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
   });
 
   const [imageSource, setImageSource] = useState(() => {
-    try { return sessionStorage.getItem('criador_image_source') === 'pinterest' ? 'pinterest' : 'ia'; } catch { return 'ia'; }
+    try {
+      const saved = sessionStorage.getItem('criador_image_source');
+      return saved === 'pinterest' || saved === 'pasta' ? saved : 'ia';
+    } catch { return 'ia'; }
   });
+
+  // "Minhas pastas": pastas públicas do Pinterest do próprio usuário (conectadas no painel ou pelo chat).
+  const inputRef = useRef(null);
+  // A caixa de escrita cresce com o texto (até ~8 linhas) e volta ao tamanho de uma linha depois de enviar.
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [input]);
+
+  const [boards, setBoards] = useState([]);
+  const [boardsOpen, setBoardsOpen] = useState(false);
+  const [selectedBoardIds, setSelectedBoardIds] = useState(() => {
+    try { const saved = JSON.parse(localStorage.getItem('criador_board_ids') || '[]'); return Array.isArray(saved) ? saved : []; } catch { return []; }
+  });
+  const selectedBoards = boards.filter(board => selectedBoardIds.includes(board.id));
+  const saveSelectedBoards = ids => {
+    setSelectedBoardIds(ids);
+    try { localStorage.setItem('criador_board_ids', JSON.stringify(ids)); } catch {}
+  };
+  useEffect(() => {
+    let cancelled = false;
+    customFetch('/api/pinterest/boards').then(res => res.json()).then(data => {
+      if (!cancelled && data?.ok) setBoards(data.boards || []);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  const callBoards = async (path, options) => {
+    try {
+      const res = await customFetch(path, options);
+      const data = await res.json();
+      if (!res.ok || !data.ok) return { ok: false, error: data.error || 'Não foi possível concluir. Tente de novo.' };
+      return data;
+    } catch { return { ok: false, error: 'Falha de conexão com o servidor.' }; }
+  };
+  const jsonPost = body => ({ method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  // Prévia: mostra o que existe no link colado, sem salvar nada.
+  const previewBoards = input => callBoards('/api/pinterest/preview', jsonPost({ input }));
+  // Adiciona só as pastas escolhidas na prévia; as novas já entram marcadas para uso.
+  const addBoards = async items => {
+    const data = await callBoards('/api/pinterest/boards', jsonPost({ items }));
+    if (data.ok) {
+      setBoards(data.boards);
+      saveSelectedBoards([...new Set([...selectedBoardIds, ...data.added.map(board => board.id)])]);
+    }
+    return data;
+  };
+  const syncBoards = async user => {
+    const data = await callBoards('/api/pinterest/sync', jsonPost({ user }));
+    if (data.ok) {
+      setBoards(data.boards);
+      saveSelectedBoards(selectedBoardIds.filter(id => data.boards.some(board => board.id === id)));
+    }
+    return data;
+  };
+  const disconnectProfile = async user => {
+    const data = await callBoards(`/api/pinterest/profile?user=${encodeURIComponent(user)}`, { method: 'DELETE' });
+    if (data.ok) { setBoards(data.boards); saveSelectedBoards(selectedBoardIds.filter(id => data.boards.some(board => board.id === id))); }
+  };
+  const removeBoard = async id => {
+    const data = await callBoards(`/api/pinterest/boards?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (data.ok) { setBoards(data.boards); saveSelectedBoards(selectedBoardIds.filter(item => item !== id)); }
+  };
+  const toggleBoard = id => saveSelectedBoards(selectedBoardIds.includes(id) ? selectedBoardIds.filter(item => item !== id) : [...selectedBoardIds, id]);
+  const chooseImageSource = value => {
+    setImageSource(value);
+    try { sessionStorage.setItem('criador_image_source', value); } catch {}
+  };
 
   const [oracleMode, setOracleMode] = useState(() => {
     try { return sessionStorage.getItem('criador_oracle_mode') === 'simples' ? 'simples' : 'atual'; } catch { return 'atual'; }
@@ -155,7 +251,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           const next = serverConversations.find(item => item.id === nextId) || serverConversations[0];
           setActiveConversationId(next.id);
           setMessages(next.messages || []);
-          if (next.templateId) setSelectedTemplate(next.templateId);
+          if (next.templateId) setSelectedTemplate(normalizeTemplateId(next.templateId));
           setSelectedModel(CREATOR_MODELS.some(item => item.id === next.model) ? next.model : 'gpt-5.6-terra');
           setReasoningEffort(REASONING_LEVELS.some(item => item.id === next.reasoningEffort) ? next.reasoningEffort : 'medium');
           setTotalSlides([3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5);
@@ -255,7 +351,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
     if (!conv) return;
     setActiveConversationId(id);
     setMessages(conv.messages || []);
-    if (conv.templateId) setSelectedTemplate(conv.templateId);
+    if (conv.templateId) setSelectedTemplate(normalizeTemplateId(conv.templateId));
     const conversationModel = CREATOR_MODELS.some(item => item.id === conv.model) ? conv.model : 'gpt-5.6-terra';
     const conversationEffort = REASONING_LEVELS.some(item => item.id === conv.reasoningEffort) ? conv.reasoningEffort : 'medium';
     const conversationSlides = [3, 5, 7, 10].includes(Number(conv.totalSlides)) ? Number(conv.totalSlides) : 5;
@@ -284,7 +380,7 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
       if (next) {
         setActiveConversationId(next.id);
         setMessages(next.messages || []);
-        setSelectedTemplate(next.templateId || 'bella_tipografico');
+        setSelectedTemplate(normalizeTemplateId(next.templateId || 'bella_tipografico'));
         setSelectedModel(CREATOR_MODELS.some(item => item.id === next.model) ? next.model : 'gpt-5.6-terra');
         setReasoningEffort(REASONING_LEVELS.some(item => item.id === next.reasoningEffort) ? next.reasoningEffort : 'medium');
         setTotalSlides([3, 5, 7, 10].includes(Number(next.totalSlides)) ? Number(next.totalSlides) : 5);
@@ -320,6 +416,22 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
   const handleSend = async (textToSend = null) => {
     const text = (textToSend || input).trim();
     if (!text || generating) return;
+
+    // "Use a pasta X": escolhe as pastas do Pinterest do usuário sem passar pelo modelo.
+    const boardCommand = parseBoardCommand(text, boards);
+    if (boardCommand) {
+      setInput('');
+      if (boardCommand.matched.length) {
+        saveSelectedBoards(boardCommand.matched.map(board => board.id));
+        chooseImageSource('pasta');
+      }
+      let reply;
+      if (!boards.length) { reply = 'Você ainda não conectou nenhuma pasta do Pinterest. Abri o painel: cole o seu usuário ou o link de uma pasta pública e depois peça de novo.'; setBoardsOpen(true); }
+      else if (!boardCommand.matched.length) reply = `Não encontrei uma pasta com esse nome. Suas pastas: ${boards.map(board => `“${board.name}”`).join(', ')}.`;
+      else reply = `Combinado: as imagens deste carrossel virão ${boardCommand.matched.length > 1 ? 'das pastas' : 'da pasta'} ${boardCommand.matched.map(board => `“${board.name}”`).join(' e ')}.${boardCommand.missing.length ? ` (Não achei: ${boardCommand.missing.join(', ')}.)` : ''} Quando as imagens não servirem, a lâmina é gerada por IA.`;
+      setMessages(prev => [...prev, { role: 'user', content: text }, { role: 'ai', content: reply, id: 'ai-' + Date.now(), streaming: false }]);
+      return;
+    }
 
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: text }]);
@@ -452,6 +564,35 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
     }
   };
 
+  // Edição do roteiro: grava título/texto de um slide de volta no texto bruto da mensagem (fonte da verdade da geração).
+  const handleSaveSlide = (index, num, fields) => {
+    const message = messages[index];
+    const next = message ? replaceSlideFields(message.content, num, fields) : null;
+    if (!next) { showToast?.('Não consegui salvar esta edição. Tente de novo.'); return false; }
+    const parsed = parseCarouselText(next);
+    setMessages(prev => prev.map((m, i) => i === index ? { ...m, content: next, parsedPayload: parsed, parsedSlides: parsed?.slides?.length ? parsed.slides : m.parsedSlides, edited: true } : m));
+    if (message.isCarousel) {
+      setLastCarouselText(next);
+      try { sessionStorage.setItem('criadorLastCarousel', next); } catch {}
+    }
+    showToast?.(`Slide ${num} atualizado.`);
+    return true;
+  };
+
+  // Pede ao Oráculo para reescrever um trecho (ou o slide inteiro) conforme o que a Isabella escreveu.
+  const handleRewrite = async request => {
+    try {
+      const res = await customFetch('/api/criador/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...request, model: selectedModel, usesMarkup: /\[\[[^\]]+\]\]/.test(`${request.title}\n${request.body}`) })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) return { ok: false, error: data.error || 'Não consegui ajustar agora. Tente de novo.' };
+      return data;
+    } catch { return { ok: false, error: 'Falha de conexão com o servidor.' }; }
+  };
+
   const handleCreateCarousel = async (carouselText, slides) => {
     if (!carouselText || startingCarousel) return;
     const currentTpl = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
@@ -465,7 +606,8 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           format: currentTpl.format,
           totalSlides,
           noImageSlidesCount: Math.min(noImageSlides, totalSlides),
-          imageSource
+          imageSource,
+          pinterestBoards: imageSource === 'pasta' ? selectedBoards.map(board => ({ url: board.url, name: board.name })) : undefined
         });
       } finally {
         setStartingCarousel(false);
@@ -545,12 +687,26 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
             <ImageSourceSelector
               value={imageSource}
               disabled={generating}
+              selectedBoards={selectedBoards}
+              onManageBoards={() => setBoardsOpen(true)}
               onChange={(value) => {
-                setImageSource(value);
-                try { sessionStorage.setItem('criador_image_source', value); } catch {}
-                showToast?.(value === 'pinterest' ? 'Imagens: curadoria Pinterest (teste)' : 'Imagens: geradas por IA');
+                chooseImageSource(value);
+                showToast?.(value === 'pasta' ? 'Imagens: das suas pastas do Pinterest' : value === 'pinterest' ? 'Imagens: curadoria Pinterest (teste)' : 'Imagens: geradas por IA');
               }}
             />
+            {boardsOpen && (
+              <PinterestBoardsPanel
+                boards={boards}
+                selectedIds={selectedBoardIds}
+                onToggle={toggleBoard}
+                onPreview={previewBoards}
+                onAdd={addBoards}
+                onSync={syncBoards}
+                onDisconnect={disconnectProfile}
+                onRemove={removeBoard}
+                onClose={() => setBoardsOpen(false)}
+              />
+            )}
 
             <NoImageSlidesSelector
               value={Math.min(noImageSlides, totalSlides)}
@@ -579,6 +735,8 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
           onSend={handleSend}
           onCopy={(text) => { navigator.clipboard.writeText(text); showToast?.('Texto copiado!'); }}
           onCreateCarousel={handleCreateCarousel}
+          onSaveSlide={handleSaveSlide}
+          onRewrite={handleRewrite}
           startingCarousel={startingCarousel}
           msgsRef={msgsRef}
           scrollAnchorRef={scrollAnchorRef}
@@ -591,21 +749,30 @@ export default function Criador({ onStartGeneration, showToast, initialMessages,
             <button className="criador-ideias-btn" onClick={() => handleSend(IDEAS_PROMPT)} disabled={generating} title="Pedir 5 ideias de temas validados para Isabella Dalcin">
               ✦ <span>Inspirar tema</span>
             </button>
+            <button className="criador-ideias-btn criador-pastas-btn" onClick={() => setBoardsOpen(true)} disabled={generating} title="Conectar suas pastas do Pinterest e usar as imagens delas nos carrosséis">
+              📌 <span>Minhas pastas{imageSource === 'pasta' && selectedBoards.length ? ` (${selectedBoards.length})` : ''}</span>
+            </button>
             <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
-              <input
-                type="text"
+              <textarea
+                ref={inputRef}
+                rows={1}
                 className="criador-input-field"
                 placeholder={generating ? "Gerando roteiro..." : "Digite o tema do carrossel ou faça uma pergunta..."}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onKeyDown={(e) => {
+                  // Enter envia; Shift+Enter quebra a linha (e a caixa cresce junto). Não envia no meio de uma composição de acento.
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); handleSend(); }
+                }}
                 disabled={generating}
+                aria-label="Mensagem para o Oráculo. Enter envia, Shift+Enter quebra a linha."
               />
               <button className="criador-send-button" onClick={() => handleSend()} disabled={generating || !input.trim()} title="Enviar">
                 {generating ? '⏳' : '➤'}
               </button>
             </div>
           </div>
+          <div className="criador-input-hint"><kbd>Enter</kbd> envia · <kbd>Shift</kbd> + <kbd>Enter</kbd> quebra a linha</div>
         </div>
       </div>
     </div>

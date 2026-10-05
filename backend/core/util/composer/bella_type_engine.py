@@ -607,7 +607,7 @@ def _extract_fragments(parts):
 
 
 FRAGMENT_SLOTS = [
-    dict(x=64, y=330, w=330, rot=-3.2),
+    dict(x=64, y=330, w=262, rot=-3.2),
     dict(x=800, y=470, w=250, rot=3.8),
     dict(x=60, y=905, w=330, rot=-2.4),
 ]
@@ -630,11 +630,28 @@ def render_fragments(title, body, pal_name, report, spec=None):
     draw = ImageDraw.Draw(canvas)
     _micro(draw, pal, report, bottom=False)
 
+    # O bloco de texto é medido primeiro: o título (que pode ter sido editado e ficar longo) ganha só o espaço que sobra
+    # acima dele, em vez de invadir o texto.
+    b_lines, b_h, bx, bw = [], 0, 560, 460
+    if rest:
+        turn = rest[-1] if len(rest) > 1 else ""
+        lead = " ".join(rest[:-1]) if len(rest) > 1 else rest[0]
+        tokens = parse_voices(sentence_lines(lead))
+        if turn:
+            tokens += [("", "br")]
+            tokens += parse_voices(turn) if "*" in turn else [(w, "em") for w in turn.split()]
+        b_plan = {"pl": ("light", 48), "em": ("semi", 48), "it": ("light", 48)}
+        b_lines, _ = fit_lines(tokens, b_plan, bw - 34, 330, em_own_line=False)
+        b_h = _block_height(b_lines)
+    body_top = H - 190 - b_h
     plan = {"pl": ("display", 124), "em": ("display", 124), "it": ("italic", 124)}
-    lines, _ = fit_lines(parse_voices(auto_markup(title)), plan, 560, 470, em_own_line=False)
+    title_cap = min(470, max(240, body_top - 60 - 250)) if b_lines else 470
+    lines, _ = fit_lines(parse_voices(auto_markup(title)), plan, 470, title_cap, em_own_line=False)
     t_height = _block_height(lines)
     t_top = 500 + (400 - t_height) / 2 - 40
-    end = draw_lines(draw, lines, 250, t_top, 560, pal["ink"], align="center", report=report)
+    if b_lines:
+        t_top = max(250, min(t_top, body_top - 60 - t_height))
+    end = draw_lines(draw, lines, 330, t_top, 470, pal["ink"], align="center", report=report)
     _hidden_source(report, "title", title)
 
     for i, quote in enumerate(quotes):
@@ -657,18 +674,7 @@ def render_fragments(title, body, pal_name, report, spec=None):
 
     draw = ImageDraw.Draw(canvas)
     if rest:
-        # frases separadas por linha; o fecho vira a voz forte
-        turn = rest[-1] if len(rest) > 1 else ""
-        lead = " ".join(rest[:-1]) if len(rest) > 1 else rest[0]
-        text = sentence_lines(lead)
-        tokens = parse_voices(text)
-        if turn:
-            tokens += [("", "br")]
-            tokens += parse_voices(turn) if "*" in turn else [(w, "em") for w in turn.split()]
-        b_plan = {"pl": ("light", 48), "em": ("semi", 48), "it": ("light", 48)}
-        bx, bw = 560, 460
-        b_lines, _ = fit_lines(tokens, b_plan, bw - 34, 330, em_own_line=False)
-        b_h = _block_height(b_lines)
+        # frases separadas por linha; o fecho vira a voz forte (o bloco já foi medido acima)
         by = min(max(end + 90, 850), H - 190 - b_h)
         draw.rectangle((bx, by - 4, bx + 10, by + b_h - 4), fill=pal["accent"])
         draw_lines(draw, b_lines, bx + 34, by, bw - 34, pal["ink"], report=report, name="Corpo", role="body")

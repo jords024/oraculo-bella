@@ -496,6 +496,24 @@ def _apply_no_image(directed: list[dict], preset_name: str, count: int) -> None:
             paper_order += 1
 
 
+def convert_missing_to_image_free(slides: list[dict], preset_name: str) -> list[int]:
+    """Lâminas que deveriam ter foto mas não receberam imagem curada viram lâminas só com tipografia.
+
+    Usado quando a fonte das imagens é o Pinterest (busca ou pastas): nunca se gera imagem por IA no lugar.
+    Devolve os números (1-based) das lâminas convertidas.
+    """
+    total = len(slides)
+    converted, order, previous = [], 0, None
+    for idx, slide in enumerate(slides, 1):
+        layout = slide.get("layout", "fullbleed")
+        if layout_uses_generated_image(layout) and not slide.get("curated_image_path"):
+            slide["layout"] = _free_layout(preset_name, idx, total, order, previous)
+            order += 1
+            converted.append(idx)
+        previous = slide.get("layout")
+    return converted
+
+
 def layout_uses_generated_image(layout: str) -> bool:
     """Layouts puramente tipográficos não gastam uma geração de imagem."""
     return layout not in {

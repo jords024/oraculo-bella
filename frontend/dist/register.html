@@ -252,7 +252,7 @@
 
 <div class="card">
   <div class="eyebrow">Criar Nova Conta</div>
-  <div class="brand">Fonte<br><em>Oculta</em></div>
+  <div class="brand">Isabella<br><em>Dalcin</em></div>
   <div class="divider"></div>
 
   <!-- Estado: Carregando -->
@@ -374,7 +374,7 @@
     .then(res => res.json())
     .then(data => {
       document.title = "Oraculo";
-      const companyName = data?.company_name || 'Fonte Oculta';
+      const companyName = data?.companyName || data?.company_name || 'Isabella Dalcin';
       const brandEl = document.querySelector('.brand');
       if (brandEl) {
         const words = companyName.trim().split(/\s+/);

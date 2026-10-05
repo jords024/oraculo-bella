@@ -382,7 +382,12 @@ def main():
             from core.curadoria.curator import curate_images
             curate_images(slides, out_dir, payload, lambda m: out({"type": "log", "msg": m}), layout_uses_generated_image)
         except Exception as exc:
-            out({"type": "log", "msg": f"Curadoria Pinterest falhou ({str(exc)[:120]}); usando geração por IA."})
+            out({"type": "log", "msg": f"Curadoria Pinterest falhou ({str(exc)[:120]})."})
+        # Fonte Pinterest = só Pinterest: lâmina sem imagem curada fica só com tipografia, nunca vira imagem de IA.
+        from core.util.deck_director import convert_missing_to_image_free
+        converted = convert_missing_to_image_free(slides, active_preset)
+        if converted:
+            out({"type": "log", "msg": f"Sem imagem do Pinterest para a(s) lâmina(s) {', '.join(map(str, converted))}: ficam só com tipografia (nenhuma imagem foi gerada por IA)."})
 
     quality = payload.get("imageQuality", None)
 

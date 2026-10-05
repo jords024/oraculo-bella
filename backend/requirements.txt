@@ -16,4 +16,5 @@ alembic>=1.13.0
 psycopg2-binary>=2.9.9
 # Toolkit SQL e ORM para definição e manipulação de esquemas com Alembic
 SQLAlchemy>=2.0.0
-
+# Navegador automático da curadoria de imagens por BUSCA no Pinterest (a fonte "Minhas pastas" não precisa dele)
+playwright>=1.40.0

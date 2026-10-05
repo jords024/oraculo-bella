@@ -34,6 +34,11 @@ export default function Login({ onSuccess }) {
       });
 
       if (!response.ok) {
+        if (response.status >= 500) {
+          setError('O Oráculo está fora do ar neste momento. Aguarde alguns segundos e tente de novo.');
+          setSubmitting(false);
+          return;
+        }
         const errData = await response.json().catch(() => ({ detail: 'Credenciais inválidas. Tente novamente.' }));
         setError(errData.detail || 'Credenciais inválidas. Tente novamente.');
         setSubmitting(false);
@@ -55,8 +60,7 @@ export default function Login({ onSuccess }) {
   };
 
   const renderBrand = () => {
-    if (!companyName) return <><em>Oculta</em></>;
-    const words = companyName.trim().split(/\s+/);
+    const words = (companyName || 'Isabella Dalcin').trim().split(/\s+/);
     if (words.length > 1) {
       const lastWord = words.pop();
       const firstPart = words.join(' ');
@@ -264,7 +268,7 @@ export default function Login({ onSuccess }) {
 
       <div className="card">
         <div className="eyebrow">Estúdio de Conteúdo</div>
-        <div className="brand">Fonte<br />{renderBrand()}</div>
+        <div className="brand">{renderBrand()}</div>
         <div className="divider"></div>
         <p className="subtitle">Acesso restrito ao estúdio.<br />Insira suas credenciais para continuar.</p>
 

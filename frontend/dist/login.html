@@ -200,7 +200,7 @@
 
 <div class="card">
   <div class="eyebrow">Estúdio de Conteúdo</div>
-  <div class="brand">Fonte<br><em>Oculta</em></div>
+  <div class="brand">Isabella<br><em>Dalcin</em></div>
   <div class="divider"></div>
   <p class="subtitle">Acesso restrito ao estúdio.<br>Insira suas credenciais para continuar.</p>
 
@@ -272,6 +272,11 @@
       });
 
       if (!response.ok) {
+        if (response.status >= 500) {
+          errorMsg.textContent = 'O Oráculo está fora do ar neste momento. Aguarde alguns segundos e tente de novo.';
+          errorMsg.classList.add('visible');
+          return;
+        }
         const errData = await response.json().catch(() => ({ detail: 'Credenciais inválidas. Tente novamente.' }));
         errorMsg.textContent = errData.detail || 'Credenciais inválidas. Tente novamente.';
         errorMsg.classList.add('visible');

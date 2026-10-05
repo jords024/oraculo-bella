@@ -26,6 +26,7 @@ import servicesRouter from "./routes/services.js";
 import backupsRouter from "./routes/backups.js";
 import libraryRouter from "./routes/library.js";
 import creatorChatsRouter from "./routes/creatorChats.js";
+import pinterestBoardsRouter from "./routes/pinterestBoards.js";
 import { resetBackupScheduler } from "./backupManager.js";
 
 import { initCarouselQueueWorker } from "./services/carouselQueueWorker.js";
@@ -121,6 +122,7 @@ app.use(servicesRouter);
 app.use(backupsRouter);
 app.use(libraryRouter);
 app.use(creatorChatsRouter);
+app.use(pinterestBoardsRouter);
 
 app.use(express.static(PUBLIC_DIR, { extensions: ['html', 'htm'] }));
 
